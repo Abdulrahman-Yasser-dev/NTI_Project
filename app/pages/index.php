@@ -7,6 +7,9 @@
 // ============================================================
 // ALL BOOKS DATA (for featured books only)
 // ============================================================
+require_once "../app/core/init.php";
+
+
 $allBooks = [
     // Romance
     [
@@ -15,7 +18,7 @@ $allBooks = [
         "author_name" => "سلمى عادل",
         "category" => "رومانسي",
         "excerpt" => "رواية عن الشوق والعودة للجذور",
-        "cover" => "../images/covers/book-1.jpg",
+        "cover" => "assets/images/covers/book-1.jpg",
         "rating" => 4.7,
         "readers" => 1243,
         "chapters" => 24
@@ -26,7 +29,7 @@ $allBooks = [
         "author_name" => "نورا أحمد",
         "category" => "رومانسي",
         "excerpt" => "رحلة بحث عن الحب في زمن المتغيرات",
-        "cover" => "../images/covers/book-2.jpg",
+        "cover" => "assets/images/covers/book-2.jpg",
         "rating" => 4.5,
         "readers" => 876,
         "chapters" => 18
@@ -38,7 +41,7 @@ $allBooks = [
         "author_name" => "هالة نبيل",
         "category" => "خيال علمي",
         "excerpt" => "رحلة عبر الأبعاد المختلفة",
-        "cover" => "../images/covers/book-4.jpg",
+        "cover" => "assets/images/covers/book-4.jpg",
         "rating" => 4.6,
         "readers" => 987,
         "chapters" => 28
@@ -49,7 +52,7 @@ $allBooks = [
         "author_name" => "كريم أشرف",
         "category" => "خيال علمي",
         "excerpt" => "مغامرات عبر الزمن",
-        "cover" => "../images/covers/book-6.jpg",
+        "cover" => "assets/images/covers/book-6.jpg",
         "rating" => 4.9,
         "readers" => 3156,
         "chapters" => 42
@@ -61,7 +64,7 @@ $allBooks = [
         "author_name" => "يوسف كامل",
         "category" => "غموض",
         "excerpt" => "لغز ينتظر من يحله",
-        "cover" => "../images/covers/book-7.jpg",
+        "cover" => "assets/images/covers/book-7.jpg",
         "rating" => 4.3,
         "readers" => 543,
         "chapters" => 14
@@ -72,7 +75,7 @@ $allBooks = [
         "author_name" => "مازن رضا",
         "category" => "غموض",
         "excerpt" => "قصة غامضة تأخذك إلى عالم آخر",
-        "cover" => "../images/covers/book-8.jpg",
+        "cover" => "assets/images/covers/book-8.jpg",
         "rating" => 4.7,
         "readers" => 1234,
         "chapters" => 22
@@ -92,7 +95,7 @@ $storyOfTheWeek = [
     "title" => "ظل النخيل",
     "author_name" => "سلمى عادل",
     "excerpt" => "رواية عن الشوق والعودة للجذور",
-    "cover" => "../images/spotlight/spotlight-cover.jpg",
+    "cover" => "assets/images/spotlight/spotlight-cover.jpg",
     "rating" => 4.7,
     "readers" => 1243,
     "chapters" => 24
@@ -105,28 +108,28 @@ $categories = [
     [
         "name" => "رومانسي",
         "description" => "قصص الحب والمشاعر",
-        "bg" => "../images/categories/romance-bg.avif",
+        "bg" => "assets/images/categories/romance-bg.avif",
         "color" => "#B34141",
         "count" => 12
     ],
     [
         "name" => "خيال علمي",
         "description" => "عوالم مستقبلية وخيالية",
-        "bg" => "../images/categories/Sci-Fi-bg.avif",
+        "bg" => "assets/images/categories/Sci-Fi-bg.avif",
         "color" => "#1A6EB5",
         "count" => 8
     ],
     [
         "name" => "غموض",
         "description" => "ألغاز وتشويق وإثارة",
-        "bg" => "../images/categories/Mystery-bg.avif",
+        "bg" => "assets/images/categories/Mystery-bg.avif",
         "color" => "#6B4C3A",
         "count" => 15
     ],
     [
         "name" => "دراما",
         "description" => "قصص إنسانية مؤثرة",
-        "bg" => "../images/categories/drama-bg.avif",
+        "bg" => "assets/images/categories/drama-bg.avif",
         "color" => "#993556",
         "count" => 10
     ],
@@ -194,55 +197,23 @@ $testimonials = [
     ],
 ];
 ?>
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سرد — حيث تبدأ كل حكاية</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="../Style/HomePage.css">
-</head>
-<body>
-
-<!-- ============================================================
-HEADER
-============================================================ -->
-<header class="site-header">
-    <div class="logo">
-        <span class="logo-text">سرد</span>
-    </div>
-    <nav class="nav-links" aria-label="القائمة الرئيسية">
-        <a href="Browsebooks.php">استكشف</a>
-        <a href="#categories">التصنيفات</a>
-        <a href="#features">عن سرد</a>
-    </nav>
-    <div class="header-actions">
-        <button class="btn btn-outline" onclick="location.href='Login.php'">دخول</button>
-        <button class="btn btn-filled" onclick="location.href='Signup.php'">حساب جديد</button>
-    </div>
-    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="القائمة">
-        <i class="fas fa-bars"></i>
-    </button>
-</header>
-
+<?php
+include "header.php";
+?>
 <main>
-
     <!-- ============================================================
     SECTION 1: HERO
     ============================================================ -->
-    <section class="hero-section" style="background-image: url('../images/hero/hero-bg.jpg');">
+    <section class="hero-section" style="background-image: url('assets/images/hero/hero-bg.jpg');">
         <div class="hero-overlay">
             <p class="eyebrow">منصة الروايات العربية</p>
             <h1>حيث تبدأ<br>كل حكاية</h1>
             <p class="hero-sub">روايات من كل نوع، من كتّاب حقيقيين، تتقرأ مجاناً من أول لحظة</p>
             <div class="hero-actions">
-                <button class="btn btn-hero-primary" onclick="location.href='Browsebooks.php'">
+                <button class="btn btn-hero-primary" onclick="location.href='Browsebooks'">
                     استكشف الروايات
                 </button>
-                <button class="btn btn-hero-secondary" onclick="location.href='Signup.php?role=writer'">
+                <button class="btn btn-hero-secondary" onclick="location.href='Signup?role=writer'">
                     انضم كـ كاتب
                 </button>
             </div>
@@ -271,9 +242,9 @@ HEADER
             <div class="story-week-badge">⭐ قصة الأسبوع</div>
             <div class="story-week-content">
                 <div class="story-week-cover">
-                    <img src="<?php echo $storyOfTheWeek['cover']; ?>" 
-                         alt="<?php echo htmlspecialchars($storyOfTheWeek['title']); ?>" 
-                         class="story-week-img">
+                    <img src="<?php echo $storyOfTheWeek['cover']; ?>"
+                        alt="<?php echo htmlspecialchars($storyOfTheWeek['title']); ?>"
+                        class="story-week-img">
                 </div>
                 <div class="story-week-info">
                     <h2 class="story-week-title"><?php echo htmlspecialchars($storyOfTheWeek['title']); ?></h2>
@@ -293,7 +264,7 @@ HEADER
                             <?php echo $storyOfTheWeek['chapters']; ?> فصل
                         </span>
                     </div>
-                    <button class="btn btn-story-week" onclick="location.href='BookDetails.php?id=<?php echo (int)$storyOfTheWeek['id']; ?>'">
+                    <button class="btn btn-story-week" onclick="location.href='BookDetails?id=<?php echo (int)$storyOfTheWeek['id']; ?>'">
                         اقرأ الآن
                     </button>
                 </div>
@@ -309,13 +280,13 @@ HEADER
         <p class="section-title">اختر عالمك المفضل</p>
         <div class="categories-grid">
             <?php foreach ($categories as $cat): ?>
-                <div class="category-card-modern" 
-                     style="background-image: linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url('<?php echo $cat['bg']; ?>');">
+                <div class="category-card-modern"
+                    style="background-image: linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url('<?php echo $cat['bg']; ?>');">
                     <div class="category-content">
                         <h3 class="category-name-modern"><?php echo $cat['name']; ?></h3>
                         <p class="category-desc"><?php echo $cat['description']; ?></p>
                         <p class="category-count-modern"><?php echo $cat['count']; ?> رواية</p>
-                        <button class="btn btn-category-browse" onclick="location.href='Browsebooks.php?category=<?php echo urlencode($cat['name']); ?>'">
+                        <button class="btn btn-category-browse" onclick="location.href='Browsebooks?category=<?php echo urlencode($cat['name']); ?>'">
                             استكشف
                         </button>
                     </div>
@@ -333,18 +304,18 @@ HEADER
                 <p class="section-kicker">أشهر الروايات</p>
                 <p class="section-title">اقرأ الأكثر رواجاً</p>
             </div>
-            <button class="btn btn-view-all" onclick="location.href='Browsebooks.php'">
+            <button class="btn btn-view-all" onclick="location.href='Browsebooks'">
                 عرض الكل ←
             </button>
         </div>
         <div class="featured-books-grid">
             <?php foreach ($featuredBooks as $book): ?>
-                <article class="featured-book-card" onclick="location.href='BookDetails.php?id=<?php echo (int)$book['id']; ?>'">
+                <article class="featured-book-card" onclick="location.href='BookDetails?id=<?php echo (int)$book['id']; ?>'">
                     <div class="featured-book-cover">
                         <?php if (!empty($book['cover']) && file_exists($book['cover'])): ?>
-                            <img src="<?php echo htmlspecialchars($book['cover']); ?>" 
-                                 alt="<?php echo htmlspecialchars($book['title']); ?>" 
-                                 class="featured-book-img">
+                            <img src="<?php echo htmlspecialchars($book['cover']); ?>"
+                                alt="<?php echo htmlspecialchars($book['title']); ?>"
+                                class="featured-book-img">
                         <?php else: ?>
                             <span class="cover-placeholder">📖</span>
                         <?php endif; ?>
@@ -356,7 +327,7 @@ HEADER
                             <i class="fas fa-star" aria-hidden="true"></i>
                             <?php echo number_format($book['rating'] ?? 4.5, 1); ?>
                         </div>
-                        <button class="btn btn-book-read" onclick="event.stopPropagation(); location.href='BookDetails.php?id=<?php echo (int)$book['id']; ?>'">
+                        <button class="btn btn-book-read" onclick="event.stopPropagation(); location.href='BookDetails?id=<?php echo (int)$book['id']; ?>'">
                             اقرأ
                         </button>
                     </div>
@@ -368,102 +339,102 @@ HEADER
     <!-- ============================================================
 SECTION 6: WHY SARD? (Redesigned)
 ============================================================ -->
-<section class="features-section" id="features">
-    <div class="features-header">
-        <p class="section-kicker">لماذا سرد؟</p>
-        <h2 class="features-headline">كل ما يحتاجه الكاتب والقارئ في مكان واحد</h2>
-        <p class="features-subheadline">منصة متكاملة تجمع بين القراءة والكتابة في تجربة سلسة</p>
-    </div>
-    <div class="features-grid">
-        <div class="feature-card">
-            <div class="feature-icon-wrapper">
-                <i class="fas fa-book-open feature-icon"></i>
-            </div>
-            <h3 class="feature-title">قراءة مجانية</h3>
-            <p class="feature-desc">تصفحي آلاف الروايات دون أي تكلفة واستمتعي بأفضل القصص العربية</p>
+    <section class="features-section" id="features">
+        <div class="features-header">
+            <p class="section-kicker">لماذا سرد؟</p>
+            <h2 class="features-headline">كل ما يحتاجه الكاتب والقارئ في مكان واحد</h2>
+            <p class="features-subheadline">منصة متكاملة تجمع بين القراءة والكتابة في تجربة سلسة</p>
         </div>
-        <div class="feature-card">
-            <div class="feature-icon-wrapper">
-                <i class="fas fa-pen-fancy feature-icon"></i>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i class="fas fa-book-open feature-icon"></i>
+                </div>
+                <h3 class="feature-title">قراءة مجانية</h3>
+                <p class="feature-desc">تصفحي آلاف الروايات دون أي تكلفة واستمتعي بأفضل القصص العربية</p>
             </div>
-            <h3 class="feature-title">كتابة ونشر</h3>
-            <p class="feature-desc">انشري روايتك ووصليها لآلاف القراء بسهولة واحترافية</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon-wrapper">
-                <i class="fas fa-users feature-icon"></i>
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i class="fas fa-pen-fancy feature-icon"></i>
+                </div>
+                <h3 class="feature-title">كتابة ونشر</h3>
+                <p class="feature-desc">انشري روايتك ووصليها لآلاف القراء بسهولة واحترافية</p>
             </div>
-            <h3 class="feature-title">مجتمع قراء</h3>
-            <p class="feature-desc">تفاعلي مع قراء وكتّاب من كل مكان وشاركي آرائك بحرية</p>
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i class="fas fa-users feature-icon"></i>
+                </div>
+                <h3 class="feature-title">مجتمع قراء</h3>
+                <p class="feature-desc">تفاعلي مع قراء وكتّاب من كل مكان وشاركي آرائك بحرية</p>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
     <!-- ============================================================
 SECTION 7: TESTIMONIALS (Redesigned with Carousel)
 ============================================================ -->
-<section class="testimonials-section" id="testimonials">
-    <div class="testimonials-header">
-        <p class="section-kicker">آراء قرّائنا وكتّابنا</p>
-        <h2 class="testimonials-headline">ماذا يقولون عن سرد؟</h2>
-    </div>
-    
-    <div class="testimonials-carousel-container">
-        <div class="testimonials-track" id="testimonialsTrack">
-            <?php foreach ($testimonials as $index => $testimonial): ?>
-                <div class="testimonial-card" data-index="<?php echo $index; ?>">
-                    <div class="testimonial-quote-icon">
-                        <i class="fas fa-quote-right"></i>
-                    </div>
-                    <div class="testimonial-stars">
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <p class="testimonial-text">"<?php echo $testimonial['text']; ?>"</p>
-                    <div class="testimonial-author">
-                        <p class="testimonial-name"><?php echo $testimonial['name']; ?></p>
-                        <p class="testimonial-role"><?php echo $testimonial['role']; ?></p>
-                    </div>
-                </div>
-            <?php endforeach; ?>
+    <section class="testimonials-section" id="testimonials">
+        <div class="testimonials-header">
+            <p class="section-kicker">آراء قرّائنا وكتّابنا</p>
+            <h2 class="testimonials-headline">ماذا يقولون عن سرد؟</h2>
         </div>
-        
-        <!-- Navigation Dots -->
-        <div class="testimonials-dots" id="testimonialsDots">
-            <?php foreach ($testimonials as $index => $testimonial): ?>
-                <button class="dot <?php echo $index === 0 ? 'active' : ''; ?>" 
-                        data-index="<?php echo $index; ?>" 
+
+        <div class="testimonials-carousel-container">
+            <div class="testimonials-track" id="testimonialsTrack">
+                <?php foreach ($testimonials as $index => $testimonial): ?>
+                    <div class="testimonial-card" data-index="<?php echo $index; ?>">
+                        <div class="testimonial-quote-icon">
+                            <i class="fas fa-quote-right"></i>
+                        </div>
+                        <div class="testimonial-stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <p class="testimonial-text">"<?php echo $testimonial['text']; ?>"</p>
+                        <div class="testimonial-author">
+                            <p class="testimonial-name"><?php echo $testimonial['name']; ?></p>
+                            <p class="testimonial-role"><?php echo $testimonial['role']; ?></p>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+            <!-- Navigation Dots -->
+            <div class="testimonials-dots" id="testimonialsDots">
+                <?php foreach ($testimonials as $index => $testimonial): ?>
+                    <button class="dot <?php echo $index === 0 ? 'active' : ''; ?>"
+                        data-index="<?php echo $index; ?>"
                         aria-label="شاهد testimonial <?php echo $index + 1; ?>">
-                </button>
-            <?php endforeach; ?>
+                    </button>
+                <?php endforeach; ?>
+            </div>
+
+            <!-- Navigation Arrows -->
+            <button class="testimonial-arrow testimonial-arrow-prev" id="prevTestimonial" aria-label="السابق">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            <button class="testimonial-arrow testimonial-arrow-next" id="nextTestimonial" aria-label="التالي">
+                <i class="fas fa-chevron-left"></i>
+            </button>
         </div>
-        
-        <!-- Navigation Arrows -->
-        <button class="testimonial-arrow testimonial-arrow-prev" id="prevTestimonial" aria-label="السابق">
-            <i class="fas fa-chevron-right"></i>
-        </button>
-        <button class="testimonial-arrow testimonial-arrow-next" id="nextTestimonial" aria-label="التالي">
-            <i class="fas fa-chevron-left"></i>
-        </button>
-    </div>
-</section>
+    </section>
 
     <!-- ============================================================
     SECTION 8: FINAL CTA
     ============================================================ -->
-    <section class="final-cta-section" style="background-image: url('../images/hero/hero-bg.jpg');">
+    <section class="final-cta-section" style="background-image: url('assets/images/hero/hero-bg.jpg');">
         <div class="final-cta-overlay">
             <div class="final-cta-content">
                 <h2 class="final-cta-title">ابدأ رحلتك مع سرد</h2>
                 <p class="final-cta-sub">انضم إلى آلاف القرّاء والكتّاب وابدأ في اكتشاف وكتابة الروايات</p>
                 <div class="final-cta-actions">
-                    <button class="btn btn-final-cta-primary" onclick="location.href='Signup.php'">
+                    <button class="btn btn-final-cta-primary" onclick="location.href='Signup'">
                         إنشاء حساب مجاني
                     </button>
-                    <button class="btn btn-final-cta-secondary" onclick="location.href='Browsebooks.php'">
+                    <button class="btn btn-final-cta-secondary" onclick="location.href='Browsebooks'">
                         استكشف الروايات
                     </button>
                 </div>
@@ -473,44 +444,14 @@ SECTION 7: TESTIMONIALS (Redesigned with Carousel)
 
 </main>
 
-<!-- ============================================================
-FOOTER
-============================================================ -->
-<footer class="site-footer">
-    <div class="footer-content">
-        <div class="footer-brand">
-            <span class="footer-logo">سرد</span>
-            <p class="footer-tagline">حيث تبدأ كل حكاية</p>
-        </div>
-        <div class="footer-links">
-            <div class="footer-column">
-                <h4>المنصة</h4>
-                <a href="Browsebooks.php">استكشف</a>
-                <a href="#">التصنيفات</a>
-                <a href="#">الروايات</a>
-            </div>
-            <div class="footer-column">
-                <h4>المجتمع</h4>
-                <a href="#">الكتّاب</a>
-                <a href="#">القرّاء</a>
-                <a href="#">المدونة</a>
-            </div>
-            <div class="footer-column">
-                <h4>الدعم</h4>
-                <a href="#">عن سرد</a>
-                <a href="#">اتصل بنا</a>
-                <a href="#">سياسة الخصوصية</a>
-            </div>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        <p>© <?php echo date("Y"); ?> سرد — منصة الروايات العربية</p>
-    </div>
-</footer>
+<?php
+include "footer.php";
+?>
 
 <!-- ============================================================
 JAVASCRIPT
 ============================================================ -->
-<script src="../Script/HomePage.js"></script>
+<script src="assets/js/index.js"></script>
 </body>
+
 </html>

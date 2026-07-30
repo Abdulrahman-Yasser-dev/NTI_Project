@@ -1,4 +1,4 @@
-<?php require_once 'config.php'; ?>
+﻿<?php require_once "../app/core/init.php"; ?>
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
@@ -73,8 +73,8 @@
         </div>
         <!-- Navigation Links -->
         <nav class="hidden md:flex flex-row-reverse items-center gap-8">
-          <a class="text-[#45464e] font-semibold text-sm hover:text-primary transition-colors" href="HomePage.php">الرئيسية</a>
-          <a class="text-[#45464e] font-semibold text-sm hover:text-primary transition-colors" href="Browsebooks.php">استكشف</a>
+          <a class="text-[#45464e] font-semibold text-sm hover:text-primary transition-colors" href="index">الرئيسية</a>
+          <a class="text-[#45464e] font-semibold text-sm hover:text-primary transition-colors" href="Browsebooks">استكشف</a>
           <a class="text-[#45464e] font-semibold text-sm hover:text-primary transition-colors" href="#">مكتبتي</a>
           <a class="text-primary font-bold border-b-2 border-primary pb-1 text-sm transition-all" href="#">الكتابة</a>
         </nav>
@@ -252,3 +252,5 @@
     </footer>
 </body>
 </html>
+
+

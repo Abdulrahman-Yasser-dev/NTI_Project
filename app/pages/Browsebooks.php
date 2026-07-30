@@ -1,20 +1,22 @@
-<?php
+﻿<?php
 // BrowseBooks.php
 // Full catalog page with sidebar filters, sorting, and a grid/list view toggle.
 // Search + filter + sort all run client-side against the cards rendered here.
 
+require_once "../app/core/init.php";
+
 $books = [
-    ["id" => 1, "title" => "ظل النخيل", "author_name" => "سلمى عادل", "category" => "رومانسي", "excerpt" => "رواية عن الشوق والعودة للجذور", "cover" => "../images/covers/book-1.jpg"],
-    ["id" => 2, "title" => "حكاية قلب", "author_name" => "نورا أحمد", "category" => "رومانسي", "excerpt" => "رحلة بحث عن الحب في زمن المتغيرات", "cover" => "../images/covers/book-2.jpg"],
-    ["id" => 3, "title" => "نسمات الحب", "author_name" => "ليلى سعيد", "category" => "رومانسي", "excerpt" => "قصة حب تتحدى الزمن والمكان", "cover" => "../images/covers/book-3.jpg"],
+    ["id" => 1, "title" => "ظل النخيل", "author_name" => "سلمى عادل", "category" => "رومانسي", "excerpt" => "رواية عن الشوق والعودة للجذور", "cover" => "assets/images/covers/book-1.jpg"],
+    ["id" => 2, "title" => "حكاية قلب", "author_name" => "نورا أحمد", "category" => "رومانسي", "excerpt" => "رحلة بحث عن الحب في زمن المتغيرات", "cover" => "assets/images/covers/book-2.jpg"],
+    ["id" => 3, "title" => "نسمات الحب", "author_name" => "ليلى سعيد", "category" => "رومانسي", "excerpt" => "قصة حب تتحدى الزمن والمكان", "cover" => "assets/images/covers/book-3.jpg"],
 
-    ["id" => 4, "title" => "العابرون", "author_name" => "هالة نبيل", "category" => "خيال علمي", "excerpt" => "رحلة عبر الأبعاد المختلفة", "cover" => "../images/covers/book-4.jpg"],
-    ["id" => 5, "title" => "كوكب آخر", "author_name" => "سامي رضا", "category" => "خيال علمي", "excerpt" => "استكشاف حياة جديدة في الفضاء", "cover" => "../images/covers/book-5.jpg"],
-    ["id" => 6, "title" => "آلة الزمن", "author_name" => "كريم أشرف", "category" => "خيال علمي", "excerpt" => "مغامرات عبر الزمن", "cover" => "../images/covers/book-6.jpg"],
+    ["id" => 4, "title" => "العابرون", "author_name" => "هالة نبيل", "category" => "خيال علمي", "excerpt" => "رحلة عبر الأبعاد المختلفة", "cover" => "assets/images/covers/book-4.jpg"],
+    ["id" => 5, "title" => "كوكب آخر", "author_name" => "سامي رضا", "category" => "خيال علمي", "excerpt" => "استكشاف حياة جديدة في الفضاء", "cover" => "assets/images/covers/book-5.jpg"],
+    ["id" => 6, "title" => "آلة الزمن", "author_name" => "كريم أشرف", "category" => "خيال علمي", "excerpt" => "مغامرات عبر الزمن", "cover" => "assets/images/covers/book-6.jpg"],
 
-    ["id" => 7, "title" => "مرايا الصمت", "author_name" => "يوسف كامل", "category" => "غموض", "excerpt" => "لغز ينتظر من يحله", "cover" => "../images/covers/book-7.jpg"],
-    ["id" => 8, "title" => "اللغز", "author_name" => "مازن رضا", "category" => "غموض", "excerpt" => "قصة غامضة تأخذك إلى عالم آخر", "cover" => "../images/covers/book-8.jpg"],
-    ["id" => 9, "title" => "الظل", "author_name" => "طارق منير", "category" => "غموض", "excerpt" => "في الظل تكمن الحقيقة", "cover" => "../images/covers/book-9.jpg"],
+    ["id" => 7, "title" => "مرايا الصمت", "author_name" => "يوسف كامل", "category" => "غموض", "excerpt" => "لغز ينتظر من يحله", "cover" => "assets/images/covers/book-7.jpg"],
+    ["id" => 8, "title" => "اللغز", "author_name" => "مازن رضا", "category" => "غموض", "excerpt" => "قصة غامضة تأخذك إلى عالم آخر", "cover" => "assets/images/covers/book-8.jpg"],
+    ["id" => 9, "title" => "الظل", "author_name" => "طارق منير", "category" => "غموض", "excerpt" => "في الظل تكمن الحقيقة", "cover" => "assets/images/covers/book-9.jpg"],
 ];
 
 // fg colors match the genre colors already used on HomePage for consistency
@@ -39,18 +41,18 @@ $activeCategory = isset($_GET['category']) ? $_GET['category'] : 'all';
 <title>تصفح الروايات — ريشة</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../Style/BrowseBooks.css">
+<link rel="stylesheet" href="assets/css/BrowseBooks.css">
 </head>
 <body>
 
 <header class="site-header">
-    <div class="logo" onclick="location.href='HomePage.php'" style="cursor:pointer;">
+    <div class="logo" onclick="location.href='index'" style="cursor:pointer;">
         <span class="logo-mark">✒</span>
         <span class="logo-text">ريشة</span>
     </div>
     <div class="header-actions">
-        <button class="btn btn-outline" onclick="location.href='Login.php'">دخول</button>
-        <button class="btn btn-filled" onclick="location.href='Signup.php'">حساب جديد</button>
+        <button class="btn btn-outline" onclick="location.href='Login'">دخول</button>
+        <button class="btn btn-filled" onclick="location.href='Signup'">حساب جديد</button>
     </div>
 </header>
 
@@ -117,7 +119,7 @@ $activeCategory = isset($_GET['category']) ? $_GET['category'] : 'all';
                           data-title="<?php echo htmlspecialchars(mb_strtolower($book['title'])); ?>"
                           data-title-raw="<?php echo htmlspecialchars($book['title']); ?>"
                           data-author="<?php echo htmlspecialchars(mb_strtolower($book['author_name'])); ?>"
-                          onclick="location.href='BookDetails.php?id=<?php echo (int)$book['id']; ?>'">
+                          onclick="location.href='BookDetails?id=<?php echo (int)$book['id']; ?>'">
                     <div class="book-cover" style="background: <?php echo $genreBg; ?>;">
                         <?php if (!empty($book['cover']) && file_exists($book['cover'])): ?>
                             <img src="<?php echo htmlspecialchars($book['cover']); ?>" alt="<?php echo htmlspecialchars($book['title']); ?>" class="book-cover-img">
@@ -147,7 +149,7 @@ $activeCategory = isset($_GET['category']) ? $_GET['category'] : 'all';
 <footer class="site-footer">
     <div class="footer-links">
         <a href="#">عن ريشة</a>
-        <a href="WriteWithUs.php">اكتب معنا</a>
+        <a href="WriteWithUs">اكتب معنا</a>
         <a href="#">سياسة الخصوصية</a>
         <a href="#">شروط الاستخدام</a>
         <a href="#">اتصل بنا</a>
@@ -158,6 +160,8 @@ $activeCategory = isset($_GET['category']) ? $_GET['category'] : 'all';
 <script>
     const initialCategory = <?php echo json_encode($activeCategory); ?>;
 </script>
-<script src="../Script/BrowseBooks.js"></script>
+<script src="assets/js/BrowseBooks.js"></script>
 </body>
 </html>
+
+

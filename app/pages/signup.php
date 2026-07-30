@@ -1,9 +1,9 @@
-<?php
-include 'config.php';
+﻿<?php
+require_once "../app/core/init.php";
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = $_POST['username'];
-    $email = $_POST['email'];
+    $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
 
@@ -12,19 +12,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        $check = $conn->prepare("SELECT id FROM users WHERE email = ?");
-        $check->bind_param("s", $email);
-        $check->execute();
-        $check->store_result();
+        $query = "SELECT id FROM users WHERE email = :email";
+        $result = query($conn, $query, ["email" => $email]);
 
-        if ($check->num_rows > 0) {
+        if (!empty($result)) {
             $error = "البريد الإلكتروني مستخدم بالفعل";
         } else {
-            $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
-            $stmt->bind_param("sss", $username, $email, $hashed_password);
+            $query = "INSERT INTO users (username, email, password) VALUES (:username, :email, :password)";
 
-            if ($stmt->execute()) {
-                header("Location: login.php");
+            $success = execute($conn, $query, ["username" => $username, "email" => $email, "password" => $hashed_password]);
+            if ($success) {
+                header("Location: login");
                 exit();
             } else {
                 $error = "حدث خطأ، حاول مرة أخرى";
@@ -35,11 +33,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <title>إنشاء حساب</title>
-    <link rel="stylesheet" href="../Style/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
+
 <body>
     <div class="auth-form">
         <div class="brand">سرد</div>
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <p class="error"><?php echo $error; ?></p>
         <?php endif; ?>
 
-        <form method="POST" action="signup.php">
+        <form method="POST" action="signup">
             <label>الاسم الكامل</label>
             <input type="text" name="username" placeholder="اسم المستخدم" required>
 
@@ -69,7 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <button type="submit">إنشاء حساب</button>
         </form>
 
-        <p class="switch-link">عندك حساب بالفعل؟ <a href="login.php">سجل دخول</a></p>
+        <p class="switch-link">عندك حساب بالفعل؟ <a href="login">سجل دخول</a></p>
     </div>
 </body>
+
 </html>

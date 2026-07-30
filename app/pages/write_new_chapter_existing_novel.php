@@ -1,75 +1,116 @@
-<?php require_once 'config.php'; ?>
+﻿<?php require_once "../app/core/init.php"; ?>
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>محرر الرواية - سرد</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;600;700&family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&family=Noto+Serif+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;600;700&family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&family=Noto+Serif+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet" />
     <style>
-      body { font-family: "IBM Plex Sans Arabic", sans-serif; }
-      .font-headline-md, .font-headline-lg { font-family: "Noto Serif Arabic", serif; }
-      .font-body-reading { font-family: "Literata", serif; }
-      ::-webkit-scrollbar { width: 6px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        body {
+            font-family: "IBM Plex Sans Arabic", sans-serif;
+        }
 
-      .glass-panel {
-          background: rgba(255, 255, 255, 0.75);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.4);
-      }
-      .editor-content:empty:before {
-          content: attr(data-placeholder);
-          color: #94a3b8;
-          pointer-events: none;
-          display: block;
-      }
-      .parchment-bg {
-          background-color: #fdfbf7;
-          background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.02"/></svg>');
-      }
-      
-      [contenteditable]:focus { outline: none; }
+        .font-headline-md,
+        .font-headline-lg {
+            font-family: "Noto Serif Arabic", serif;
+        }
+
+        .font-body-reading {
+            font-family: "Literata", serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .editor-content:empty:before {
+            content: attr(data-placeholder);
+            color: #94a3b8;
+            pointer-events: none;
+            display: block;
+        }
+
+        .parchment-bg {
+            background-color: #fdfbf7;
+            background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.02"/></svg>');
+        }
+
+        [contenteditable]:focus {
+            outline: none;
+        }
     </style>
     <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              primary: "#182442",
-              "primary-container": "#2e3a59",
-              secondary: "#605e58",
-              "accent-orange": "#d97706",
-              surface: "#f8f9ff",
-              "surface-container": "#e5eeff",
-              "surface-container-low": "#eff4ff",
-              "surface-container-lowest": "#ffffff",
-              "surface-container-highest": "#d3e4fe",
-              outline: "#75777e",
-              "outline-variant": "#c6c6ce",
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#182442",
+                        "primary-container": "#2e3a59",
+                        secondary: "#605e58",
+                        "accent-orange": "#d97706",
+                        surface: "#f8f9ff",
+                        "surface-container": "#e5eeff",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#d3e4fe",
+                        outline: "#75777e",
+                        "outline-variant": "#c6c6ce",
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': {
+                                opacity: '0'
+                            },
+                            '100%': {
+                                opacity: '1'
+                            }
+                        },
+                        slideUp: {
+                            '0%': {
+                                opacity: '0',
+                                transform: 'translate(-50%, 20px)'
+                            },
+                            '100%': {
+                                opacity: '1',
+                                transform: 'translate(-50%, 0)'
+                            },
+                        }
+                    }
+                },
             },
-            animation: {
-              'fade-in': 'fadeIn 0.5s ease-out forwards',
-              'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-            },
-            keyframes: {
-              fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-              slideUp: {
-                '0%': { opacity: '0', transform: 'translate(-50%, 20px)' },
-                '100%': { opacity: '1', transform: 'translate(-50%, 0)' },
-              }
-            }
-          },
-        },
-      };
+        };
     </script>
 </head>
+
 <body class="bg-surface text-[#0b1c30] h-screen flex flex-col overflow-hidden z-0">
     <!-- TopAppBar -->
     <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-outline-variant/40 sticky top-0 z-50">
@@ -80,19 +121,19 @@
                     <span class="material-symbols-outlined text-[22px]">notifications</span>
                 </button>
                 <div class="w-8 h-8 rounded-full overflow-hidden border-2 border-outline-variant/30 hover:border-primary transition-colors cursor-pointer shadow-sm">
-                    <img alt="صورة المستخدم" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYP12sr_eYqSBDRBrcNB6Z6PlIFyDKysKUSDtWAHIVJ5kS0esZgSTU_jpNZG5wBw4fwLRbo6GtrTEdir5o4vXlcvs1iTwDTkrbXPoZ1-P8zmSoZR2lGSqpHSqLR4WSisL0k67IM6LqQtSlySJAlAZu3kd8aRxjF6OmlRXX-aBzinFL__m03IVc6mq3OIuNcCmnVA71ga4nu2nnh8YRv7uLCV2Ub4PVl00vXrVPYi4gNXTDPbyqTa5xMv9OAoNOuNFprBSwzntr92Gj"/>
+                    <img alt="صورة المستخدم" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYP12sr_eYqSBDRBrcNB6Z6PlIFyDKysKUSDtWAHIVJ5kS0esZgSTU_jpNZG5wBw4fwLRbo6GtrTEdir5o4vXlcvs1iTwDTkrbXPoZ1-P8zmSoZR2lGSqpHSqLR4WSisL0k67IM6LqQtSlySJAlAZu3kd8aRxjF6OmlRXX-aBzinFL__m03IVc6mq3OIuNcCmnVA71ga4nu2nnh8YRv7uLCV2Ub4PVl00vXrVPYi4gNXTDPbyqTa5xMv9OAoNOuNFprBSwzntr92Gj" />
                 </div>
             </div>
             <!-- Navigation -->
             <nav class="hidden md:flex gap-8 flex-row-reverse items-center absolute left-1/2 -translate-x-1/2">
-                <a class="text-[#45464e] font-semibold text-sm hover:text-primary transition-colors" href="HomePage.php">الرئيسية</a>
-                <a class="text-[#45464e] font-semibold text-sm hover:text-primary transition-colors" href="Browsebooks.php">استكشف</a>
+                <a class="text-[#45464e] font-semibold text-sm hover:text-primary transition-colors" href="index">الرئيسية</a>
+                <a class="text-[#45464e] font-semibold text-sm hover:text-primary transition-colors" href="Browsebooks">استكشف</a>
                 <a class="text-[#45464e] font-semibold text-sm hover:text-primary transition-colors" href="#">مكتبتي</a>
                 <a class="text-primary font-bold text-sm border-b-2 border-primary py-5" href="#">الكتابة</a>
             </nav>
             <!-- Brand Logo -->
             <div class="flex items-center gap-2">
-                <img alt="رواياتي" class="h-9 object-contain drop-shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3n0B3x5jaIgKWss2vxacZ0q1V5clYRXKo1ovC6GSZ9WdR2yByLb17Cy-zBFxoAXj_DP2qrKVKZ9EDEsueFhPxxRF2v81qrRYCxN5-3_VnenoQbIEv0mryprBQGo-9Ot1xe3yYqARv-PRu5Onr7R5rzadtPAsKuqcTm7EqMDjl72bOgHQwXwklJlMZrLLj1ry4j_h_XaJCTlv-bp5kUqhrWfJhe72u9oaicUYO8CTAcfcIMrqfyZ7ZRT0vghUG5KiE5M1iJ6tFTTdx"/>
+                <img alt="رواياتي" class="h-9 object-contain drop-shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3n0B3x5jaIgKWss2vxacZ0q1V5clYRXKo1ovC6GSZ9WdR2yByLb17Cy-zBFxoAXj_DP2qrKVKZ9EDEsueFhPxxRF2v81qrRYCxN5-3_VnenoQbIEv0mryprBQGo-9Ot1xe3yYqARv-PRu5Onr7R5rzadtPAsKuqcTm7EqMDjl72bOgHQwXwklJlMZrLLj1ry4j_h_XaJCTlv-bp5kUqhrWfJhe72u9oaicUYO8CTAcfcIMrqfyZ7ZRT0vghUG5KiE5M1iJ6tFTTdx" />
                 <span class="font-headline-lg text-xl font-bold text-primary hidden lg:block">سرد</span>
             </div>
         </div>
@@ -105,7 +146,7 @@
             <h2 class="font-headline-md text-xl text-primary font-bold mb-8">تفاصيل الفصل</h2>
             <div class="mb-7 group">
                 <label class="block text-xs font-bold text-primary mb-2 transition-colors">عنوان الفصل</label>
-                <input class="w-full bg-transparent border-b border-outline-variant/60 text-[#0b1c30] text-sm focus:border-primary focus:border-b-2 focus:outline-none focus:ring-0 px-0 py-1.5 transition-all" type="text" value="الفصل الأول: البداية"/>
+                <input class="w-full bg-transparent border-b border-outline-variant/60 text-[#0b1c30] text-sm focus:border-primary focus:border-b-2 focus:outline-none focus:ring-0 px-0 py-1.5 transition-all" type="text" value="الفصل الأول: البداية" />
             </div>
             <div class="mb-7 group">
                 <label class="block text-xs font-bold text-primary mb-2 transition-colors">ملاحظات الكاتب</label>
@@ -179,4 +220,5 @@
         </section>
     </main>
 </body>
+
 </html>

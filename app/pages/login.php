@@ -1,22 +1,24 @@
-<?php
-include 'config.php';
-session_start();
+﻿<?php
+require_once "../app/core/init.php";
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE email = ?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
 
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
+    $query = "SELECT id, username, password, role FROM users WHERE email = :email";
+
+    $result = query($conn, $query, ["email" => $email]);
+
+    if ($result) {
+        $row = $result[0];
         if (password_verify($password, $row['password'])) {
-            $_SESSION['user_id'] = $row['id'];
-            $_SESSION['username'] = $row['username'];
-            header("Location: ../index.php");
+            $_SESSION['user'] = [
+                "id"       => $row['id'],
+                "username" => $row['username'],
+                "role"     => $row['role']
+            ];
+            header("Location: index");
             exit();
         } else {
             $error = "كلمة المرور غير صحيحة";
@@ -28,11 +30,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <title>تسجيل الدخول</title>
-    <link rel="stylesheet" href="../Style/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
+
 <body>
     <div class="auth-form">
         <div class="brand">سرد</div>
@@ -45,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <p class="error"><?php echo $error; ?></p>
         <?php endif; ?>
 
-        <form method="POST" action="login.php">
+        <form method="POST" action="login">
             <label>البريد الإلكتروني</label>
             <input type="email" name="email" placeholder="example@email.com" required>
 
@@ -55,7 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <button type="submit">دخول</button>
         </form>
 
-        <p class="switch-link">مفيش حساب؟ <a href="signup.php">إنشاء حساب جديد</a></p>
+        <p class="switch-link">مفيش حساب؟ <a href="signup">إنشاء حساب جديد</a></p>
     </div>
 </body>
+
 </html>

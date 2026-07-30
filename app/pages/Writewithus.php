@@ -1,7 +1,9 @@
-<?php
+﻿<?php
 // WriteWithUs.php
 // Static-content page explaining submission policy + evaluation
 // criteria for writers. No DB needed — this is policy text.
+require_once "../app/core/init.php";
+
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -11,18 +13,18 @@
 <title>اكتب معنا — ريشة</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../Style/WriteWithUs.css">
+<link rel="stylesheet" href="assets/css/WriteWithUs.css">
 </head>
 <body>
 
 <header class="site-header">
-    <div class="logo" onclick="location.href='HomePage.php'" style="cursor:pointer;">
+    <div class="logo" onclick="location.href='index'" style="cursor:pointer;">
         <span class="logo-mark">✒</span>
         <span class="logo-text">ريشة</span>
     </div>
     <div class="header-actions">
-        <button class="btn btn-outline" onclick="location.href='Login.php'">دخول</button>
-        <button class="btn btn-filled" onclick="location.href='Signup.php?role=writer'">حساب جديد</button>
+        <button class="btn btn-outline" onclick="location.href='Login'">دخول</button>
+        <button class="btn btn-filled" onclick="location.href='Signup?role=writer'">حساب جديد</button>
     </div>
 </header>
 
@@ -88,3 +90,9 @@
 
 </body>
 </html>
+
+
+
+
+
+
