@@ -55,22 +55,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <form method="POST" action="signup">
             <label>الاسم الكامل</label>
             <input type="text" name="username" placeholder="اسم المستخدم" required>
+            <p class="field-rule" id="rule-username">٣ أحرف على الأقل</p>
 
             <label>البريد الإلكتروني</label>
             <input type="email" name="email" placeholder="example@email.com" required>
+            <p class="field-rule" id="rule-email">صيغة بريد إلكتروني صحيحة</p>
 
             <label>كلمة المرور</label>
             <input type="password" name="password" placeholder="كلمة المرور" required>
-            <p class="hint">٨ أحرف على الأقل • حرف كبير وحرف صغير • رقم واحد على الأقل</p>
+            <ul class="password-rules">
+                <li id="rule-length">٨ أحرف منهم حرف واحد كبير على الاقل</li>
+                <li id="rule-case">يجب ان يحتوى على @او #</li>
+                <li id="rule-number">رقم واحد على الأقل</li>
+            </ul>
 
             <label>تأكيد كلمة المرور</label>
             <input type="password" name="confirm_password" placeholder="إعادة إدخال كلمة المرور" required>
+            <p class="field-rule" id="rule-confirm">يجب أن تطابق كلمة المرور</p>
 
             <button type="submit">إنشاء حساب</button>
         </form>
 
         <p class="switch-link">عندك حساب بالفعل؟ <a href="login">سجل دخول</a></p>
     </div>
+
+    <script src="<?= ROOT ?>assets/js/signup.js"></script>
 </body>
 
 </html>
