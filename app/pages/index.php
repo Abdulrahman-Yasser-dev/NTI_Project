@@ -204,7 +204,7 @@ include "header.php";
     <!-- ============================================================
     SECTION 1: HERO
     ============================================================ -->
-    <section class="hero-section" style="background-image: url('assets/images/hero/hero-bg.jpg');">
+    <section class="hero-section" style="background-image: url('<?= ROOT ?>assets/images/hero/hero-bg.jpg');">
         <div class="hero-overlay">
             <p class="eyebrow">منصة الروايات العربية</p>
             <h1>حيث تبدأ<br>كل حكاية</h1>

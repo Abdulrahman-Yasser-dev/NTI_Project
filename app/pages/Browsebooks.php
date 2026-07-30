@@ -41,7 +41,7 @@ $activeCategory = isset($_GET['category']) ? $_GET['category'] : 'all';
 <title>تصفح الروايات — ريشة</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/BrowseBooks.css">
+<link rel="stylesheet" href="<?= ROOT ?>assets/css/BrowseBooks.css">
 </head>
 <body>
 
