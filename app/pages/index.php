@@ -1,6 +1,94 @@
 <?php
-// index.php (formerly HomePage.php — renamed to match the team's new routing/structure)
+// index.php (Homepage)
+// سرد (Sard) — Arabic Reading Platform
+
 require_once __DIR__ . "/../core/init.php";
+
+// ============================================================
+// FETCH BOOKS FROM DATABASE
+// ============================================================
+try {
+    $query = "
+        SELECT 
+            n.id,
+            n.title,
+            n.slug,
+            n.description,
+            n.cover_image,
+            n.spine_image,
+            n.banner_image,
+            n.publish_year,
+            n.pages,
+            n.language,
+            n.country,
+            n.rating,
+            n.keywords,
+            n.is_featured,
+            n.status,
+            a.name AS author_name,
+            a.bio AS author_bio,
+            a.photo AS author_photo,
+            c.name_ar AS category_name,
+            c.name_en AS category_name_en,
+            p.name AS publisher_name
+        FROM novels n
+        JOIN authors a ON n.author_id = a.id
+        JOIN categories c ON n.category_id = c.id
+        LEFT JOIN publishers p ON n.publisher_id = p.id
+        WHERE n.status = 'published'
+        ORDER BY n.is_featured DESC, n.id ASC
+    ";
+    
+    $stmt = $conn->prepare($query);
+    $stmt->execute();
+    $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+} catch (PDOException $e) {
+    // If there's an error, show empty array
+    $books = [];
+    error_log("Database Error in index.php: " . $e->getMessage());
+}
+
+// ============================================================
+// SPINE IMAGE POOL (Existing spine images from the old homepage)
+// ============================================================
+$spinePool = [
+    "نجيب-محفوظ-اللص و الكلاب(2).png",
+    "اولاد الناس.png",
+    "ثرثرة فوق النيل .png",
+    "طبيب ارياف.png",
+    "ماجدولين.png",
+    "ايكادولي.png",
+    "شجرتي.png",
+];
+
+// Build the spine images array
+$bookSpines = [];
+foreach ($books as $index => $book) {
+    // If spine_image exists in database, use it
+    if (!empty($book['spine_image'])) {
+        $bookSpines[] = ROOT . "assets/images/" . $book['spine_image'];
+    } else {
+        // Use fallback based on index
+        $fallbackIndex = $index % count($spinePool);
+        $bookSpines[] = ROOT . "assets/images/" . $spinePool[$fallbackIndex];
+    }
+}
+
+// ============================================================
+// MODAL DATA (for the book modal popup)
+// ============================================================
+$modalData = [];
+foreach ($books as $book) {
+    $modalData[$book['id']] = [
+        "title" => $book['title'],
+        "author" => $book['author_name'],
+        "category" => $book['category_name'],
+        "year" => $book['publish_year'],
+        "pages" => $book['pages'],
+        "desc" => $book['description']
+    ];
+}
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -45,44 +133,26 @@ require_once __DIR__ . "/../core/init.php";
   <section class="shelf-wrapper">
     <div class="shelf-hero">
 
-      <!-- Row 1: 16 books -->
+      <!-- Row 1: First 9 books -->
       <div class="shelf-row row-1" aria-label="الرف الأول">
-        <div class="book-wrapper"><button class="book-btn" data-book="1"><img src="<?= ROOT ?>assets/images/نجيب-محفوظ-اللص و الكلاب(2).png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="2"><img src="<?= ROOT ?>assets/images/اولاد الناس.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="3"><img src="<?= ROOT ?>assets/images/ثرثرة فوق النيل .png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="4"><img src="<?= ROOT ?>assets/images/طبيب ارياف.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="5"><img src="<?= ROOT ?>assets/images/ماجدولين.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="6"><img src="<?= ROOT ?>assets/images/ايكادولي.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="7"><img src="<?= ROOT ?>assets/images/شجرتي.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="8"><img src="<?= ROOT ?>assets/images/نجيب-محفوظ-اللص و الكلاب(2).png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="9"><img src="<?= ROOT ?>assets/images/اولاد الناس.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="10"><img src="<?= ROOT ?>assets/images/ثرثرة فوق النيل .png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="11"><img src="<?= ROOT ?>assets/images/طبيب ارياف.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="12"><img src="<?= ROOT ?>assets/images/ماجدولين.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="13"><img src="<?= ROOT ?>assets/images/ايكادولي.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="14"><img src="<?= ROOT ?>assets/images/شجرتي.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="15"><img src="<?= ROOT ?>assets/images/نجيب-محفوظ-اللص و الكلاب(2).png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="16"><img src="<?= ROOT ?>assets/images/اولاد الناس.png" alt="book"></button></div>
+        <?php for ($i = 0; $i < 9 && $i < count($books); $i++): ?>
+          <div class="book-wrapper">
+            <button class="book-btn" data-book="<?= $books[$i]['id'] ?>" onclick="openBookModal(<?= $books[$i]['id'] ?>)">
+              <img src="<?= htmlspecialchars($bookSpines[$i]) ?>" alt="<?= htmlspecialchars($books[$i]['title']) ?>">
+            </button>
+          </div>
+        <?php endfor; ?>
       </div>
 
-      <!-- Row 2: 16 books -->
+      <!-- Row 2: Last 9 books -->
       <div class="shelf-row row-2" aria-label="الرف الثاني">
-        <div class="book-wrapper"><button class="book-btn" data-book="17"><img src="<?= ROOT ?>assets/images/اولاد الناس.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="18"><img src="<?= ROOT ?>assets/images/ايكادولي.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="19"><img src="<?= ROOT ?>assets/images/شجرتي.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="20"><img src="<?= ROOT ?>assets/images/نجيب-محفوظ-اللص و الكلاب(2).png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="21"><img src="<?= ROOT ?>assets/images/ثرثرة فوق النيل .png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="22"><img src="<?= ROOT ?>assets/images/طبيب ارياف.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="23"><img src="<?= ROOT ?>assets/images/ماجدولين.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="24"><img src="<?= ROOT ?>assets/images/ايكادولي.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="25"><img src="<?= ROOT ?>assets/images/اولاد الناس.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="26"><img src="<?= ROOT ?>assets/images/شجرتي.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="27"><img src="<?= ROOT ?>assets/images/نجيب-محفوظ-اللص و الكلاب(2).png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="28"><img src="<?= ROOT ?>assets/images/ثرثرة فوق النيل .png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="29"><img src="<?= ROOT ?>assets/images/طبيب ارياف.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="30"><img src="<?= ROOT ?>assets/images/ماجدولين.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="31"><img src="<?= ROOT ?>assets/images/ايكادولي.png" alt="book"></button></div>
-        <div class="book-wrapper"><button class="book-btn" data-book="32"><img src="<?= ROOT ?>assets/images/شجرتي.png" alt="book"></button></div>
+        <?php for ($i = 9; $i < 18 && $i < count($books); $i++): ?>
+          <div class="book-wrapper">
+            <button class="book-btn" data-book="<?= $books[$i]['id'] ?>" onclick="openBookModal(<?= $books[$i]['id'] ?>)">
+              <img src="<?= htmlspecialchars($bookSpines[$i]) ?>" alt="<?= htmlspecialchars($books[$i]['title']) ?>">
+            </button>
+          </div>
+        <?php endfor; ?>
       </div>
 
     </div>
@@ -161,8 +231,8 @@ require_once __DIR__ . "/../core/init.php";
     </div>
   </footer>
 
-<!-- ─────────────────────────  BOOK MODAL  ───────────────────────── -->
-<div class="modal-overlay" id="bookModal">
+  <!-- ─────────────────────────  BOOK MODAL  ───────────────────────── -->
+  <div class="modal-overlay" id="bookModal">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <button class="modal-close" id="modalClose" aria-label="إغلاق">✕</button>
 
@@ -175,10 +245,9 @@ require_once __DIR__ . "/../core/init.php";
             <div class="modal-author" id="modalAuthor">نجيب محفوظ</div>
 
             <div class="modal-meta" id="modalMeta">
-                <span>رواية</span>
-                <span>أدب عربي</span>
-                <span>١٩٦١</span>
-                <span>١٤٤ صفحة</span>
+                <span id="modalCategory">رواية</span>
+                <span id="modalYear">١٩٦١</span>
+                <span id="modalPages">١٤٤ صفحة</span>
             </div>
 
             <p class="modal-desc" id="modalDesc">
@@ -191,10 +260,60 @@ require_once __DIR__ . "/../core/init.php";
             </div>
         </div>
     </div>
-</div>
+  </div>
 
   <!-- ─────────────────────────  JAVASCRIPT  ───────────────────────── -->
-  <script src="<?= ROOT ?>assets/js/index.js"></script>
+  <script>
+    // ============================================================
+    // MODAL DATA (from PHP)
+    // ============================================================
+    const modalData = <?= json_encode($modalData) ?>;
+
+    // ============================================================
+    // OPEN MODAL FUNCTION
+    // ============================================================
+    function openBookModal(bookId) {
+        const data = modalData[bookId];
+        if (!data) return;
+
+        document.getElementById('modalTitle').textContent = data.title;
+        document.getElementById('modalAuthor').textContent = data.author;
+        document.getElementById('modalCategory').textContent = data.category;
+        document.getElementById('modalYear').textContent = data.year;
+        document.getElementById('modalPages').textContent = data.pages + ' صفحة';
+        document.getElementById('modalDesc').textContent = data.desc;
+
+        // Update read button to go to BookDetails
+        document.getElementById('readNowBtn').onclick = function() {
+            window.location.href = 'BookDetails?id=' + bookId;
+        };
+
+        document.getElementById('bookModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // ============================================================
+    // CLOSE MODAL
+    // ============================================================
+    document.getElementById('modalClose').addEventListener('click', function() {
+        document.getElementById('bookModal').classList.remove('active');
+        document.body.style.overflow = '';
+    });
+
+    document.getElementById('bookModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            document.getElementById('bookModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.getElementById('bookModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+  </script>
 
 </body>
 </html>

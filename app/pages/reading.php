@@ -1,67 +1,99 @@
 <?php
 /* ============================================================
    سرد — Reading Page (reading.php)
-   PHP is used here only to receive/prepare book data.
-   Replace the block below with a real query against nti_sard,
-   e.g. SELECT * FROM books WHERE id = ?  (use PDO + prepared
-   statements — the array below is a stand-in for that result).
+   Clean, distraction-free reading experience
    ============================================================ */
 
 require_once __DIR__ . "/../core/init.php";
 
 $bookId = isset($_GET['id']) ? (int) $_GET['id'] : 1;
 
-$book = [
-    'id'          => $bookId,
-    'title'       => 'أولاد حارتنا',
-    'author'      => 'نجيب محفوظ',
-    'genre'       => 'رواية رمزية',
-    'language'    => 'العربية',
-    'pages_count' => 312,
-    'rating'      => 4.7,
-    'description' => 'حكاية حارة مصرية تمتد عبر أجيال، يرويها نجيب محفوظ في نسيج رمزي يمزج بين التاريخ والفلسفة والإنسان.',
-    // TODO: point this to the real cover filename inside assets/images
-    'cover'       => ROOT . 'assets/images/Background-desk.png',
-    'quote'       => 'الحارة لا تنسى، والزمن وحده من يملك أن يُنصف أو يظلم.'
+// ============================================================
+// FETCH BOOK FROM DATABASE
+// ============================================================
+try {
+    $query = "
+        SELECT 
+            n.id,
+            n.title,
+            n.slug,
+            n.description,
+            n.cover_image,
+            n.spine_image,
+            n.banner_image,
+            n.publish_year,
+            n.pages,
+            n.language,
+            n.country,
+            n.rating,
+            a.name AS author_name,
+            c.name_ar AS category_name
+        FROM novels n
+        JOIN authors a ON n.author_id = a.id
+        JOIN categories c ON n.category_id = c.id
+        WHERE n.id = :book_id AND n.status = 'published'
+    ";
+    
+    $stmt = $conn->prepare($query);
+    $stmt->execute([':book_id' => $bookId]);
+    $book = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+} catch (PDOException $e) {
+    $book = null;
+    error_log("Database Error in reading.php: " . $e->getMessage());
+}
+
+// If book not found, redirect to BrowseBooks
+if (!$book) {
+    header('Location: ' . ROOT . 'Browsebooks');
+    exit;
+}
+
+// ============================================================
+// FETCH CHAPTERS
+// ============================================================
+try {
+    $chapterQuery = "
+        SELECT 
+            id,
+            chapter_number,
+            title,
+            word_count,
+            reading_time
+        FROM chapters
+        WHERE novel_id = :book_id
+        ORDER BY chapter_number ASC
+    ";
+    
+    $chapterStmt = $conn->prepare($chapterQuery);
+    $chapterStmt->execute([':book_id' => $bookId]);
+    $chapters = $chapterStmt->fetchAll(PDO::FETCH_ASSOC);
+    
+} catch (PDOException $e) {
+    $chapters = [];
+    error_log("Database Error fetching chapters: " . $e->getMessage());
+}
+
+// ============================================================
+// READING PROGRESS (Placeholder - will be from database later)
+// ============================================================
+$progress = [
+    'current_page' => 128,
+    'total_pages' => $book['pages'] ?? 312,
+    'percentage' => 0,
+    'remaining_time' => '1h 35m'
 ];
+$progress['percentage'] = round(($progress['current_page'] / $progress['total_pages']) * 100);
 
-$chapters = [
-    ['id' => 1, 'title' => 'الفصل الأول: عدلي',      'time' => '9 دقائق',  'status' => 'completed'],
-    ['id' => 2, 'title' => 'الفصل الثاني: جبل',       'time' => '11 دقيقة', 'status' => 'completed'],
-    ['id' => 3, 'title' => 'الفصل الثالث: رفاعة',     'time' => '14 دقيقة', 'status' => 'current'],
-    ['id' => 4, 'title' => 'الفصل الرابع: قاسم',      'time' => '13 دقيقة', 'status' => 'unread'],
-    ['id' => 5, 'title' => 'الفصل الخامس: عرفة',      'time' => '16 دقيقة', 'status' => 'unread'],
-    ['id' => 6, 'title' => 'الفصل السادس: الخاتمة',   'time' => '8 دقائق',  'status' => 'unread'],
-];
-
-// Empty on purpose — comments are loaded/posted from the client.
-// A real backend would fetch these with something like:
-// SELECT * FROM comments WHERE book_id = ? ORDER BY created_at DESC
-$comments = [];
-
-// Each string is one "page" of the open book. A real integration
-// would page a chapter's stored HTML/text into chunks like this.
+// ============================================================
+// GENERATE PAGES (temporary - will come from chapters later)
+// ============================================================
 $pages = [
     "في تلك الحارة التي تمتد بين الجبل والصحراء، وُلدت الحكاية الأولى. كان أهلها لا يعرفون عن الفوتوة إلا أنه القانون الذي يحكم كل شيء، وأن الرضا بالقسمة هو السبيل الوحيد للنجاة من غضب الحارة.",
     "قال الجبلاوي في وصيته: لن أترك لكم إلا هذا الوقف، فاحفظوه بينكم، ولا تجعلوا الطمع يفرقكم كما فرّق أولاد آدم من قبلكم. غير أن الوصية سرعان ما نُسيت، وحلّ مكانها صوت الأقوى.",
     "مرّت الأجيال، وتغيّر الفتوات، وبقيت الحارة على حالها؛ تحلم بالعدل وتكتفي بالحكايات. حتى جاء عرفة يحمل قنينة سحرية، لا يعرف أحد ما بداخلها على وجه اليقين.",
-];
-
-$related = [
-    ['title' => 'ثرثرة فوق النيل', 'cover' => ROOT . 'assets/images/غلاف ثرثرة فوق النيل.jpg'],
-    ['title' => 'اللص والكلاب',    'cover' => ROOT . 'assets/images/غلاف اللص والكلاب.jpg'],
-    ['title' => 'ميرامار',         'cover' => ROOT . 'assets/images/غلاف ميرامار.jpg'],
-];
-
-$today = ['books_read' => 1, 'time_spent' => '45 دقيقة'];
-$progress = ['current_page' => 128, 'total_pages' => $book['pages_count']];
-$progress['percentage'] = round(($progress['current_page'] / $progress['total_pages']) * 100);
-
-$achievements = [
-    ['name' => 'الفصل الأول', 'earned' => true],
-    ['name' => '50 صفحة',     'earned' => true],
-    ['name' => '100 صفحة',    'earned' => false],
-    ['name' => 'إنهاء الكتاب', 'earned' => false],
+    "وفي ليلة من ليالي الشتاء، انطلقت صيحة مدوية من وسط الحارة. كان عرفة قد فتح القنينة أمام أعين الجميع، ولم يصدق أحد ما رأى. لكن الحقيقة كانت أبسط مما يتخيلون، وأعقد مما يحتملون.",
+    "ومنذ تلك اللحظة، تغير كل شيء. صارت الحارة تعرف أن السحر ليس في القنينة، بل في قلوب من يؤمنون بأن التغيير ممكن. وأن الفوتوة الحقيقية هي أن يقرر الإنسان أن يكون هو الفتوة."
 ];
 ?>
 <!DOCTYPE html>
@@ -78,8 +110,7 @@ $achievements = [
 <body>
 
 <!-- ============================================================
-     NAVBAR — placeholder matching the homepage navbar. Swap this
-     markup for the shared header.php include used elsewhere.
+     NAVBAR
      ============================================================ -->
 <header class="navbar" role="banner">
   <div class="navbar__inner">
@@ -90,12 +121,13 @@ $achievements = [
     <nav class="navbar__links" aria-label="التنقل الرئيسي">
       <a href="<?= ROOT ?>index">الرئيسية</a>
       <a href="<?= ROOT ?>Browsebooks">تصفح الكتب</a>
-      <a href="<?= ROOT ?>Writewithus">اكتب معنا</a>
+      <a href="#" class="navbar__link--active">القراءة</a>
     </nav>
     <div class="navbar__actions">
-      <button class="navbar__icon-btn" aria-label="بحث">
-        <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.6" y2="16.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
+      <a href="<?= ROOT ?>BookDetails?id=<?= $bookId ?>" class="navbar__back-link" title="العودة لصفحة الكتاب">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span>العودة للكتاب</span>
+      </a>
       <a href="<?= ROOT ?>signup" class="navbar__cta">حسابي</a>
     </div>
   </div>
@@ -106,83 +138,65 @@ $achievements = [
   <div class="reading-grid">
 
     <!-- ==========================================================
-         RIGHT COLUMN — Book Information
+         LEFT COLUMN — Chapters Panel
          ========================================================== -->
-    <aside class="panel book-info" id="bookInfoPanel" aria-label="معلومات الكتاب">
-      <button class="book-info__collapse-toggle" id="bookInfoToggle" aria-expanded="true" aria-controls="bookInfoBody">
-        <span>معلومات الكتاب</span>
-        <svg class="chev" viewBox="0 0 24 24" width="16" height="16"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <aside class="panel side-panel" id="sidePanel" aria-label="الفصول">
+      <button class="side-panel__drawer-toggle" id="drawerToggle" aria-label="فتح لوحة الفصول" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
 
-      <div class="book-info__body" id="bookInfoBody">
-
-        <div class="glass-card book-info__cover-card">
-          <img src="<?= htmlspecialchars($book['cover']) ?>" alt="غلاف كتاب <?= htmlspecialchars($book['title']) ?>" class="book-info__cover" onerror="this.classList.add('img-fallback')">
-          <h1 class="book-info__title"><?= htmlspecialchars($book['title']) ?></h1>
-          <p class="book-info__author"><?= htmlspecialchars($book['author']) ?></p>
-
-          <div class="book-info__meta">
-            <span class="meta-chip"><?= htmlspecialchars($book['genre']) ?></span>
-            <span class="meta-chip"><?= htmlspecialchars($book['language']) ?></span>
-            <span class="meta-chip"><?= (int) $book['pages_count'] ?> صفحة</span>
-          </div>
-
-          <div class="book-info__rating" aria-label="التقييم <?= htmlspecialchars($book['rating']) ?> من 5">
-            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9L5.7 21l1.7-7-5.4-4.7 7.1-.6z"/></svg>
-            <span><?= htmlspecialchars($book['rating']) ?></span>
-          </div>
-
-          <p class="book-info__desc"><?= htmlspecialchars($book['description']) ?></p>
-
-          <div class="book-info__buttons">
-            <button class="btn btn--gold" id="continueReadingBtn">متابعة القراءة</button>
-            <div class="btn-row">
-              <button class="btn btn--ghost btn--icon" id="bookmarkToggleBtn" aria-pressed="false">
-                <svg viewBox="0 0 24 24" width="18" height="18"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M6 3h12v18l-6-4-6 4V3z"/></svg>
-                <span>حفظ العلامة</span>
-              </button>
-              <button class="btn btn--ghost btn--icon" id="favoriteToggleBtn" aria-pressed="false">
-                <svg viewBox="0 0 24 24" width="18" height="18"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 21s-7.5-4.9-10-9.3C.4 8.2 2 4.5 5.6 4c2-.3 3.8.7 4.9 2.3C11.6 4.7 13.4 3.7 15.4 4c3.6.5 5.2 4.2 3.6 7.7C19.5 16.1 12 21 12 21z"/></svg>
-                <span>المفضلة</span>
-              </button>
-            </div>
-          </div>
+      <div class="side-panel__body">
+        <div class="panel-header">
+          <h2 class="panel-title">الفصول</h2>
+          <span class="panel-badge"><?= count($chapters) ?></span>
         </div>
 
-        <div class="glass-card book-info__progress-card">
-          <h2 class="card-title">التقدم اليومي</h2>
-          <div class="mini-progress">
-            <div class="mini-progress__track"><div class="mini-progress__fill" style="width:0%" data-target="<?= (int) $progress['percentage'] ?>"></div></div>
-            <span class="mini-progress__label"><?= (int) $progress['percentage'] ?>٪ مكتمل</span>
+        <!-- Search -->
+        <div class="chapter-search">
+          <svg viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.6" y2="16.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="search" id="chapterSearchInput" placeholder="ابحث عن فصل...">
+        </div>
+
+        <!-- Reading Progress -->
+        <div class="chapters-progress">
+          <div class="chapters-progress__track">
+            <div class="chapters-progress__fill" style="width: <?= $progress['percentage'] ?>%;"></div>
           </div>
+          <span><?= $progress['percentage'] ?>% مكتمل</span>
         </div>
 
-        <div class="glass-card book-info__quote-card">
-          <h2 class="card-title">اقتباس من الكتاب</h2>
-          <p class="book-quote">"<?= htmlspecialchars($book['quote']) ?>"</p>
-        </div>
-
-        <div class="glass-card book-info__related-card">
-          <h2 class="card-title">كتب قد تعجبك</h2>
-          <ul class="related-list">
-            <?php foreach ($related as $r): ?>
-            <li class="related-item">
-              <img src="<?= htmlspecialchars($r['cover']) ?>" alt="غلاف <?= htmlspecialchars($r['title']) ?>" onerror="this.classList.add('img-fallback')">
-              <span><?= htmlspecialchars($r['title']) ?></span>
+        <!-- Chapter List -->
+        <ul class="chapter-list" id="chapterList">
+          <?php if (!empty($chapters)): ?>
+            <?php foreach ($chapters as $ch): ?>
+            <li class="chapter-row <?= $ch['chapter_number'] <= 2 ? 'chapter-row--completed' : ($ch['chapter_number'] == 3 ? 'chapter-row--current' : 'chapter-row--unread') ?>" 
+                data-title="<?= htmlspecialchars($ch['title']) ?>" 
+                tabindex="0"
+                onclick="location.href='reading.php?id=<?= $bookId ?>&chapter=<?= $ch['chapter_number'] ?>'">
+              <span class="chapter-row__status" aria-hidden="true"></span>
+              <span class="chapter-row__number"><?= sprintf('%02d', $ch['chapter_number']) ?></span>
+              <span class="chapter-row__title"><?= htmlspecialchars($ch['title']) ?></span>
+              <?php if ($ch['reading_time'] > 0): ?>
+                <span class="chapter-row__time"><?= $ch['reading_time'] ?> د</span>
+              <?php endif; ?>
             </li>
             <?php endforeach; ?>
-          </ul>
-        </div>
-
+          <?php else: ?>
+            <li class="chapter-row" style="justify-content:center; opacity:0.6; cursor:default;">
+              <span>لم يتم إضافة فصول بعد</span>
+            </li>
+          <?php endif; ?>
+        </ul>
       </div>
     </aside>
 
     <!-- ==========================================================
-         CENTER COLUMN — Open Book
+         CENTER COLUMN — Open Book (MAIN CONTENT)
          ========================================================== -->
     <section class="panel open-book-wrap" aria-label="عرض الكتاب">
       <div class="book-container" id="bookContainer">
 
+        <!-- Book Atmosphere -->
         <div class="book-atmosphere" aria-hidden="true">
           <span class="light-ray light-ray--1"></span>
           <span class="light-ray light-ray--2"></span>
@@ -193,24 +207,25 @@ $achievements = [
           <span class="dust dust--5"></span>
         </div>
 
-        <!-- Signature opening animation: plays once on load, then removes itself -->
+        <!-- Opening Animation -->
         <div class="book-opening-cover" id="bookOpeningCover" aria-hidden="true">
           <span class="book-opening-cover__emblem">سرد</span>
         </div>
 
+        <!-- The Book -->
         <div class="book" id="book">
           <div class="book__spine" aria-hidden="true"></div>
 
           <div class="page page--right" id="pageRight">
             <div class="page__inner">
-              <p class="page__text" id="pageTextRight" style="font-family:'Amiri', serif;"><?= nl2br(htmlspecialchars($pages[0])) ?></p>
+              <p class="page__text" id="pageTextRight" style="font-family:'Amiri', serif; font-size: 19px; line-height: 1.9;"><?= nl2br(htmlspecialchars($pages[0] ?? '')) ?></p>
               <span class="page__number">1</span>
             </div>
           </div>
 
           <div class="page page--left" id="pageLeft">
             <div class="page__inner">
-              <p class="page__text" id="pageTextLeft" style="font-family:'Amiri', serif;"><?= nl2br(htmlspecialchars($pages[1] ?? '')) ?></p>
+              <p class="page__text" id="pageTextLeft" style="font-family:'Amiri', serif; font-size: 19px; line-height: 1.9;"><?= nl2br(htmlspecialchars($pages[1] ?? '')) ?></p>
               <span class="page__number">2</span>
             </div>
           </div>
@@ -234,7 +249,7 @@ $achievements = [
         </button>
 
         <div class="toolbar__center">
-          <span class="toolbar__page-indicator" id="toolbarPageIndicator">— / —</span>
+          <span class="toolbar__page-indicator" id="toolbarPageIndicator">1 / <?= $progress['total_pages'] ?></span>
           <div class="toolbar__dots" id="toolbarDots" aria-hidden="true">
             <span class="toolbar__dot"></span><span class="toolbar__dot"></span><span class="toolbar__dot"></span><span class="toolbar__dot"></span><span class="toolbar__dot"></span>
           </div>
@@ -244,6 +259,7 @@ $achievements = [
           <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.6" y2="16.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
 
+        <!-- Aa Button - Anchor for settings popover -->
         <button class="toolbar__btn toolbar__btn--text" id="fontSettingsBtn" aria-haspopup="true" aria-expanded="false" aria-label="حجم ونوع الخط">Aa</button>
 
         <button class="toolbar__btn" id="darkModeBtn" aria-pressed="false" aria-label="الوضع الليلي">
@@ -258,141 +274,82 @@ $achievements = [
           <svg viewBox="0 0 24 24" width="24" height="24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>
         </button>
 
+        <!-- ======================================================
+             SETTINGS POPOVER — Above Aa Button
+             ====================================================== -->
+        <div class="settings-popover" id="settingsPopover" role="dialog" aria-label="إعدادات القراءة">
+          <h3 class="card-title">إعدادات القراءة</h3>
+
+          <!-- Font Size -->
+          <div class="settings-row">
+            <label>
+              <span>حجم الخط</span>
+              <span id="fontSizeDisplay">19</span>
+            </label>
+            <input type="range" min="14" max="28" step="1" value="19" id="fontSizeSlider">
+          </div>
+
+          <!-- Font Family -->
+          <div class="settings-row">
+            <label>نوع الخط</label>
+            <select id="fontFamilySelect">
+              <option value="'Amiri', serif">Amiri</option>
+              <option value="'Noto Naskh Arabic', serif">Noto Naskh Arabic</option>
+              <option value="'Tajawal', sans-serif">Tajawal</option>
+            </select>
+          </div>
+
+          <!-- Line Height -->
+          <div class="settings-row">
+            <label>
+              <span>تباعد الأسطر</span>
+              <span id="lineHeightDisplay">1.9</span>
+            </label>
+            <input type="range" min="1.4" max="2.4" step="0.1" value="1.9" id="lineHeightSlider">
+          </div>
+
+          <!-- Theme -->
+          <div class="settings-row">
+            <label>المظهر</label>
+            <div class="settings-themes">
+              <button data-theme="light" class="active">
+                <span class="theme-icon">☀️</span>
+                فاتح
+              </button>
+              <button data-theme="sepia">
+                <span class="theme-icon">📜</span>
+                Sepia
+              </button>
+              <button data-theme="dark">
+                <span class="theme-icon">🌙</span>
+                داكن
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <!-- Settings popover (opened from the "Aa" button) -->
-      <div class="settings-popover glass-card" id="settingsPopover" hidden>
-        <h3 class="card-title">إعدادات القراءة</h3>
-        <label class="settings-row">
-          <span>حجم الخط</span>
-          <input type="range" min="14" max="28" step="1" value="18" id="fontSizeSlider">
-        </label>
-        <label class="settings-row">
-          <span>نوع الخط</span>
-          <select id="fontFamilySelect">
-            <option value="'Amiri', serif">Amiri</option>
-            <option value="'Noto Naskh Arabic', serif">Noto Naskh Arabic</option>
-          </select>
-        </label>
-        <label class="settings-row">
-          <span>تباعد الأسطر</span>
-          <input type="range" min="1.4" max="2.4" step="0.1" value="1.9" id="lineHeightSlider">
-        </label>
+      <!-- ======================================================
+           READING PROGRESS BAR
+           ====================================================== -->
+      <div class="reading-progress-bar">
+        <div class="reading-progress__track">
+          <div class="reading-progress__fill" style="width: <?= $progress['percentage'] ?>%;"></div>
+        </div>
+        <div class="reading-progress__info">
+          <span class="reading-progress__percent"><?= $progress['percentage'] ?>% مكتمل</span>
+          <span class="reading-progress__pages">صفحة <?= $progress['current_page'] ?> من <?= $progress['total_pages'] ?></span>
+          <span class="reading-progress__time">⏱ تبقى تقريباً <?= $progress['remaining_time'] ?></span>
+        </div>
+        <div class="reading-progress__save">
+          <span class="reading-progress__save-indicator">✓ تم حفظ تقدم القراءة تلقائياً</span>
+        </div>
       </div>
+
     </section>
 
-    <!-- ==========================================================
-         LEFT COLUMN — Chapters / Comments
-         ========================================================== -->
-    <aside class="panel side-panel" id="sidePanel" aria-label="الفصول والتعليقات">
-
-      <button class="side-panel__drawer-toggle" id="drawerToggle" aria-label="فتح لوحة الفصول والتعليقات" aria-expanded="false">
-        <svg viewBox="0 0 24 24" width="22" height="22"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
-      </button>
-
-      <div class="side-panel__body">
-        <div class="tabs" role="tablist" aria-label="تبويبات الكتاب">
-          <button class="tab tab--active" id="tabChapters" role="tab" aria-selected="true" aria-controls="chaptersPanel">الفصول</button>
-          <button class="tab" id="tabComments" role="tab" aria-selected="false" aria-controls="commentsPanel">التعليقات</button>
-        </div>
-
-        <!-- CHAPTERS -->
-        <div class="tab-panel" id="chaptersPanel" role="tabpanel" aria-labelledby="tabChapters">
-
-          <div class="chapter-search">
-            <svg viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.6" y2="16.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            <input type="search" id="chapterSearchInput" placeholder="ابحث عن فصل...">
-          </div>
-
-          <div class="chapters-progress">
-            <div class="chapters-progress__track"><div class="chapters-progress__fill" style="width:0%" data-target="<?= (int) $progress['percentage'] ?>"></div></div>
-            <span><?= (int) $progress['percentage'] ?>٪ من الكتاب مكتمل</span>
-          </div>
-
-          <ul class="chapter-list" id="chapterList">
-            <?php foreach ($chapters as $ch): ?>
-            <li class="chapter-row chapter-row--<?= htmlspecialchars($ch['status']) ?>" data-title="<?= htmlspecialchars($ch['title']) ?>" tabindex="0">
-              <span class="chapter-row__status" aria-hidden="true"></span>
-              <span class="chapter-row__title"><?= htmlspecialchars($ch['title']) ?></span>
-              <span class="chapter-row__time"><?= htmlspecialchars($ch['time']) ?></span>
-            </li>
-            <?php endforeach; ?>
-          </ul>
-        </div>
-
-        <!-- COMMENTS -->
-        <div class="tab-panel" id="commentsPanel" role="tabpanel" aria-labelledby="tabComments" hidden>
-
-          <form class="comment-form" id="commentForm">
-            <div class="comment-form__avatar" aria-hidden="true">ز</div>
-            <textarea id="commentInput" placeholder="شاركنا رأيك في هذا الفصل..." rows="2" aria-label="اكتب تعليقًا"></textarea>
-            <button type="submit" class="btn btn--gold btn--sm">إرسال</button>
-          </form>
-
-          <ul class="comment-list" id="commentList">
-            <?php if (empty($comments)): ?>
-              <li class="comment-empty" id="commentEmptyState">لا توجد تعليقات حتى الآن</li>
-            <?php else: foreach ($comments as $c): ?>
-              <li class="comment-card">
-                <div class="comment-card__avatar" aria-hidden="true"><?= htmlspecialchars(mb_substr($c['name'], 0, 1)) ?></div>
-                <div class="comment-card__body">
-                  <div class="comment-card__head">
-                    <span class="comment-card__name"><?= htmlspecialchars($c['name']) ?></span>
-                    <span class="comment-card__date"><?= htmlspecialchars($c['date']) ?></span>
-                  </div>
-                  <p class="comment-card__text"><?= htmlspecialchars($c['text']) ?></p>
-                  <div class="comment-card__actions">
-                    <button class="comment-action">إعجاب</button>
-                    <button class="comment-action">رد</button>
-                  </div>
-                </div>
-              </li>
-            <?php endforeach; endif; ?>
-          </ul>
-        </div>
-      </div>
-    </aside>
-
   </div>
-
-  <!-- ==========================================================
-       BOTTOM DASHBOARD
-       ========================================================== -->
-  <section class="dashboard" aria-label="لوحة القراءة">
-
-    <div class="glass-card dashboard__card">
-      <div class="dashboard__icon">
-        <svg viewBox="0 0 24 24" width="24" height="24"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M4 5.5A2.5 2.5 0 016.5 3H19v16H6.5A2.5 2.5 0 004 16.5v-11z"/><path fill="none" stroke="currentColor" stroke-width="1.6" d="M4 16.5A2.5 2.5 0 006.5 19H19"/></svg>
-      </div>
-      <h3 class="card-title">قراءة اليوم</h3>
-      <p class="dashboard__stat"><?= (int) $today['books_read'] ?> كتاب</p>
-      <p class="dashboard__substat"><?= htmlspecialchars($today['time_spent']) ?></p>
-    </div>
-
-    <div class="glass-card dashboard__card">
-      <div class="dashboard__icon">
-        <svg viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 12V6M12 12l4.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-      </div>
-      <h3 class="card-title">تقدم القراءة</h3>
-      <div class="mini-progress">
-        <div class="mini-progress__track"><div class="mini-progress__fill" style="width:0%" data-target="<?= (int) $progress['percentage'] ?>"></div></div>
-      </div>
-      <p class="dashboard__substat">صفحة <?= (int) $progress['current_page'] ?> من <?= (int) $progress['total_pages'] ?> — <?= (int) $progress['percentage'] ?>٪</p>
-    </div>
-
-    <div class="glass-card dashboard__card">
-      <div class="dashboard__icon">
-        <svg viewBox="0 0 24 24" width="24" height="24"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M12 2l2.6 5.8L21 8.6l-4.5 4.2L17.6 19 12 15.8 6.4 19l1.1-6.2L3 8.6l6.4-.8z"/></svg>
-      </div>
-      <h3 class="card-title">الإنجازات</h3>
-      <ul class="achievement-list">
-        <?php foreach ($achievements as $a): ?>
-          <li class="badge <?= $a['earned'] ? 'badge--earned' : 'badge--locked' ?>"><?= htmlspecialchars($a['name']) ?></li>
-        <?php endforeach; ?>
-      </ul>
-    </div>
-
-  </section>
 
 </main>
 

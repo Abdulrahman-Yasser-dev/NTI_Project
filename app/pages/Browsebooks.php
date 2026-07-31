@@ -5,60 +5,122 @@
 require_once __DIR__ . "/../core/init.php";
 
 // ============================================================
-// EXACTLY 18 BOOKS — 6 per category — ALL PATHS CORRECT ✅
+// GET SEARCH QUERY
 // ============================================================
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
+$categoryFilter = isset($_GET['category']) ? trim($_GET['category']) : 'الكل';
 
-$books = [
-    // ============================================================
-    // 1. الروايات التاريخية (Historical Novels) — 6 books
-    // ============================================================
-    ["id" => 1, "title" => "أولاد الناس (ثلاثية المماليك)", "author" => "رضوى عاشور", "category" => "رواية تاريخية", "cover" => ROOT . "assets/images/غلاف اولاد الناس.jpg"],
-    ["id" => 2, "title" => "عزازيل", "author" => "يوسف زيدان", "category" => "رواية تاريخية", "cover" => ROOT . "assets/images/غلاف عزازيل.png"],
-    ["id" => 3, "title" => "واحة الغروب", "author" => "بهاء طاهر", "category" => "رواية تاريخية", "cover" => ROOT . "assets/images/غلاف واحة الغراب.png"],
-    ["id" => 4, "title" => "قمر على سمرقند", "author" => "أمين معلوف", "category" => "رواية تاريخية", "cover" => ROOT . "assets/images/غلاف قمر على سمرقند.png"],
-    ["id" => 5, "title" => "ثلاثية غرناطة", "author" => "رضوى عاشور", "category" => "رواية تاريخية", "cover" => ROOT . "assets/images/غلاف ثلاثية غرناطة.png"],
-    ["id" => 6, "title" => "الحب في المنفى", "author" => "بهاء طاهر", "category" => "رواية تاريخية", "cover" => ROOT . "assets/images/غلاف الحب في المنفي.png"],
+// ============================================================
+// FETCH BOOKS FROM DATABASE WITH SEARCH
+// ============================================================
+try {
+    $sql = "
+        SELECT 
+            n.id,
+            n.title,
+            n.slug,
+            n.cover_image,
+            n.spine_image,
+            n.description,
+            n.publish_year,
+            n.pages,
+            n.rating,
+            n.is_featured,
+            n.status,
+            a.name AS author_name,
+            a.bio AS author_bio,
+            a.photo AS author_photo,
+            c.name_ar AS category_name,
+            c.name_en AS category_name_en,
+            c.id AS category_id,
+            p.name AS publisher_name
+        FROM novels n
+        JOIN authors a ON n.author_id = a.id
+        JOIN categories c ON n.category_id = c.id
+        LEFT JOIN publishers p ON n.publisher_id = p.id
+        WHERE n.status = 'published'
+    ";
     
-    // ============================================================
-    // 2. روايات الغموض والإثارة (Mystery & Thriller) — 6 books
-    // ============================================================
-    ["id" => 7, "title" => "الفيل الأزرق", "author" => "أحمد مراد", "category" => "رواية غموض", "cover" => ROOT . "assets/images/غلاف الفيل الأزرق.png"],
-    ["id" => 8, "title" => "تراب الماس", "author" => "أحمد مراد", "category" => "رواية غموض", "cover" => ROOT . "assets/images/غلاف تراب الماس.png"],
-    ["id" => 9, "title" => "موسم صيد الغزلان", "author" => "أحمد مراد", "category" => "رواية غموض", "cover" => ROOT . "assets/images/غلاف موسم صيد الغزلان.png"],
-    ["id" => 10, "title" => "لوكاندة بير الوطاوي", "author" => "مصطفى محمود", "category" => "رواية غموض", "cover" => ROOT . "assets/images/غلاف لوكاندة بير الوطاوي.png"],
-    ["id" => 11, "title" => "يوتوبيا", "author" => "أحمد خالد توفيق", "category" => "رواية غموض", "cover" => ROOT . "assets/images/غلاف يوتوبيا.png"],
-    ["id" => 12, "title" => "في ممر الفئران", "author" => "أحمد خالد توفيق", "category" => "رواية غموض", "cover" => ROOT . "assets/images/غلاف في ممر الفئران.png"],
+    $params = [];
     
-    // ============================================================
-    // 3. روايات الفانتازيا والخيال (Fantasy) — 6 books
-    // ============================================================
-    ["id" => 13, "title" => "أرض زيكولا", "author" => "عمرو عبد الحميد", "category" => "رواية فانتازيا", "cover" => ROOT . "assets/images/غلاف أرض زيكولا.png"],
-    ["id" => 14, "title" => "أماريتا", "author" => "عمرو عبد الحميد", "category" => "رواية فانتازيا", "cover" => ROOT . "assets/images/غلاف أماريتا.png"],
-    ["id" => 15, "title" => "وادي الذئاب المنسية", "author" => "أحمد خالد توفيق", "category" => "رواية فانتازيا", "cover" => ROOT . "assets/images/غلاف وادي الذئاب المنسية.png"],
-    ["id" => 16, "title" => "قواعد جارتين", "author" => "أحمد خالد توفيق", "category" => "رواية فانتازيا", "cover" => ROOT . "assets/images/غلاف قواعد جارتين.png"],
-    ["id" => 17, "title" => "دقات الشامو", "author" => "أحمد خالد توفيق", "category" => "رواية فانتازيا", "cover" => ROOT . "assets/images/غلاف دقات الشامو.png"],
-    ["id" => 18, "title" => "أمواج أكما", "author" => "نورا ناجي", "category" => "رواية فانتازيا", "cover" => ROOT . "assets/images/غلاف أمواج أكما.png"],
+    // Apply search filter
+    if (!empty($searchQuery)) {
+        $sql .= " AND (n.title LIKE :search 
+                  OR a.name LIKE :search 
+                  OR n.description LIKE :search
+                  OR n.keywords LIKE :search)";
+        $params[':search'] = '%' . $searchQuery . '%';
+    }
+    
+    // Apply category filter
+    if ($categoryFilter !== 'الكل') {
+        $sql .= " AND c.name_ar = :category";
+        $params[':category'] = $categoryFilter;
+    }
+    
+    $sql .= " ORDER BY c.id, n.id";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+} catch (PDOException $e) {
+    $books = [];
+    error_log("Database Error in BrowseBooks.php: " . $e->getMessage());
+}
+
+// ============================================================
+// SPINE IMAGE POOL (for fallback)
+// ============================================================
+$spinePool = [
+    "نجيب-محفوظ-اللص و الكلاب(2).png",
+    "اولاد الناس.png",
+    "ثرثرة فوق النيل .png",
+    "طبيب ارياف.png",
+    "ماجدولين.png",
+    "ايكادولي.png",
+    "شجرتي.png",
 ];
 
 // ============================================================
 // GROUP BOOKS BY CATEGORY
 // ============================================================
-$shelves = [
-    "الروايات التاريخية" => array_slice($books, 0, 6),
-    "روايات الغموض والإثارة" => array_slice($books, 6, 6),
-    "روايات الفانتازيا والخيال" => array_slice($books, 12, 6),
+$shelves = [];
+$categoryMap = [
+    1 => 'الروايات التاريخية',
+    2 => 'روايات الغموض والإثارة',
+    3 => 'روايات الفانتازيا والخيال'
 ];
 
+foreach ($books as $book) {
+    $categoryId = $book['category_id'];
+    $categoryName = $categoryMap[$categoryId] ?? $book['category_name'];
+    
+    if (!isset($shelves[$categoryName])) {
+        $shelves[$categoryName] = [];
+    }
+    $shelves[$categoryName][] = $book;
+}
+
 // ============================================================
-// CATEGORIES FOR FILTERS
+// CATEGORIES FOR FILTERS (from database)
 // ============================================================
-$categories = ['الكل', 'رواية تاريخية', 'رواية غموض', 'رواية فانتازيا'];
-$categoryLabels = [
-    'الكل' => 'جميع الكتب',
-    'رواية تاريخية' => 'الروايات التاريخية',
-    'رواية غموض' => 'روايات الغموض والإثارة',
-    'رواية فانتازيا' => 'روايات الفانتازيا والخيال'
-];
+try {
+    $catQuery = "SELECT id, name_ar, name_en FROM categories ORDER BY id";
+    $catStmt = $conn->prepare($catQuery);
+    $catStmt->execute();
+    $dbCategories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $dbCategories = [];
+}
+
+$categories = ['الكل'];
+$categoryLabels = ['الكل' => 'جميع الكتب'];
+
+foreach ($dbCategories as $cat) {
+    $categories[] = $cat['name_ar'];
+    $categoryLabels[$cat['name_ar']] = $cat['name_ar'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -104,8 +166,20 @@ $categoryLabels = [
         <div class="search-premium-container">
             <div class="search-premium-wrapper">
                 <i class="fas fa-search search-premium-icon"></i>
-                <input type="text" class="search-premium-input" id="searchInput" placeholder="ابحث عن كتاب، مؤلف، أو تصنيف..." autocomplete="off">
-                <button class="search-premium-clear" id="searchClear"><i class="fas fa-times"></i></button>
+                <form method="GET" action="" style="width: 100%; display: flex; align-items: center;">
+                    <input type="text" 
+                           name="search" 
+                           class="search-premium-input" 
+                           id="searchInput" 
+                           placeholder="ابحث عن كتاب، مؤلف، أو تصنيف..." 
+                           autocomplete="off"
+                           value="<?php echo htmlspecialchars($searchQuery); ?>">
+                    <?php if (!empty($searchQuery)): ?>
+                        <a href="<?= ROOT ?>Browsebooks" class="search-premium-clear" style="text-decoration: none;">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    <?php endif; ?>
+                </form>
             </div>
         </div>
     </section>
@@ -116,78 +190,110 @@ $categoryLabels = [
     <section class="category-premium-section">
         <div class="category-premium-container">
             <?php foreach ($categories as $cat): ?>
-                <button class="category-premium-chip <?php echo $cat === 'الكل' ? 'active' : ''; ?>" data-category="<?php echo $cat; ?>">
+                <a href="<?= ROOT ?>Browsebooks<?php 
+                    $params = [];
+                    if ($searchQuery) $params['search'] = $searchQuery;
+                    if ($cat !== 'الكل') $params['category'] = $cat;
+                    echo !empty($params) ? '?' . http_build_query($params) : '';
+                ?>" 
+                   class="category-premium-chip <?php echo $cat === $categoryFilter ? 'active' : ''; ?>" 
+                   style="text-decoration: none; cursor: pointer;">
                     <?php echo $categoryLabels[$cat]; ?>
-                </button>
+                </a>
             <?php endforeach; ?>
         </div>
     </section>
+
+    <!-- ============================================================
+    RESULTS COUNT
+    ============================================================ -->
+    <div style="text-align: center; padding: 10px 20px; color: #8a7a6a; font-size: 14px;">
+        <?php if (!empty($searchQuery) || $categoryFilter !== 'الكل'): ?>
+            عرض <?php echo count($books); ?> كتاب
+            <?php if (!empty($searchQuery)): ?>
+                عن "<?php echo htmlspecialchars($searchQuery); ?>"
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
 
     <!-- ============================================================
     BOOKSHELVES — Only One Visible at a Time
     ============================================================ -->
     <main class="library-premium-hall">
         
-        <?php foreach ($shelves as $shelfName => $shelfBooks): 
-            $categoryKey = '';
-            if ($shelfName === 'الروايات التاريخية') $categoryKey = 'رواية تاريخية';
-            elseif ($shelfName === 'روايات الغموض والإثارة') $categoryKey = 'رواية غموض';
-            elseif ($shelfName === 'روايات الفانتازيا والخيال') $categoryKey = 'رواية فانتازيا';
-        ?>
-            <section class="shelf-premium-section" data-category="<?php echo $categoryKey; ?>">
-                <div class="shelf-premium-header">
-                    <h2 class="shelf-premium-title"><?php echo $shelfName; ?></h2>
-                    <span class="shelf-premium-line"></span>
-                </div>
-                <div class="shelf-premium-wrapper">
-                    <div class="shelf-premium-wood">
-                        <div class="shelf-premium-books">
-                            <?php 
-                            $heights = [175, 185, 165, 190, 180, 170];
-                            $rotations = [-1, 0, 2, -0.5, 1.5, -2];
-                            $i = 0;
-                            foreach ($shelfBooks as $book): 
-                                $h = $heights[$i % count($heights)] + rand(-3, 3);
-                                $r = $rotations[$i % count($rotations)] + (rand(-15, 15) / 100);
-                                $i++;
-                            ?>
-                                <div class="book-premium-stand" 
-                                     data-category="<?php echo $book['category']; ?>"
-                                     style="--book-height: <?php echo $h; ?>px; --book-rotation: <?php echo $r; ?>deg;"
-                                     onclick="location.href='<?php echo ROOT; ?>reading?id=<?php echo $book['id']; ?>&title=<?php echo urlencode($book['title']); ?>&author=<?php echo urlencode($book['author']); ?>&cover=<?php echo urlencode($book['cover']); ?>'"
-                                     title="<?php echo htmlspecialchars($book['title']); ?>">
-                                    <div class="book-premium-3d">
-                                        <div class="book-premium-cover">
-                                            <?php if (!empty($book['cover'])): ?>
-                                                <img src="<?php echo htmlspecialchars($book['cover']); ?>" alt="<?php echo htmlspecialchars($book['title']); ?>" class="book-premium-img" loading="lazy">
-                                            <?php else: ?>
-                                                <div class="book-premium-placeholder">
-                                                    <i class="fas fa-book"></i>
-                                                </div>
-                                            <?php endif; ?>
-                                            <div class="book-premium-spine"></div>
-                                            <div class="book-premium-glow"></div>
+        <?php if (empty($books)): ?>
+            <!-- Empty State -->
+            <div class="empty-premium-state" id="emptyState" style="display: flex !important;">
+                <div class="empty-premium-icon"><i class="fas fa-book-open"></i></div>
+                <h3 class="empty-premium-title">لم يتم العثور على كتب</h3>
+                <p class="empty-premium-text">حاول تغيير كلمات البحث أو التصنيف</p>
+                <a href="<?= ROOT ?>Browsebooks" class="info-cta" style="margin-top: 20px; display: inline-block; padding: 12px 30px; background: #8B7355; color: white; border-radius: 8px; text-decoration: none;">
+                    عرض جميع الكتب
+                </a>
+            </div>
+        <?php else: ?>
+            
+            <?php foreach ($shelves as $shelfName => $shelfBooks): 
+                // Determine category key for filtering
+                $categoryKey = '';
+                if (strpos($shelfName, 'التاريخية') !== false) $categoryKey = 'رواية تاريخية';
+                elseif (strpos($shelfName, 'الغموض') !== false) $categoryKey = 'رواية غموض';
+                elseif (strpos($shelfName, 'الفانتازيا') !== false) $categoryKey = 'رواية فانتازيا';
+            ?>
+                <section class="shelf-premium-section" data-category="<?php echo $categoryKey; ?>">
+                    <div class="shelf-premium-header">
+                        <h2 class="shelf-premium-title"><?php echo $shelfName; ?></h2>
+                        <span class="shelf-premium-line"></span>
+                    </div>
+                    <div class="shelf-premium-wrapper">
+                        <div class="shelf-premium-wood">
+                            <div class="shelf-premium-books">
+                                <?php 
+                                $heights = [175, 185, 165, 190, 180, 170];
+                                $rotations = [-1, 0, 2, -0.5, 1.5, -2];
+                                $i = 0;
+                                foreach ($shelfBooks as $book): 
+                                    // Build cover image path
+                                    $coverPath = !empty($book['cover_image']) 
+                                        ? ROOT . 'assets/images/' . $book['cover_image'] 
+                                        : ROOT . 'assets/images/placeholder.jpg';
+                                    
+                                    $h = $heights[$i % count($heights)] + rand(-3, 3);
+                                    $r = $rotations[$i % count($rotations)] + (rand(-15, 15) / 100);
+                                    $i++;
+                                ?>
+                                    <div class="book-premium-stand" 
+                                         data-category="<?php echo $book['category_name']; ?>"
+                                         style="--book-height: <?php echo $h; ?>px; --book-rotation: <?php echo $r; ?>deg;"
+                                         onclick="location.href='BookDetails?id=<?php echo $book['id']; ?>'"
+                                         title="<?php echo htmlspecialchars($book['title']); ?>">
+                                        <div class="book-premium-3d">
+                                            <div class="book-premium-cover">
+                                                <?php if (!empty($coverPath)): ?>
+                                                    <img src="<?php echo htmlspecialchars($coverPath); ?>" alt="<?php echo htmlspecialchars($book['title']); ?>" class="book-premium-img" loading="lazy">
+                                                <?php else: ?>
+                                                    <div class="book-premium-placeholder">
+                                                        <i class="fas fa-book"></i>
+                                                    </div>
+                                                <?php endif; ?>
+                                                <div class="book-premium-spine"></div>
+                                                <div class="book-premium-glow"></div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            <?php endforeach; ?>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="shelf-premium-board">
+                                <div class="shelf-premium-grain"></div>
+                                <div class="shelf-premium-edge"></div>
+                            </div>
+                            <div class="shelf-premium-shadow"></div>
                         </div>
-                        <div class="shelf-premium-board">
-                            <div class="shelf-premium-grain"></div>
-                            <div class="shelf-premium-edge"></div>
-                        </div>
-                        <div class="shelf-premium-shadow"></div>
                     </div>
-                </div>
-            </section>
-        <?php endforeach; ?>
-
-        <!-- Empty State (hidden by default) -->
-        <div class="empty-premium-state" id="emptyState">
-            <div class="empty-premium-icon"><i class="fas fa-book-open"></i></div>
-            <h3 class="empty-premium-title">لم يتم العثور على كتب</h3>
-            <p class="empty-premium-text">حاول تغيير كلمات البحث أو التصنيف</p>
-        </div>
+                </section>
+            <?php endforeach; ?>
+            
+        <?php endif; ?>
 
     </main>
 

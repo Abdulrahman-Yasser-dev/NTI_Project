@@ -1,13 +1,10 @@
 /* ============================================================
    سرد — reading.js
-   Vanilla JS only. No frameworks.
+   Clean reading experience with page turns
    ============================================================ */
 (function () {
   "use strict";
 
-  /* ----------------------------------------------------------
-     Data handed off from PHP
-     ---------------------------------------------------------- */
   var pagesDataEl = document.getElementById("bookPagesData");
   var bookPages = [];
   try {
@@ -15,40 +12,15 @@
   } catch (e) {
     bookPages = [];
   }
-  // We always show a *spread* of two pages, so pair them up.
-  var spreadIndex = 0; // index of the right-hand page in bookPages
+
+  var spreadIndex = 0;
   var totalSpreads = Math.max(1, Math.ceil(bookPages.length / 2));
 
-  /* ----------------------------------------------------------
-     Helpers
-     ---------------------------------------------------------- */
   function $(sel, ctx) { return (ctx || document).querySelector(sel); }
   function $all(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
 
-  function animateFills() {
-    $all("[data-target]").forEach(function (el) {
-      var target = parseInt(el.getAttribute("data-target"), 10) || 0;
-      requestAnimationFrame(function () {
-        el.style.width = target + "%";
-      });
-    });
-  }
-  window.addEventListener("load", animateFills);
-
   /* ============================================================
-     BOOK INFO — mobile collapsible
-     ============================================================ */
-  var bookInfoPanel = $("#bookInfoPanel");
-  var bookInfoToggle = $("#bookInfoToggle");
-  if (bookInfoToggle) {
-    bookInfoToggle.addEventListener("click", function () {
-      var expanded = bookInfoPanel.classList.toggle("is-expanded");
-      bookInfoToggle.setAttribute("aria-expanded", String(expanded));
-    });
-  }
-
-  /* ============================================================
-     SIDE PANEL DRAWER (tablet / phone)
+     SIDE PANEL DRAWER
      ============================================================ */
   var sidePanel = $("#sidePanel");
   var drawerToggle = $("#drawerToggle");
@@ -57,28 +29,6 @@
       var open = sidePanel.classList.toggle("is-open");
       drawerToggle.setAttribute("aria-expanded", String(open));
     });
-  }
-
-  /* ============================================================
-     TABS — الفصول / التعليقات
-     ============================================================ */
-  var tabChapters = $("#tabChapters");
-  var tabComments = $("#tabComments");
-  var chaptersPanel = $("#chaptersPanel");
-  var commentsPanel = $("#commentsPanel");
-
-  function activateTab(which) {
-    var chaptersActive = which === "chapters";
-    tabChapters.classList.toggle("tab--active", chaptersActive);
-    tabComments.classList.toggle("tab--active", !chaptersActive);
-    tabChapters.setAttribute("aria-selected", String(chaptersActive));
-    tabComments.setAttribute("aria-selected", String(!chaptersActive));
-    chaptersPanel.hidden = !chaptersActive;
-    commentsPanel.hidden = chaptersActive;
-  }
-  if (tabChapters && tabComments) {
-    tabChapters.addEventListener("click", function () { activateTab("chapters"); });
-    tabComments.addEventListener("click", function () { activateTab("comments"); });
   }
 
   /* ============================================================
@@ -95,56 +45,10 @@
       });
     });
   }
-  chapterRows.forEach(function (row) {
-    row.addEventListener("click", function () { setActiveChapter(row); });
-    row.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveChapter(row); }
-    });
-  });
-  function setActiveChapter(row) {
-    chapterRows.forEach(function (r) { r.classList.remove("chapter-row--current"); });
-    row.classList.remove("chapter-row--completed", "chapter-row--unread");
-    row.classList.add("chapter-row--current");
-  }
 
   /* ============================================================
-     COMMENTS
+     PAGE TURN (FLIP) ANIMATION
      ============================================================ */
-  var commentForm = $("#commentForm");
-  var commentInput = $("#commentInput");
-  var commentList = $("#commentList");
-  var commentEmptyState = $("#commentEmptyState");
-
-  if (commentForm) {
-    commentForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var text = commentInput.value.trim();
-      if (!text) return;
-
-      if (commentEmptyState) {
-        commentEmptyState.remove();
-        commentEmptyState = null;
-      }
-
-      var li = document.createElement("li");
-      li.className = "comment-card";
-      li.innerHTML =
-        '<div class="comment-card__avatar" aria-hidden="true">ز</div>' +
-        '<div class="comment-card__body">' +
-        '<div class="comment-card__head"><span class="comment-card__name">أنتِ</span><span class="comment-card__date">الآن</span></div>' +
-        '<p class="comment-card__text"></p>' +
-        '<div class="comment-card__actions"><button class="comment-action">إعجاب</button><button class="comment-action">رد</button></div>' +
-        "</div>";
-      li.querySelector(".comment-card__text").textContent = text;
-      commentList.insertBefore(li, commentList.firstChild);
-      commentInput.value = "";
-    });
-  }
-
-  /* ============================================================
-     OPEN BOOK — page turn (flip) animation
-     ============================================================ */
-  var bookContainer = $("#bookContainer");
   var pageTextRight = $("#pageTextRight");
   var pageTextLeft = $("#pageTextLeft");
   var pageFlip = $("#pageFlip");
@@ -153,28 +57,36 @@
   var nextPageBtn = $("#nextPageBtn");
   var isFlipping = false;
 
-  function renderSpread() {
-    pageTextRight.textContent = bookPages[spreadIndex * 2] || "";
-    pageTextLeft.textContent = bookPages[spreadIndex * 2 + 1] || "";
-    updateBookProgress();
-  }
-
   var toolbarEl = $("#readingToolbar");
   var totalBookPages = toolbarEl ? parseInt(toolbarEl.getAttribute("data-total-pages"), 10) || 0 : 0;
   var startBookPage = toolbarEl ? parseInt(toolbarEl.getAttribute("data-start-page"), 10) || 1 : 1;
   var toolbarPageIndicator = $("#toolbarPageIndicator");
   var toolbarDots = $all(".toolbar__dot");
 
+  function renderSpread() {
+    pageTextRight.textContent = bookPages[spreadIndex * 2] || "";
+    pageTextLeft.textContent = bookPages[spreadIndex * 2 + 1] || "";
+    updateBookProgress();
+  }
+
   function updateBookProgress() {
     var pct = Math.round(((spreadIndex + 1) / totalSpreads) * 100);
-    $all(".mini-progress__fill, .chapters-progress__fill").forEach(function (el) {
+    $all(".mini-progress__fill, .chapters-progress__fill, .reading-progress__fill").forEach(function (el) {
       el.style.width = pct + "%";
+    });
+    $all(".reading-progress__percent").forEach(function (el) {
+      el.textContent = pct + "% مكتمل";
     });
 
     if (toolbarPageIndicator && totalBookPages) {
       var currentPage = Math.min(totalBookPages, startBookPage + spreadIndex * 2);
       toolbarPageIndicator.textContent = currentPage + " / " + totalBookPages;
     }
+
+    $all(".reading-progress__pages").forEach(function (el) {
+      var current = Math.min(totalBookPages, startBookPage + spreadIndex * 2);
+      el.textContent = "صفحة " + current + " من " + totalBookPages;
+    });
 
     var filledDots = Math.max(1, Math.round((pct / 100) * toolbarDots.length));
     toolbarDots.forEach(function (dot, i) {
@@ -197,7 +109,6 @@
     pageTextFlip.style.lineHeight = pageTextRight.style.lineHeight;
 
     pageFlip.classList.remove("is-flipping-next", "is-flipping-prev");
-    // force reflow so the animation restarts cleanly
     void pageFlip.offsetWidth;
     pageFlip.classList.add(direction === "next" ? "is-flipping-next" : "is-flipping-prev");
 
@@ -212,6 +123,7 @@
 
   if (nextPageBtn) nextPageBtn.addEventListener("click", function () { flip("next"); });
   if (prevPageBtn) prevPageBtn.addEventListener("click", function () { flip("prev"); });
+
   document.addEventListener("keydown", function (e) {
     if (e.key === "ArrowLeft") flip(document.documentElement.dir === "rtl" ? "next" : "prev");
     if (e.key === "ArrowRight") flip(document.documentElement.dir === "rtl" ? "prev" : "next");
@@ -220,8 +132,7 @@
   renderSpread();
 
   /* ============================================================
-     TOOLBAR — zoom, font size, font family, dark/sepia, bookmark,
-     fullscreen, settings popover
+     TOOLBAR — zoom, font, dark mode, bookmark
      ============================================================ */
   var zoomBtn = $("#zoomBtn");
   var zoomedIn = false;
@@ -234,19 +145,30 @@
   }
 
   var fontSizeSlider = $("#fontSizeSlider");
+  var fontSizeDisplay = document.getElementById("fontSizeDisplay");
+
   function setFontSize(px) {
     px = Math.max(14, Math.min(28, px));
     document.documentElement.style.setProperty("--reader-font-size", px + "px");
     if (fontSizeSlider) fontSizeSlider.value = px;
+    if (fontSizeDisplay) fontSizeDisplay.textContent = px;
   }
-  if (fontSizeSlider) fontSizeSlider.addEventListener("input", function () {
-    setFontSize(parseInt(fontSizeSlider.value, 10));
-  });
+
+  if (fontSizeSlider) {
+    fontSizeSlider.addEventListener("input", function () {
+      var val = parseInt(fontSizeSlider.value, 10);
+      setFontSize(val);
+    });
+  }
 
   var lineHeightSlider = $("#lineHeightSlider");
+  var lineHeightDisplay = document.getElementById("lineHeightDisplay");
+
   if (lineHeightSlider) {
     lineHeightSlider.addEventListener("input", function () {
-      document.documentElement.style.setProperty("--reader-line-height", lineHeightSlider.value);
+      var val = parseFloat(lineHeightSlider.value).toFixed(1);
+      document.documentElement.style.setProperty("--reader-line-height", val);
+      if (lineHeightDisplay) lineHeightDisplay.textContent = val;
     });
   }
 
@@ -263,48 +185,106 @@
   }
 
   var darkModeBtn = $("#darkModeBtn");
+  var bookContainer = $("#bookContainer");
+
+  // Also check for existing dark mode from before
+  function applyTheme(theme) {
+    if (theme === 'dark') {
+      bookContainer.classList.add("mode-dark");
+      bookContainer.classList.remove("mode-sepia");
+    } else if (theme === 'sepia') {
+      bookContainer.classList.add("mode-sepia");
+      bookContainer.classList.remove("mode-dark");
+    } else {
+      bookContainer.classList.remove("mode-dark", "mode-sepia");
+    }
+  }
+
   if (darkModeBtn) {
     darkModeBtn.addEventListener("click", function () {
-      var active = bookContainer.classList.toggle("mode-dark");
-      darkModeBtn.setAttribute("aria-pressed", String(active));
+      var isDark = bookContainer.classList.toggle("mode-dark");
+      darkModeBtn.setAttribute("aria-pressed", String(isDark));
+      // If turning dark on, remove sepia
+      if (isDark) {
+        bookContainer.classList.remove("mode-sepia");
+      }
+      // Update theme buttons in popover if they exist
+      var themeBtns = document.querySelectorAll(".settings-themes button");
+      themeBtns.forEach(function (btn) {
+        btn.classList.remove("active");
+        if (btn.getAttribute("data-theme") === (isDark ? "dark" : "light")) {
+          btn.classList.add("active");
+        }
+      });
     });
   }
 
   var toolbarBookmarkBtn = $("#toolbarBookmarkBtn");
-  var bookmarkToggleBtn = $("#bookmarkToggleBtn");
-  function toggleBookmark() {
-    var pressed = toolbarBookmarkBtn.getAttribute("aria-pressed") === "true";
-    var next = String(!pressed);
-    toolbarBookmarkBtn.setAttribute("aria-pressed", next);
-    if (bookmarkToggleBtn) bookmarkToggleBtn.setAttribute("aria-pressed", next);
-  }
-  if (toolbarBookmarkBtn) toolbarBookmarkBtn.addEventListener("click", toggleBookmark);
-  if (bookmarkToggleBtn) bookmarkToggleBtn.addEventListener("click", toggleBookmark);
-
-  var favoriteToggleBtn = $("#favoriteToggleBtn");
-  if (favoriteToggleBtn) {
-    favoriteToggleBtn.addEventListener("click", function () {
-      var pressed = favoriteToggleBtn.getAttribute("aria-pressed") === "true";
-      favoriteToggleBtn.setAttribute("aria-pressed", String(!pressed));
+  if (toolbarBookmarkBtn) {
+    toolbarBookmarkBtn.addEventListener("click", function () {
+      var pressed = toolbarBookmarkBtn.getAttribute("aria-pressed") === "true";
+      toolbarBookmarkBtn.setAttribute("aria-pressed", String(!pressed));
     });
   }
 
+  /* ============================================================
+     SETTINGS POPOVER — Above Aa button (Kindle style)
+     ============================================================ */
   var fontSettingsBtn = $("#fontSettingsBtn");
   var settingsPopover = $("#settingsPopover");
+
   if (fontSettingsBtn && settingsPopover) {
-    fontSettingsBtn.addEventListener("click", function () {
-      var isHidden = settingsPopover.hidden;
-      settingsPopover.hidden = !isHidden;
-      fontSettingsBtn.setAttribute("aria-expanded", String(isHidden));
+    // Toggle popover
+    fontSettingsBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var isOpen = settingsPopover.classList.toggle("is-open");
+      fontSettingsBtn.setAttribute("aria-expanded", String(isOpen));
     });
+
+    // Close when clicking outside
     document.addEventListener("click", function (e) {
-      if (!settingsPopover.hidden && !settingsPopover.contains(e.target) && e.target !== fontSettingsBtn && !fontSettingsBtn.contains(e.target)) {
-        settingsPopover.hidden = true;
+      if (
+        settingsPopover.classList.contains("is-open") &&
+        !settingsPopover.contains(e.target) &&
+        e.target !== fontSettingsBtn &&
+        !fontSettingsBtn.contains(e.target)
+      ) {
+        settingsPopover.classList.remove("is-open");
         fontSettingsBtn.setAttribute("aria-expanded", "false");
       }
     });
+
+    // Close on Escape
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && settingsPopover.classList.contains("is-open")) {
+        settingsPopover.classList.remove("is-open");
+        fontSettingsBtn.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    // Theme buttons inside settings
+    var themeButtons = settingsPopover.querySelectorAll(".settings-themes button");
+    themeButtons.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        // Update active state
+        themeButtons.forEach(function (b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+
+        // Apply theme
+        var theme = btn.getAttribute("data-theme");
+        applyTheme(theme);
+
+        // Update dark mode button state
+        if (darkModeBtn) {
+          darkModeBtn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+        }
+      });
+    });
   }
 
+  /* ============================================================
+     OPENING ANIMATION — remove after play
+     ============================================================ */
   var bookOpeningCover = $("#bookOpeningCover");
   if (bookOpeningCover) {
     setTimeout(function () {
@@ -312,13 +292,6 @@
         bookOpeningCover.parentNode.removeChild(bookOpeningCover);
       }
     }, 1300);
-  }
-
-  var continueReadingBtn = $("#continueReadingBtn");
-  if (continueReadingBtn) {
-    continueReadingBtn.addEventListener("click", function () {
-      $("#bookContainer").scrollIntoView({ behavior: "smooth", block: "center" });
-    });
   }
 
 })();
