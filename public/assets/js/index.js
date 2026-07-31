@@ -1,263 +1,476 @@
-/**
- * HomePage.js — Premium Homepage (Marketing-Focused)
- * سرد (Sard) — Arabic Reading Platform
- */
+(function() {
+    const modal = document.getElementById('bookModal');
+    const closeBtn = document.getElementById('modalClose');
+    const bookButtons = document.querySelectorAll('.book-btn');
 
-document.addEventListener('DOMContentLoaded', function() {
+    // Modal elements
+    const modalCover = document.getElementById('modalCoverImg');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalAuthor = document.getElementById('modalAuthor');
+    const modalMeta = document.getElementById('modalMeta');
+    const modalDesc = document.getElementById('modalDesc');
 
     // ============================================================
-    // MOBILE MENU TOGGLE
+    // BASE PATH — matches app/core/config.php's ROOT constant
     // ============================================================
+    const ROOT = "http://localhost/NTI_project/public/";
 
-    const mobileToggle = document.getElementById('mobileMenuToggle');
-    const navLinks = document.querySelector('.nav-links');
+    // ============================================================
+    // BOOK DATA — All 32 books with their metadata
+    // ============================================================
+    const books = [
+        // Row 1 - Books 1-16
+        {
+            id: 1,
+            title: "اللص والكلاب",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/نجيب-محفوظ-اللص و الكلاب(2).png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٦١",
+            pages: "١٤٤",
+            description: "تدور أحداث الرواية حول سعيد مهران بعد خروجه من السجن، وسعيه للانتقام ممن خانوه، في عمل يعكس صراع الإنسان مع المجتمع ومع ذاته. من أبرز أعمال نجيب محفوظ الفلسفية."
+        },
+        {
+            id: 2,
+            title: "أولاد الناس",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/اولاد الناس.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٦٢",
+            pages: "٢٠٠",
+            description: "رواية عن الصراع الطبقي والبحث عن الهوية في المجتمع المصري."
+        },
+        {
+            id: 3,
+            title: "ثرثرة فوق النيل",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/ثرثرة فوق النيل .png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٦٦",
+            pages: "١٦٠",
+            description: "رواية نقدية ساخرة تصور حالة التيه والضياع التي تعيشها الشخصيات على متن مركب في النيل."
+        },
+        {
+            id: 4,
+            title: "طبيب أرياف",
+            author: "توفيق الحكيم",
+            cover: ROOT + "assets/images/طبيب ارياف.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٣٦",
+            pages: "١٢٠",
+            description: "رواية تصور حياة طبيب في الريف المصري وتناقضات المجتمع."
+        },
+        {
+            id: 5,
+            title: "ماجدولين",
+            author: "مي زيادة",
+            cover: ROOT + "assets/images/ماجدولين.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٢٥",
+            pages: "١٥٠",
+            description: "رواية رومانسية عن الحب والتضحية في المجتمع العربي."
+        },
+        {
+            id: 6,
+            title: "إيكادولي",
+            author: "توفيق الحكيم",
+            cover: ROOT + "assets/images/ايكادولي.png",
+            genre: "مسرحية",
+            category: "أدب عربي",
+            year: "١٩٤٢",
+            pages: "١٨٠",
+            description: "مسرحية فلسفية تستكشف العلاقة بين الإنسان والسلطة."
+        },
+        {
+            id: 7,
+            title: "شجرتي",
+            author: "محمود درويش",
+            cover: ROOT + "assets/images/شجرتي.png",
+            genre: "شعر",
+            category: "شعر عربي",
+            year: "١٩٦٤",
+            pages: "٨٠",
+            description: "ديوان شعري يتناول قضية الوطن والانتماء."
+        },
+        {
+            id: 8,
+            title: "بداية ونهاية",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/نجيب-محفوظ-اللص و الكلاب(2).png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٤٩",
+            pages: "٢٢٠",
+            description: "رواية عن أسرة مصرية تواجه تحديات الحياة في فترة ما بعد الحرب."
+        },
+        {
+            id: 9,
+            title: "الثلاثية",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/اولاد الناس.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٥٦",
+            pages: "٥٠٠",
+            description: "ثلاثية تصور حياة أسرة في القاهرة خلال فترة الثورة."
+        },
+        {
+            id: 10,
+            title: "الحرافيش",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/ثرثرة فوق النيل .png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٧٧",
+            pages: "٢٤٠",
+            description: "رواية عن حياة البسطاء في حارة شعبية وحكاياتهم."
+        },
+        {
+            id: 11,
+            title: "مرمر زماني",
+            author: "علي أحمد باكثير",
+            cover: ROOT + "assets/images/طبيب ارياف.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٥٠",
+            pages: "١٦٠",
+            description: "رواية تاريخية عن أحداث في التاريخ العربي."
+        },
+        {
+            id: 12,
+            title: "رجال في الشمس",
+            author: "غسان كنفاني",
+            cover: ROOT + "assets/images/ماجدولين.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٦٣",
+            pages: "١٣٠",
+            description: "رواية عن معاناة الفلسطينيين وهجرتهم بحثًا عن حياة أفضل."
+        },
+        {
+            id: 13,
+            title: "عائد إلى حيفا",
+            author: "غسان كنفاني",
+            cover: ROOT + "assets/images/ايكادولي.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٦٩",
+            pages: "١٤٠",
+            description: "رواية عن العودة والذاكرة والهوية الفلسطينية."
+        },
+        {
+            id: 14,
+            title: "موسم الهجرة",
+            author: "الطيب صالح",
+            cover: ROOT + "assets/images/شجرتي.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٦٦",
+            pages: "١٧٠",
+            description: "رواية عن الصراع بين الشرق والغرب والبحث عن الذات."
+        },
+        {
+            id: 15,
+            title: "زقاق المدق",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/نجيب-محفوظ-اللص و الكلاب(2).png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٤٧",
+            pages: "١٩٠",
+            description: "رواية عن حياة الناس في زقاق شعبي بالقاهرة."
+        },
+        {
+            id: 16,
+            title: "السمان والخريف",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/اولاد الناس.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٦٢",
+            pages: "١٤٠",
+            description: "رواية عن التحولات الاجتماعية في مصر بعد الثورة."
+        },
+        // Row 2 - Books 17-32
+        {
+            id: 17,
+            title: "أولاد الناس (الجزء الثاني)",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/اولاد الناس.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٦٢",
+            pages: "٢٠٠",
+            description: "رواية عن الصراع الطبقي والبحث عن الهوية في المجتمع المصري."
+        },
+        {
+            id: 18,
+            title: "إيكادولي (الجزء الثاني)",
+            author: "توفيق الحكيم",
+            cover: ROOT + "assets/images/ايكادولي.png",
+            genre: "مسرحية",
+            category: "أدب عربي",
+            year: "١٩٤٢",
+            pages: "١٨٠",
+            description: "مسرحية فلسفية تستكشف العلاقة بين الإنسان والسلطة."
+        },
+        {
+            id: 19,
+            title: "شجرتي (الجزء الثاني)",
+            author: "محمود درويش",
+            cover: ROOT + "assets/images/شجرتي.png",
+            genre: "شعر",
+            category: "شعر عربي",
+            year: "١٩٦٤",
+            pages: "٨٠",
+            description: "ديوان شعري يتناول قضية الوطن والانتماء."
+        },
+        {
+            id: 20,
+            title: "اللص والكلاب (الجزء الثاني)",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/نجيب-محفوظ-اللص و الكلاب(2).png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٦١",
+            pages: "١٤٤",
+            description: "تدور أحداث الرواية حول سعيد مهران بعد خروجه من السجن، وسعيه للانتقام ممن خانوه."
+        },
+        {
+            id: 21,
+            title: "ثرثرة فوق النيل (الجزء الثاني)",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/ثرثرة فوق النيل .png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٦٦",
+            pages: "١٦٠",
+            description: "رواية نقدية ساخرة تصور حالة التيه والضياع التي تعيشها الشخصيات."
+        },
+        {
+            id: 22,
+            title: "طبيب أرياف (الجزء الثاني)",
+            author: "توفيق الحكيم",
+            cover: ROOT + "assets/images/طبيب ارياف.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٣٦",
+            pages: "١٢٠",
+            description: "رواية تصور حياة طبيب في الريف المصري وتناقضات المجتمع."
+        },
+        {
+            id: 23,
+            title: "ماجدولين (الجزء الثاني)",
+            author: "مي زيادة",
+            cover: ROOT + "assets/images/ماجدولين.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٢٥",
+            pages: "١٥٠",
+            description: "رواية رومانسية عن الحب والتضحية في المجتمع العربي."
+        },
+        {
+            id: 24,
+            title: "إيكادولي (الجزء الثالث)",
+            author: "توفيق الحكيم",
+            cover: ROOT + "assets/images/ايكادولي.png",
+            genre: "مسرحية",
+            category: "أدب عربي",
+            year: "١٩٤٢",
+            pages: "١٨٠",
+            description: "مسرحية فلسفية تستكشف العلاقة بين الإنسان والسلطة."
+        },
+        {
+            id: 25,
+            title: "أولاد الناس (الجزء الثالث)",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/اولاد الناس.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٦٢",
+            pages: "٢٠٠",
+            description: "رواية عن الصراع الطبقي والبحث عن الهوية في المجتمع المصري."
+        },
+        {
+            id: 26,
+            title: "شجرتي (الجزء الثالث)",
+            author: "محمود درويش",
+            cover: ROOT + "assets/images/شجرتي.png",
+            genre: "شعر",
+            category: "شعر عربي",
+            year: "١٩٦٤",
+            pages: "٨٠",
+            description: "ديوان شعري يتناول قضية الوطن والانتماء."
+        },
+        {
+            id: 27,
+            title: "اللص والكلاب (الجزء الثالث)",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/نجيب-محفوظ-اللص و الكلاب(2).png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٦١",
+            pages: "١٤٤",
+            description: "تدور أحداث الرواية حول سعيد مهران بعد خروجه من السجن."
+        },
+        {
+            id: 28,
+            title: "ثرثرة فوق النيل (الجزء الثالث)",
+            author: "نجيب محفوظ",
+            cover: ROOT + "assets/images/ثرثرة فوق النيل .png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٦٦",
+            pages: "١٦٠",
+            description: "رواية نقدية ساخرة تصور حالة التيه والضياع."
+        },
+        {
+            id: 29,
+            title: "طبيب أرياف (الجزء الثالث)",
+            author: "توفيق الحكيم",
+            cover: ROOT + "assets/images/طبيب ارياف.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٣٦",
+            pages: "١٢٠",
+            description: "رواية تصور حياة طبيب في الريف المصري."
+        },
+        {
+            id: 30,
+            title: "ماجدولين (الجزء الثالث)",
+            author: "مي زيادة",
+            cover: ROOT + "assets/images/ماجدولين.png",
+            genre: "رواية",
+            category: "أدب عربي",
+            year: "١٩٢٥",
+            pages: "١٥٠",
+            description: "رواية رومانسية عن الحب والتضحية."
+        },
+        {
+            id: 31,
+            title: "إيكادولي (الجزء الرابع)",
+            author: "توفيق الحكيم",
+            cover: ROOT + "assets/images/ايكادولي.png",
+            genre: "مسرحية",
+            category: "أدب عربي",
+            year: "١٩٤٢",
+            pages: "١٨٠",
+            description: "مسرحية فلسفية تستكشف العلاقة بين الإنسان والسلطة."
+        },
+        {
+            id: 32,
+            title: "شجرتي (الجزء الرابع)",
+            author: "محمود درويش",
+            cover: ROOT + "assets/images/شجرتي.png",
+            genre: "شعر",
+            category: "شعر عربي",
+            year: "١٩٦٤",
+            pages: "٨٠",
+            description: "ديوان شعري يتناول قضية الوطن والانتماء."
+        }
+    ];
 
-    if (mobileToggle && navLinks) {
-        mobileToggle.addEventListener('click', function() {
-            navLinks.classList.toggle('active');
-            const icon = this.querySelector('i');
-            if (icon) {
-                icon.classList.toggle('fa-bars');
-                icon.classList.toggle('fa-times');
-            }
+    // Variable to store current book ID for the read now button
+    let currentBookId = null;
+
+    // ============================================================
+    // OPEN MODAL FUNCTION
+    // ============================================================
+    function openModal(bookId) {
+        currentBookId = bookId;
+
+        const book = books.find(b => b.id === parseInt(bookId));
+        if (!book) return;
+
+        modalTitle.textContent = book.title;
+        modalAuthor.textContent = book.author;
+        modalDesc.textContent = book.description;
+
+        modalCover.src = book.cover;
+        modalCover.alt = book.title;
+
+        modalMeta.innerHTML = `
+            <span>${book.genre}</span>
+            <span>${book.category}</span>
+            <span>${book.year}</span>
+            <span>${book.pages} صفحة</span>
+        `;
+
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // ============================================================
+    // CLOSE MODAL FUNCTION
+    // ============================================================
+    function closeModal() {
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    // ============================================================
+    // READ NOW BUTTON — Navigate to reading page
+    // ============================================================
+    const readNowBtn = document.getElementById('readNowBtn');
+
+    if (readNowBtn) {
+        readNowBtn.addEventListener('click', function() {
+            const title = document.getElementById('modalTitle').textContent;
+            const author = document.getElementById('modalAuthor').textContent;
+            const cover = document.getElementById('modalCoverImg').src;
+
+            closeModal();
+
+            setTimeout(function() {
+                window.location.href = ROOT + 'reading?id=' + encodeURIComponent(currentBookId) +
+                    '&title=' + encodeURIComponent(title) +
+                    '&author=' + encodeURIComponent(author) +
+                    '&cover=' + encodeURIComponent(cover);
+            }, 300);
         });
     }
 
     // ============================================================
-    // SMOOTH SCROLL
+    // EVENT LISTENERS
     // ============================================================
-
-    document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
-        anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({ behavior: 'smooth' });
-                if (navLinks) {
-                    navLinks.classList.remove('active');
-                }
-                const icon = mobileToggle?.querySelector('i');
-                if (icon) {
-                    icon.classList.add('fa-bars');
-                    icon.classList.remove('fa-times');
-                }
-            }
+    bookButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const bookId = this.dataset.book;
+            openModal(bookId);
         });
     });
 
-    // ============================================================
-    // CLOSE MOBILE MENU ON RESIZE
-    // ============================================================
+    closeBtn.addEventListener('click', closeModal);
 
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768 && navLinks) {
-            navLinks.classList.remove('active');
-            const icon = mobileToggle?.querySelector('i');
-            if (icon) {
-                icon.classList.add('fa-bars');
-                icon.classList.remove('fa-times');
-            }
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+    });
+
+    // ============================================================
+    // NAVBAR SCROLL EFFECT
+    // ============================================================
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 60) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
         }
     });
 
     // ============================================================
-    // TESTIMONIALS CAROUSEL
+    // CONSOLE LOG
     // ============================================================
+    console.log('%c📖 سرد — Dynamic Book Modal Loaded', 'font-size:16px; font-weight:bold; color:#C9A96E;');
+    console.log('%c' + books.length + ' books loaded successfully!', 'color:#1D9E75;');
 
-    const track = document.getElementById('testimonialsTrack');
-    const dots = document.querySelectorAll('.dot');
-    const prevBtn = document.getElementById('prevTestimonial');
-    const nextBtn = document.getElementById('nextTestimonial');
-    
-    if (track && dots.length > 0) {
-        let currentIndex = 0;
-        let autoSlideInterval = null;
-        let isTransitioning = false;
-        
-        // Get visible cards count based on screen width
-        function getVisibleCards() {
-            if (window.innerWidth < 768) return 1;
-            if (window.innerWidth < 1024) return 2;
-            return 3;
-        }
-        
-        // Get card width including gap
-        function getCardWidth() {
-            const card = track.querySelector('.testimonial-card');
-            if (!card) return 0;
-            const rect = card.getBoundingClientRect();
-            const gap = 28; // match gap from CSS
-            return rect.width + gap;
-        }
-        
-        // Update carousel position
-        function updateCarousel(index, animate = true) {
-            if (isTransitioning) return;
-            
-            const cards = track.querySelectorAll('.testimonial-card');
-            const totalCards = cards.length;
-            const visible = getVisibleCards();
-            const maxIndex = Math.max(0, totalCards - visible);
-            
-            // Clamp index
-            if (index < 0) index = 0;
-            if (index > maxIndex) index = maxIndex;
-            
-            currentIndex = index;
-            
-            // Update dots
-            dots.forEach((dot, i) => {
-                dot.classList.toggle('active', i === index);
-            });
-            
-            // Move track
-            const cardWidth = getCardWidth();
-            const offset = index * cardWidth;
-            
-            if (animate) {
-                track.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-            } else {
-                track.style.transition = 'none';
-            }
-            
-            track.style.transform = `translateX(-${offset}px)`;
-            
-            // Reset transition after animation
-            if (animate) {
-                isTransitioning = true;
-                setTimeout(() => {
-                    isTransitioning = false;
-                }, 500);
-            }
-        }
-        
-        // Next slide
-        function nextSlide() {
-            const cards = track.querySelectorAll('.testimonial-card');
-            const totalCards = cards.length;
-            const visible = getVisibleCards();
-            const maxIndex = Math.max(0, totalCards - visible);
-            
-            if (currentIndex < maxIndex) {
-                updateCarousel(currentIndex + 1);
-            } else {
-                updateCarousel(0);
-            }
-        }
-        
-        // Previous slide
-        function prevSlide() {
-            const cards = track.querySelectorAll('.testimonial-card');
-            const totalCards = cards.length;
-            const visible = getVisibleCards();
-            const maxIndex = Math.max(0, totalCards - visible);
-            
-            if (currentIndex > 0) {
-                updateCarousel(currentIndex - 1);
-            } else {
-                updateCarousel(maxIndex);
-            }
-        }
-        
-        // Start auto-slide
-        function startAutoSlide() {
-            if (autoSlideInterval) {
-                clearInterval(autoSlideInterval);
-            }
-            autoSlideInterval = setInterval(nextSlide, 5000);
-        }
-        
-        // Stop auto-slide
-        function stopAutoSlide() {
-            if (autoSlideInterval) {
-                clearInterval(autoSlideInterval);
-                autoSlideInterval = null;
-            }
-        }
-        
-        // Reset auto-slide timer
-        function resetAutoSlide() {
-            stopAutoSlide();
-            startAutoSlide();
-        }
-        
-        // Event listeners for dots
-        dots.forEach((dot) => {
-            dot.addEventListener('click', function() {
-                const index = parseInt(this.dataset.index);
-                const cards = track.querySelectorAll('.testimonial-card');
-                const totalCards = cards.length;
-                const visible = getVisibleCards();
-                const maxIndex = Math.max(0, totalCards - visible);
-                
-                if (index <= maxIndex) {
-                    updateCarousel(index);
-                    resetAutoSlide();
-                }
-            });
-        });
-        
-        // Event listeners for arrows
-        if (prevBtn) {
-            prevBtn.addEventListener('click', function() {
-                prevSlide();
-                resetAutoSlide();
-            });
-        }
-        
-        if (nextBtn) {
-            nextBtn.addEventListener('click', function() {
-                nextSlide();
-                resetAutoSlide();
-            });
-        }
-        
-        // Keyboard navigation
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowRight') {
-                prevSlide();
-                resetAutoSlide();
-            } else if (e.key === 'ArrowLeft') {
-                nextSlide();
-                resetAutoSlide();
-            }
-        });
-        
-        // Pause on hover
-        const container = document.querySelector('.testimonials-carousel-container');
-        if (container) {
-            container.addEventListener('mouseenter', stopAutoSlide);
-            container.addEventListener('mouseleave', startAutoSlide);
-        }
-        
-        // Responsive: update on resize
-        let resizeTimeout;
-        window.addEventListener('resize', function() {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                const cards = track.querySelectorAll('.testimonial-card');
-                const totalCards = cards.length;
-                const visible = getVisibleCards();
-                const maxIndex = Math.max(0, totalCards - visible);
-                
-                if (currentIndex > maxIndex) {
-                    updateCarousel(maxIndex, false);
-                } else {
-                    updateCarousel(currentIndex, false);
-                }
-            }, 250);
-        });
-        
-        // Initialize
-        updateCarousel(0, false);
-        startAutoSlide();
-    }
-
-    // ============================================================
-    // CONSOLE
-    // ============================================================
-
-    console.log('%c📖 سرد — Premium Homepage', 'font-size:20px; font-weight:bold; color:#C9A96E;');
-    console.log('%cتم تحميل الصفحة بنجاح!', 'color:#1D9E75;');
-
-});
+})();

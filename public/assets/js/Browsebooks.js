@@ -1,86 +1,190 @@
-// BrowseBooks.js
-// Combines search + sidebar category + sort + grid/list view.
-// initialCategory comes from PHP (?category=... in the URL).
+/**
+ * BrowseBooks.js — Premium Luxury Bookstore
+ * سرد (Sard) — Arabic Reading Platform
+ */
 
-document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById("searchInput");
-    const categoryItems = document.querySelectorAll(".category-item");
-    const sortSelect = document.getElementById("sortSelect");
-    const cards = Array.from(document.querySelectorAll(".book-card"));
-    const bookGrid = document.getElementById("bookGrid");
-    const resultsCount = document.getElementById("resultsCount");
-    const emptyState = document.getElementById("emptyState");
-    const gridViewBtn = document.getElementById("gridViewBtn");
-    const listViewBtn = document.getElementById("listViewBtn");
+document.addEventListener('DOMContentLoaded', function() {
 
-    let activeCategory = typeof initialCategory !== "undefined" ? initialCategory : "all";
+    'use strict';
 
-    // ===== Sidebar category selection =====
-    categoryItems.forEach(function (item) {
-        item.addEventListener("click", function () {
-            categoryItems.forEach(function (i) { i.classList.remove("category-active"); });
-            item.classList.add("category-active");
-            activeCategory = item.dataset.category;
-            applyFilters();
-        });
-    });
+    const searchInput = document.getElementById('searchInput');
+    const searchClear = document.getElementById('searchClear');
+    const categoryChips = document.querySelectorAll('.category-premium-chip');
+    const shelfSections = document.querySelectorAll('.shelf-premium-section');
+    const emptyState = document.getElementById('emptyState');
+    const books = document.querySelectorAll('.book-premium-stand');
 
-    // ===== Search =====
-    searchInput.addEventListener("input", applyFilters);
+    let currentSearch = '';
+    let currentCategory = 'الكل';
 
-    // ===== Sort =====
-    sortSelect.addEventListener("change", applyFilters);
+    // ============================================================
+    // CATEGORY FILTER — Show/Hide Shelves with Animation
+    // ============================================================
 
-    // ===== Grid / List view toggle =====
-    gridViewBtn.addEventListener("click", function () {
-        bookGrid.classList.remove("list-mode");
-        gridViewBtn.classList.add("view-active");
-        listViewBtn.classList.remove("view-active");
-    });
+    function filterCategory(category) {
+        let hasVisibleBooks = false;
 
-    listViewBtn.addEventListener("click", function () {
-        bookGrid.classList.add("list-mode");
-        listViewBtn.classList.add("view-active");
-        gridViewBtn.classList.remove("view-active");
-    });
-
-    function applyFilters() {
-        const term = searchInput.value.trim().toLowerCase();
-        let visible = [];
-
-        cards.forEach(function (card) {
-            const matchesCategory = activeCategory === "all" || card.dataset.category === activeCategory;
-            const matchesSearch =
-                term === "" ||
-                card.dataset.title.includes(term) ||
-                card.dataset.author.includes(term);
-
-            const show = matchesCategory && matchesSearch;
-            card.style.display = show ? "" : "none";
-            if (show) visible.push(card);
+        shelfSections.forEach(function(section) {
+            const sectionCategory = section.dataset.category;
+            
+            if (category === 'الكل' || sectionCategory === category) {
+                section.classList.remove('hidden');
+                section.style.display = '';
+                // Trigger reflow for animation
+                void section.offsetWidth;
+                section.style.animation = 'none';
+                setTimeout(function() {
+                    section.style.animation = 'shelfFadeIn 0.5s ease forwards';
+                }, 10);
+                hasVisibleBooks = true;
+            } else {
+                section.style.animation = 'shelfFadeIn 0.3s ease reverse forwards';
+                setTimeout(function() {
+                    section.classList.add('hidden');
+                    section.style.display = 'none';
+                }, 250);
+            }
         });
 
-        applySort(visible);
-
-        resultsCount.textContent = visible.length + " رواية";
-        bookGrid.style.display = visible.length === 0 ? "none" : "";
-        emptyState.style.display = visible.length === 0 ? "block" : "none";
+        // Show/hide empty state
+        if (emptyState) {
+            if (!hasVisibleBooks) {
+                emptyState.classList.add('visible');
+            } else {
+                emptyState.classList.remove('visible');
+            }
+        }
     }
 
-    function applySort(visibleCards) {
-        const sortValue = sortSelect.value;
-        if (sortValue === "default") return; // keep original DOM order (newest first, as rendered by PHP)
+    // ============================================================
+    // SEARCH
+    // ============================================================
 
-        const sorted = visibleCards.slice().sort(function (a, b) {
-            const titleA = a.dataset.titleRaw;
-            const titleB = b.dataset.titleRaw;
-            if (sortValue === "title-asc") return titleA.localeCompare(titleB, "ar");
-            if (sortValue === "title-desc") return titleB.localeCompare(titleA, "ar");
-            return 0;
+    function filterBooks() {
+        const searchTerm = currentSearch.trim().toLowerCase();
+        const category = currentCategory;
+
+        let hasVisibleBooks = false;
+
+        books.forEach(function(book) {
+            const title = book.getAttribute('title')?.toLowerCase() || '';
+            const bookCategory = book.dataset.category || '';
+
+            const matchesSearch = title.includes(searchTerm);
+            const matchesCategory = category === 'الكل' || bookCategory === category;
+
+            if (matchesSearch && matchesCategory) {
+                book.style.display = '';
+                hasVisibleBooks = true;
+                book.style.animation = 'none';
+                setTimeout(function() {
+                    book.style.animation = 'bookRise 0.4s ease forwards';
+                }, 10);
+            } else {
+                book.style.display = 'none';
+            }
         });
 
-        sorted.forEach(function (card) { bookGrid.appendChild(card); });
+        // Update empty state
+        if (emptyState) {
+            if (!hasVisibleBooks) {
+                emptyState.classList.add('visible');
+            } else {
+                emptyState.classList.remove('visible');
+            }
+        }
     }
 
-    applyFilters(); // run once on load
+    // ============================================================
+    // SEARCH INPUT
+    // ============================================================
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            currentSearch = this.value;
+            if (searchClear) {
+                searchClear.classList.toggle('visible', this.value.length > 0);
+            }
+            filterBooks();
+        });
+    }
+
+    if (searchClear) {
+        searchClear.addEventListener('click', function() {
+            if (searchInput) {
+                searchInput.value = '';
+                searchClear.classList.remove('visible');
+                currentSearch = '';
+                filterBooks();
+                searchInput.focus();
+            }
+        });
+    }
+
+    // ============================================================
+    // CATEGORY CHIPS
+    // ============================================================
+
+    if (categoryChips.length > 0) {
+        categoryChips.forEach(function(chip) {
+            chip.addEventListener('click', function() {
+                categoryChips.forEach(function(c) { c.classList.remove('active'); });
+                this.classList.add('active');
+                currentCategory = this.dataset.category;
+                
+                // Reset search
+                if (searchInput) {
+                    searchInput.value = '';
+                    if (searchClear) searchClear.classList.remove('visible');
+                    currentSearch = '';
+                }
+                
+                filterCategory(currentCategory);
+                filterBooks();
+            });
+        });
+    }
+
+    // ============================================================
+    // NAVBAR SCROLL EFFECT
+    // ============================================================
+
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', function() {
+        if (navbar) {
+            navbar.classList.toggle('scrolled', window.scrollY > 60);
+        }
+    });
+
+    // ============================================================
+    // KEYBOARD SHORTCUTS
+    // ============================================================
+
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey && e.key === 'f') || (e.key === '/' && !e.ctrlKey && !e.metaKey)) {
+            e.preventDefault();
+            if (searchInput) searchInput.focus();
+        }
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            if (searchInput) {
+                searchInput.blur();
+                searchInput.value = '';
+                if (searchClear) searchClear.classList.remove('visible');
+                currentSearch = '';
+                filterBooks();
+            }
+        }
+    });
+
+    // ============================================================
+    // INIT
+    // ============================================================
+
+    // Show all shelves by default
+    filterCategory('الكل');
+    filterBooks();
+
+    console.log('%c📖 سرد — Premium Luxury Bookstore', 'font-size:20px; font-weight:bold; color:#D4A64A;');
+    console.log('%c18 books loaded — 3 categories', 'color:#E8C86A;');
+
 });

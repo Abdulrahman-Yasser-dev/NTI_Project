@@ -1,0 +1,361 @@
+<?php
+/* ============================================================
+   سرد — Reading Page (reading.php)
+   Clean, distraction-free reading experience
+   ============================================================ */
+
+require_once __DIR__ . "/../core/init.php";
+
+$bookId = isset($_GET['id']) ? (int) $_GET['id'] : 1;
+
+// ============================================================
+// FETCH BOOK FROM DATABASE
+// ============================================================
+try {
+    $query = "
+        SELECT 
+            n.id,
+            n.title,
+            n.slug,
+            n.description,
+            n.cover_image,
+            n.spine_image,
+            n.banner_image,
+            n.publish_year,
+            n.pages,
+            n.language,
+            n.country,
+            n.rating,
+            a.name AS author_name,
+            c.name_ar AS category_name
+        FROM novels n
+        JOIN authors a ON n.author_id = a.id
+        JOIN categories c ON n.category_id = c.id
+        WHERE n.id = :book_id AND n.status = 'published'
+    ";
+    
+    $stmt = $conn->prepare($query);
+    $stmt->execute([':book_id' => $bookId]);
+    $book = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+} catch (PDOException $e) {
+    $book = null;
+    error_log("Database Error in reading.php: " . $e->getMessage());
+}
+
+// If book not found, redirect to BrowseBooks
+if (!$book) {
+    header('Location: ' . ROOT . 'Browsebooks');
+    exit;
+}
+
+// ============================================================
+// FETCH CHAPTERS
+// ============================================================
+try {
+    $chapterQuery = "
+        SELECT 
+            id,
+            chapter_number,
+            title,
+            word_count,
+            reading_time
+        FROM chapters
+        WHERE novel_id = :book_id
+        ORDER BY chapter_number ASC
+    ";
+    
+    $chapterStmt = $conn->prepare($chapterQuery);
+    $chapterStmt->execute([':book_id' => $bookId]);
+    $chapters = $chapterStmt->fetchAll(PDO::FETCH_ASSOC);
+    
+} catch (PDOException $e) {
+    $chapters = [];
+    error_log("Database Error fetching chapters: " . $e->getMessage());
+}
+
+// ============================================================
+// READING PROGRESS (Placeholder - will be from database later)
+// ============================================================
+$progress = [
+    'current_page' => 128,
+    'total_pages' => $book['pages'] ?? 312,
+    'percentage' => 0,
+    'remaining_time' => '1h 35m'
+];
+$progress['percentage'] = round(($progress['current_page'] / $progress['total_pages']) * 100);
+
+// ============================================================
+// GENERATE PAGES (temporary - will come from chapters later)
+// ============================================================
+$pages = [
+    "في تلك الحارة التي تمتد بين الجبل والصحراء، وُلدت الحكاية الأولى. كان أهلها لا يعرفون عن الفوتوة إلا أنه القانون الذي يحكم كل شيء، وأن الرضا بالقسمة هو السبيل الوحيد للنجاة من غضب الحارة.",
+    "قال الجبلاوي في وصيته: لن أترك لكم إلا هذا الوقف، فاحفظوه بينكم، ولا تجعلوا الطمع يفرقكم كما فرّق أولاد آدم من قبلكم. غير أن الوصية سرعان ما نُسيت، وحلّ مكانها صوت الأقوى.",
+    "مرّت الأجيال، وتغيّر الفتوات، وبقيت الحارة على حالها؛ تحلم بالعدل وتكتفي بالحكايات. حتى جاء عرفة يحمل قنينة سحرية، لا يعرف أحد ما بداخلها على وجه اليقين.",
+    "وفي ليلة من ليالي الشتاء، انطلقت صيحة مدوية من وسط الحارة. كان عرفة قد فتح القنينة أمام أعين الجميع، ولم يصدق أحد ما رأى. لكن الحقيقة كانت أبسط مما يتخيلون، وأعقد مما يحتملون.",
+    "ومنذ تلك اللحظة، تغير كل شيء. صارت الحارة تعرف أن السحر ليس في القنينة، بل في قلوب من يؤمنون بأن التغيير ممكن. وأن الفوتوة الحقيقية هي أن يقرر الإنسان أن يكون هو الفتوة."
+];
+?>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><?= htmlspecialchars($book['title']) ?> — سرد</title>
+<link rel="icon" href="<?= ROOT ?>assets/images/sarrdd Logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="<?= ROOT ?>assets/css/reading.css">
+</head>
+<body>
+
+<!-- ============================================================
+     NAVBAR
+     ============================================================ -->
+<header class="navbar" role="banner">
+  <div class="navbar__inner">
+    <a href="<?= ROOT ?>index" class="navbar__logo">
+      <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد">
+      <span>سرد</span>
+    </a>
+    <nav class="navbar__links" aria-label="التنقل الرئيسي">
+      <a href="<?= ROOT ?>index">الرئيسية</a>
+      <a href="<?= ROOT ?>Browsebooks">تصفح الكتب</a>
+      <a href="#" class="navbar__link--active">القراءة</a>
+    </nav>
+    <div class="navbar__actions">
+      <a href="<?= ROOT ?>BookDetails?id=<?= $bookId ?>" class="navbar__back-link" title="العودة لصفحة الكتاب">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span>العودة للكتاب</span>
+      </a>
+      <a href="<?= ROOT ?>signup" class="navbar__cta">حسابي</a>
+    </div>
+  </div>
+</header>
+
+<main class="reading-page">
+
+  <div class="reading-grid">
+
+    <!-- ==========================================================
+         LEFT COLUMN — Chapters Panel
+         ========================================================== -->
+    <aside class="panel side-panel" id="sidePanel" aria-label="الفصول">
+      <button class="side-panel__drawer-toggle" id="drawerToggle" aria-label="فتح لوحة الفصول" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+
+      <div class="side-panel__body">
+        <div class="panel-header">
+          <h2 class="panel-title">الفصول</h2>
+          <span class="panel-badge"><?= count($chapters) ?></span>
+        </div>
+
+        <!-- Search -->
+        <div class="chapter-search">
+          <svg viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.6" y2="16.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="search" id="chapterSearchInput" placeholder="ابحث عن فصل...">
+        </div>
+
+        <!-- Reading Progress -->
+        <div class="chapters-progress">
+          <div class="chapters-progress__track">
+            <div class="chapters-progress__fill" style="width: <?= $progress['percentage'] ?>%;"></div>
+          </div>
+          <span><?= $progress['percentage'] ?>% مكتمل</span>
+        </div>
+
+        <!-- Chapter List -->
+        <ul class="chapter-list" id="chapterList">
+          <?php if (!empty($chapters)): ?>
+            <?php foreach ($chapters as $ch): ?>
+            <li class="chapter-row <?= $ch['chapter_number'] <= 2 ? 'chapter-row--completed' : ($ch['chapter_number'] == 3 ? 'chapter-row--current' : 'chapter-row--unread') ?>" 
+                data-title="<?= htmlspecialchars($ch['title']) ?>" 
+                tabindex="0"
+                onclick="location.href='reading.php?id=<?= $bookId ?>&chapter=<?= $ch['chapter_number'] ?>'">
+              <span class="chapter-row__status" aria-hidden="true"></span>
+              <span class="chapter-row__number"><?= sprintf('%02d', $ch['chapter_number']) ?></span>
+              <span class="chapter-row__title"><?= htmlspecialchars($ch['title']) ?></span>
+              <?php if ($ch['reading_time'] > 0): ?>
+                <span class="chapter-row__time"><?= $ch['reading_time'] ?> د</span>
+              <?php endif; ?>
+            </li>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <li class="chapter-row" style="justify-content:center; opacity:0.6; cursor:default;">
+              <span>لم يتم إضافة فصول بعد</span>
+            </li>
+          <?php endif; ?>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- ==========================================================
+         CENTER COLUMN — Open Book (MAIN CONTENT)
+         ========================================================== -->
+    <section class="panel open-book-wrap" aria-label="عرض الكتاب">
+      <div class="book-container" id="bookContainer">
+
+        <!-- Book Atmosphere -->
+        <div class="book-atmosphere" aria-hidden="true">
+          <span class="light-ray light-ray--1"></span>
+          <span class="light-ray light-ray--2"></span>
+          <span class="dust dust--1"></span>
+          <span class="dust dust--2"></span>
+          <span class="dust dust--3"></span>
+          <span class="dust dust--4"></span>
+          <span class="dust dust--5"></span>
+        </div>
+
+        <!-- Opening Animation -->
+        <div class="book-opening-cover" id="bookOpeningCover" aria-hidden="true">
+          <span class="book-opening-cover__emblem">سرد</span>
+        </div>
+
+        <!-- The Book -->
+        <div class="book" id="book">
+          <div class="book__spine" aria-hidden="true"></div>
+
+          <div class="page page--right" id="pageRight">
+            <div class="page__inner">
+              <p class="page__text" id="pageTextRight" style="font-family:'Amiri', serif; font-size: 19px; line-height: 1.9;"><?= nl2br(htmlspecialchars($pages[0] ?? '')) ?></p>
+              <span class="page__number">1</span>
+            </div>
+          </div>
+
+          <div class="page page--left" id="pageLeft">
+            <div class="page__inner">
+              <p class="page__text" id="pageTextLeft" style="font-family:'Amiri', serif; font-size: 19px; line-height: 1.9;"><?= nl2br(htmlspecialchars($pages[1] ?? '')) ?></p>
+              <span class="page__number">2</span>
+            </div>
+          </div>
+
+          <div class="page page--flip" id="pageFlip" aria-hidden="true">
+            <div class="page__inner">
+              <p class="page__text" id="pageTextFlip" style="font-family:'Amiri', serif;"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================
+           FLOATING READING TOOLBAR
+           ====================================================== -->
+      <div class="toolbar glass-card" role="toolbar" aria-label="أدوات القراءة" id="readingToolbar"
+           data-total-pages="<?= (int) $progress['total_pages'] ?>" data-start-page="<?= (int) $progress['current_page'] ?>">
+
+        <button class="toolbar__btn toolbar__btn--nav" id="prevPageBtn" aria-label="الصفحة السابقة">
+          <svg viewBox="0 0 24 24" width="24" height="24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg>
+        </button>
+
+        <div class="toolbar__center">
+          <span class="toolbar__page-indicator" id="toolbarPageIndicator">1 / <?= $progress['total_pages'] ?></span>
+          <div class="toolbar__dots" id="toolbarDots" aria-hidden="true">
+            <span class="toolbar__dot"></span><span class="toolbar__dot"></span><span class="toolbar__dot"></span><span class="toolbar__dot"></span><span class="toolbar__dot"></span>
+          </div>
+        </div>
+
+        <button class="toolbar__btn" id="zoomBtn" aria-label="تكبير">
+          <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.6" y2="16.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+
+        <!-- Aa Button - Anchor for settings popover -->
+        <button class="toolbar__btn toolbar__btn--text" id="fontSettingsBtn" aria-haspopup="true" aria-expanded="false" aria-label="حجم ونوع الخط">Aa</button>
+
+        <button class="toolbar__btn" id="darkModeBtn" aria-pressed="false" aria-label="الوضع الليلي">
+          <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+        </button>
+
+        <button class="toolbar__btn" id="toolbarBookmarkBtn" aria-pressed="false" aria-label="علامة مرجعية">
+          <svg viewBox="0 0 24 24" width="22" height="22"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M6 3h12v18l-6-4-6 4V3z"/></svg>
+        </button>
+
+        <button class="toolbar__btn toolbar__btn--nav" id="nextPageBtn" aria-label="الصفحة التالية">
+          <svg viewBox="0 0 24 24" width="24" height="24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg>
+        </button>
+
+        <!-- ======================================================
+             SETTINGS POPOVER — Above Aa Button
+             ====================================================== -->
+        <div class="settings-popover" id="settingsPopover" role="dialog" aria-label="إعدادات القراءة">
+          <h3 class="card-title">إعدادات القراءة</h3>
+
+          <!-- Font Size -->
+          <div class="settings-row">
+            <label>
+              <span>حجم الخط</span>
+              <span id="fontSizeDisplay">19</span>
+            </label>
+            <input type="range" min="14" max="28" step="1" value="19" id="fontSizeSlider">
+          </div>
+
+          <!-- Font Family -->
+          <div class="settings-row">
+            <label>نوع الخط</label>
+            <select id="fontFamilySelect">
+              <option value="'Amiri', serif">Amiri</option>
+              <option value="'Noto Naskh Arabic', serif">Noto Naskh Arabic</option>
+              <option value="'Tajawal', sans-serif">Tajawal</option>
+            </select>
+          </div>
+
+          <!-- Line Height -->
+          <div class="settings-row">
+            <label>
+              <span>تباعد الأسطر</span>
+              <span id="lineHeightDisplay">1.9</span>
+            </label>
+            <input type="range" min="1.4" max="2.4" step="0.1" value="1.9" id="lineHeightSlider">
+          </div>
+
+          <!-- Theme -->
+          <div class="settings-row">
+            <label>المظهر</label>
+            <div class="settings-themes">
+              <button data-theme="light" class="active">
+                <span class="theme-icon">☀️</span>
+                فاتح
+              </button>
+              <button data-theme="sepia">
+                <span class="theme-icon">📜</span>
+                Sepia
+              </button>
+              <button data-theme="dark">
+                <span class="theme-icon">🌙</span>
+                داكن
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ======================================================
+           READING PROGRESS BAR
+           ====================================================== -->
+      <div class="reading-progress-bar">
+        <div class="reading-progress__track">
+          <div class="reading-progress__fill" style="width: <?= $progress['percentage'] ?>%;"></div>
+        </div>
+        <div class="reading-progress__info">
+          <span class="reading-progress__percent"><?= $progress['percentage'] ?>% مكتمل</span>
+          <span class="reading-progress__pages">صفحة <?= $progress['current_page'] ?> من <?= $progress['total_pages'] ?></span>
+          <span class="reading-progress__time">⏱ تبقى تقريباً <?= $progress['remaining_time'] ?></span>
+        </div>
+        <div class="reading-progress__save">
+          <span class="reading-progress__save-indicator">✓ تم حفظ تقدم القراءة تلقائياً</span>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+</main>
+
+<!-- Page content passed from PHP to JS for the flip/turn logic -->
+<script id="bookPagesData" type="application/json"><?= json_encode($pages, JSON_UNESCAPED_UNICODE) ?></script>
+
+<script src="<?= ROOT ?>assets/js/reading.js"></script>
+</body>
+</html>

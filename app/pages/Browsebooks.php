@@ -1,167 +1,325 @@
-﻿<?php
-// BrowseBooks.php
-// Full catalog page with sidebar filters, sorting, and a grid/list view toggle.
-// Search + filter + sort all run client-side against the cards rendered here.
+<?php
+// BrowseBooks.php — Premium Digital Library
+// سرد (Sard) — Arabic Reading Platform
 
-require_once "../app/core/init.php";
+require_once __DIR__ . "/../core/init.php";
 
-$books = [
-    ["id" => 1, "title" => "ظل النخيل", "author_name" => "سلمى عادل", "category" => "رومانسي", "excerpt" => "رواية عن الشوق والعودة للجذور", "cover" => "assets/images/covers/book-1.jpg"],
-    ["id" => 2, "title" => "حكاية قلب", "author_name" => "نورا أحمد", "category" => "رومانسي", "excerpt" => "رحلة بحث عن الحب في زمن المتغيرات", "cover" => "assets/images/covers/book-2.jpg"],
-    ["id" => 3, "title" => "نسمات الحب", "author_name" => "ليلى سعيد", "category" => "رومانسي", "excerpt" => "قصة حب تتحدى الزمن والمكان", "cover" => "assets/images/covers/book-3.jpg"],
+// ============================================================
+// GET SEARCH QUERY
+// ============================================================
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
+$categoryFilter = isset($_GET['category']) ? trim($_GET['category']) : 'الكل';
 
-    ["id" => 4, "title" => "العابرون", "author_name" => "هالة نبيل", "category" => "خيال علمي", "excerpt" => "رحلة عبر الأبعاد المختلفة", "cover" => "assets/images/covers/book-4.jpg"],
-    ["id" => 5, "title" => "كوكب آخر", "author_name" => "سامي رضا", "category" => "خيال علمي", "excerpt" => "استكشاف حياة جديدة في الفضاء", "cover" => "assets/images/covers/book-5.jpg"],
-    ["id" => 6, "title" => "آلة الزمن", "author_name" => "كريم أشرف", "category" => "خيال علمي", "excerpt" => "مغامرات عبر الزمن", "cover" => "assets/images/covers/book-6.jpg"],
-
-    ["id" => 7, "title" => "مرايا الصمت", "author_name" => "يوسف كامل", "category" => "غموض", "excerpt" => "لغز ينتظر من يحله", "cover" => "assets/images/covers/book-7.jpg"],
-    ["id" => 8, "title" => "اللغز", "author_name" => "مازن رضا", "category" => "غموض", "excerpt" => "قصة غامضة تأخذك إلى عالم آخر", "cover" => "assets/images/covers/book-8.jpg"],
-    ["id" => 9, "title" => "الظل", "author_name" => "طارق منير", "category" => "غموض", "excerpt" => "في الظل تكمن الحقيقة", "cover" => "assets/images/covers/book-9.jpg"],
-];
-
-// fg colors match the genre colors already used on HomePage for consistency
-$genres = [
-    ["label" => "رومانسي", "fg" => "#B34141", "bg" => "#FDF2F2"],
-    ["label" => "خيال علمي", "fg" => "#1A6EB5", "bg" => "#F0F7FF"],
-    ["label" => "غموض", "fg" => "#6B4C3A", "bg" => "#F5F0EB"],
-];
-
-$genreCounts = [];
-foreach ($books as $b) {
-    $genreCounts[$b['category']] = ($genreCounts[$b['category']] ?? 0) + 1;
+// ============================================================
+// FETCH BOOKS FROM DATABASE WITH SEARCH
+// ============================================================
+try {
+    $sql = "
+        SELECT 
+            n.id,
+            n.title,
+            n.slug,
+            n.cover_image,
+            n.spine_image,
+            n.description,
+            n.publish_year,
+            n.pages,
+            n.rating,
+            n.is_featured,
+            n.status,
+            a.name AS author_name,
+            a.bio AS author_bio,
+            a.photo AS author_photo,
+            c.name_ar AS category_name,
+            c.name_en AS category_name_en,
+            c.id AS category_id,
+            p.name AS publisher_name
+        FROM novels n
+        JOIN authors a ON n.author_id = a.id
+        JOIN categories c ON n.category_id = c.id
+        LEFT JOIN publishers p ON n.publisher_id = p.id
+        WHERE n.status = 'published'
+    ";
+    
+    $params = [];
+    
+    // Apply search filter
+    if (!empty($searchQuery)) {
+        $sql .= " AND (n.title LIKE :search 
+                  OR a.name LIKE :search 
+                  OR n.description LIKE :search
+                  OR n.keywords LIKE :search)";
+        $params[':search'] = '%' . $searchQuery . '%';
+    }
+    
+    // Apply category filter
+    if ($categoryFilter !== 'الكل') {
+        $sql .= " AND c.name_ar = :category";
+        $params[':category'] = $categoryFilter;
+    }
+    
+    $sql .= " ORDER BY c.id, n.id";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+} catch (PDOException $e) {
+    $books = [];
+    error_log("Database Error in BrowseBooks.php: " . $e->getMessage());
 }
 
-$activeCategory = isset($_GET['category']) ? $_GET['category'] : 'all';
+// ============================================================
+// SPINE IMAGE POOL (for fallback)
+// ============================================================
+$spinePool = [
+    "نجيب-محفوظ-اللص و الكلاب(2).png",
+    "اولاد الناس.png",
+    "ثرثرة فوق النيل .png",
+    "طبيب ارياف.png",
+    "ماجدولين.png",
+    "ايكادولي.png",
+    "شجرتي.png",
+];
+
+// ============================================================
+// GROUP BOOKS BY CATEGORY
+// ============================================================
+$shelves = [];
+$categoryMap = [
+    1 => 'الروايات التاريخية',
+    2 => 'روايات الغموض والإثارة',
+    3 => 'روايات الفانتازيا والخيال'
+];
+
+foreach ($books as $book) {
+    $categoryId = $book['category_id'];
+    $categoryName = $categoryMap[$categoryId] ?? $book['category_name'];
+    
+    if (!isset($shelves[$categoryName])) {
+        $shelves[$categoryName] = [];
+    }
+    $shelves[$categoryName][] = $book;
+}
+
+// ============================================================
+// CATEGORIES FOR FILTERS (from database)
+// ============================================================
+try {
+    $catQuery = "SELECT id, name_ar, name_en FROM categories ORDER BY id";
+    $catStmt = $conn->prepare($catQuery);
+    $catStmt->execute();
+    $dbCategories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $dbCategories = [];
+}
+
+$categories = ['الكل'];
+$categoryLabels = ['الكل' => 'جميع الكتب'];
+
+foreach ($dbCategories as $cat) {
+    $categories[] = $cat['name_ar'];
+    $categoryLabels[$cat['name_ar']] = $cat['name_ar'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تصفح الروايات — ريشة</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="<?= ROOT ?>assets/css/BrowseBooks.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المكتبة — سرد</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="<?= ROOT ?>assets/css/Browsebooks.css">
 </head>
 <body>
 
-<header class="site-header">
-    <div class="logo" onclick="location.href='index'" style="cursor:pointer;">
-        <span class="logo-mark">✒</span>
-        <span class="logo-text">ريشة</span>
-    </div>
-    <div class="header-actions">
-        <button class="btn btn-outline" onclick="location.href='Login'">دخول</button>
-        <button class="btn btn-filled" onclick="location.href='Signup'">حساب جديد</button>
-    </div>
-</header>
-
-<!-- Colored header band instead of a plain white title -->
-<section class="browse-hero">
-    <p class="browse-hero-title">تصفح الروايات</p>
-    <p class="browse-hero-sub">كل الروايات المنشورة على ريشة في مكان واحد</p>
-    <div class="browse-hero-search">
-        <input type="text" id="searchInput" class="search-input" placeholder="ابحث بالعنوان أو اسم الكاتب...">
-    </div>
-</section>
-
-<main class="browse-layout">
-
-    <!-- Sidebar filters -->
-    <aside class="filters-sidebar">
-        <div class="filter-block">
-            <p class="filter-block-title">التصنيف</p>
-            <div class="category-list" id="categoryList">
-                <button class="category-item <?php echo $activeCategory === 'all' ? 'category-active' : ''; ?>" data-category="all">
-                    <span>كل الروايات</span>
-                    <span class="category-item-count"><?php echo count($books); ?></span>
-                </button>
-                <?php foreach ($genres as $g): ?>
-                    <button class="category-item <?php echo $activeCategory === $g['label'] ? 'category-active' : ''; ?>"
-                            data-category="<?php echo htmlspecialchars($g['label']); ?>"
-                            style="--cat-color: <?php echo $g['fg']; ?>;">
-                        <span><?php echo htmlspecialchars($g['label']); ?></span>
-                        <span class="category-item-count"><?php echo $genreCounts[$g['label']] ?? 0; ?></span>
-                    </button>
-                <?php endforeach; ?>
+    <!-- ============================================================
+    NAVBAR — Premium Floating
+    ============================================================ -->
+    <nav class="navbar-premium" id="navbar">
+        <div class="navbar-premium-container">
+            <div class="navbar-premium-brand">
+                <a href="<?= ROOT ?>index" class="brand-premium-link">
+                    <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد logo" class="brand-premium-logo">
+                    <span class="brand-premium-name">سرد</span>
+                </a>
+            </div>
+            <ul class="nav-premium-links">
+                <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
+                <li><a href="<?= ROOT ?>Browsebooks" class="active">المكتبة</a></li>
+                <li><a href="#">الكتّاب</a></li>
+                <li><a href="#">من نحن</a></li>
+            </ul>
+            <div class="nav-premium-actions">
+                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
+                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-filled">إنشاء حساب</a>
             </div>
         </div>
+    </nav>
 
-        <div class="filter-block">
-            <p class="filter-block-title">الترتيب</p>
-            <select id="sortSelect" class="sort-select">
-                <option value="default">الأحدث</option>
-                <option value="title-asc">الاسم: أ - ي</option>
-                <option value="title-desc">الاسم: ي - أ</option>
-            </select>
-        </div>
-    </aside>
-
-    <!-- Results -->
-    <section class="results-area">
-        <div class="results-header">
-            <p class="results-count" id="resultsCount"></p>
-            <div class="view-toggle">
-                <button class="view-btn view-active" id="gridViewBtn" aria-label="عرض شبكي">⬛⬛</button>
-                <button class="view-btn" id="listViewBtn" aria-label="عرض قائمة">☰</button>
+    <!-- ============================================================
+    SEARCH SECTION
+    ============================================================ -->
+    <section class="search-premium-section">
+        <div class="search-premium-container">
+            <div class="search-premium-wrapper">
+                <i class="fas fa-search search-premium-icon"></i>
+                <form method="GET" action="" style="width: 100%; display: flex; align-items: center;">
+                    <input type="text" 
+                           name="search" 
+                           class="search-premium-input" 
+                           id="searchInput" 
+                           placeholder="ابحث عن كتاب، مؤلف، أو تصنيف..." 
+                           autocomplete="off"
+                           value="<?php echo htmlspecialchars($searchQuery); ?>">
+                    <?php if (!empty($searchQuery)): ?>
+                        <a href="<?= ROOT ?>Browsebooks" class="search-premium-clear" style="text-decoration: none;">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    <?php endif; ?>
+                </form>
             </div>
-        </div>
-
-        <div class="book-grid" id="bookGrid">
-            <?php foreach ($books as $book):
-                $genreColor = '#1D9E75';
-                $genreBg = '#E1F5EE';
-                foreach ($genres as $g) {
-                    if ($g['label'] === $book['category']) { $genreColor = $g['fg']; $genreBg = $g['bg']; break; }
-                }
-            ?>
-                <article class="book-card" data-category="<?php echo htmlspecialchars($book['category']); ?>"
-                          data-title="<?php echo htmlspecialchars(mb_strtolower($book['title'])); ?>"
-                          data-title-raw="<?php echo htmlspecialchars($book['title']); ?>"
-                          data-author="<?php echo htmlspecialchars(mb_strtolower($book['author_name'])); ?>"
-                          onclick="location.href='BookDetails?id=<?php echo (int)$book['id']; ?>'">
-                    <div class="book-cover" style="background: <?php echo $genreBg; ?>;">
-                        <?php if (!empty($book['cover']) && file_exists($book['cover'])): ?>
-                            <img src="<?php echo htmlspecialchars($book['cover']); ?>" alt="<?php echo htmlspecialchars($book['title']); ?>" class="book-cover-img">
-                        <?php else: ?>
-                            <span class="cover-placeholder" style="color: <?php echo $genreColor; ?>;">📖</span>
-                        <?php endif; ?>
-                        <span class="category-badge" style="color: <?php echo $genreColor; ?>;"><?php echo htmlspecialchars($book['category']); ?></span>
-                        <div class="cover-overlay">
-                            <button class="read-btn">اقرأ الآن</button>
-                        </div>
-                    </div>
-                    <p class="book-title"><?php echo htmlspecialchars($book['title']); ?></p>
-                    <p class="book-author"><?php echo htmlspecialchars($book['author_name']); ?></p>
-                    <p class="book-excerpt"><?php echo htmlspecialchars($book['excerpt']); ?></p>
-                </article>
-            <?php endforeach; ?>
-        </div>
-
-        <div class="empty-state" id="emptyState" style="display:none;">
-            <p class="empty-icon">🔍</p>
-            <p>مفيش روايات مطابقة لبحثك</p>
         </div>
     </section>
 
-</main>
+    <!-- ============================================================
+    CATEGORY FILTERS — Horizontal Chips
+    ============================================================ -->
+    <section class="category-premium-section">
+        <div class="category-premium-container">
+            <?php foreach ($categories as $cat): ?>
+                <a href="<?= ROOT ?>Browsebooks<?php 
+                    $params = [];
+                    if ($searchQuery) $params['search'] = $searchQuery;
+                    if ($cat !== 'الكل') $params['category'] = $cat;
+                    echo !empty($params) ? '?' . http_build_query($params) : '';
+                ?>" 
+                   class="category-premium-chip <?php echo $cat === $categoryFilter ? 'active' : ''; ?>" 
+                   style="text-decoration: none; cursor: pointer;">
+                    <?php echo $categoryLabels[$cat]; ?>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </section>
 
-<footer class="site-footer">
-    <div class="footer-links">
-        <a href="#">عن ريشة</a>
-        <a href="WriteWithUs">اكتب معنا</a>
-        <a href="#">سياسة الخصوصية</a>
-        <a href="#">شروط الاستخدام</a>
-        <a href="#">اتصل بنا</a>
+    <!-- ============================================================
+    RESULTS COUNT
+    ============================================================ -->
+    <div style="text-align: center; padding: 10px 20px; color: #8a7a6a; font-size: 14px;">
+        <?php if (!empty($searchQuery) || $categoryFilter !== 'الكل'): ?>
+            عرض <?php echo count($books); ?> كتاب
+            <?php if (!empty($searchQuery)): ?>
+                عن "<?php echo htmlspecialchars($searchQuery); ?>"
+            <?php endif; ?>
+        <?php endif; ?>
     </div>
-    <p>© <?php echo date("Y"); ?> ريشة — منصة كتابة وقراءة الروايات العربية</p>
-</footer>
 
-<script>
-    const initialCategory = <?php echo json_encode($activeCategory); ?>;
-</script>
-<script src="assets/js/BrowseBooks.js"></script>
+    <!-- ============================================================
+    BOOKSHELVES — Only One Visible at a Time
+    ============================================================ -->
+    <main class="library-premium-hall">
+        
+        <?php if (empty($books)): ?>
+            <!-- Empty State -->
+            <div class="empty-premium-state" id="emptyState" style="display: flex !important;">
+                <div class="empty-premium-icon"><i class="fas fa-book-open"></i></div>
+                <h3 class="empty-premium-title">لم يتم العثور على كتب</h3>
+                <p class="empty-premium-text">حاول تغيير كلمات البحث أو التصنيف</p>
+                <a href="<?= ROOT ?>Browsebooks" class="info-cta" style="margin-top: 20px; display: inline-block; padding: 12px 30px; background: #8B7355; color: white; border-radius: 8px; text-decoration: none;">
+                    عرض جميع الكتب
+                </a>
+            </div>
+        <?php else: ?>
+            
+            <?php foreach ($shelves as $shelfName => $shelfBooks): 
+                // Determine category key for filtering
+                $categoryKey = '';
+                if (strpos($shelfName, 'التاريخية') !== false) $categoryKey = 'رواية تاريخية';
+                elseif (strpos($shelfName, 'الغموض') !== false) $categoryKey = 'رواية غموض';
+                elseif (strpos($shelfName, 'الفانتازيا') !== false) $categoryKey = 'رواية فانتازيا';
+            ?>
+                <section class="shelf-premium-section" data-category="<?php echo $categoryKey; ?>">
+                    <div class="shelf-premium-header">
+                        <h2 class="shelf-premium-title"><?php echo $shelfName; ?></h2>
+                        <span class="shelf-premium-line"></span>
+                    </div>
+                    <div class="shelf-premium-wrapper">
+                        <div class="shelf-premium-wood">
+                            <div class="shelf-premium-books">
+                                <?php 
+                                $heights = [175, 185, 165, 190, 180, 170];
+                                $rotations = [-1, 0, 2, -0.5, 1.5, -2];
+                                $i = 0;
+                                foreach ($shelfBooks as $book): 
+                                    // Build cover image path
+                                    $coverPath = !empty($book['cover_image']) 
+                                        ? ROOT . 'assets/images/' . $book['cover_image'] 
+                                        : ROOT . 'assets/images/placeholder.jpg';
+                                    
+                                    $h = $heights[$i % count($heights)] + rand(-3, 3);
+                                    $r = $rotations[$i % count($rotations)] + (rand(-15, 15) / 100);
+                                    $i++;
+                                ?>
+                                    <div class="book-premium-stand" 
+                                         data-category="<?php echo $book['category_name']; ?>"
+                                         style="--book-height: <?php echo $h; ?>px; --book-rotation: <?php echo $r; ?>deg;"
+                                         onclick="location.href='BookDetails?id=<?php echo $book['id']; ?>'"
+                                         title="<?php echo htmlspecialchars($book['title']); ?>">
+                                        <div class="book-premium-3d">
+                                            <div class="book-premium-cover">
+                                                <?php if (!empty($coverPath)): ?>
+                                                    <img src="<?php echo htmlspecialchars($coverPath); ?>" alt="<?php echo htmlspecialchars($book['title']); ?>" class="book-premium-img" loading="lazy">
+                                                <?php else: ?>
+                                                    <div class="book-premium-placeholder">
+                                                        <i class="fas fa-book"></i>
+                                                    </div>
+                                                <?php endif; ?>
+                                                <div class="book-premium-spine"></div>
+                                                <div class="book-premium-glow"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="shelf-premium-board">
+                                <div class="shelf-premium-grain"></div>
+                                <div class="shelf-premium-edge"></div>
+                            </div>
+                            <div class="shelf-premium-shadow"></div>
+                        </div>
+                    </div>
+                </section>
+            <?php endforeach; ?>
+            
+        <?php endif; ?>
+
+    </main>
+
+    <!-- ============================================================
+    FOOTER — Premium with Curve
+    ============================================================ -->
+    <footer class="footer-premium">
+        <div class="footer-premium-curve"></div>
+        <div class="footer-premium-content">
+            <div class="footer-premium-brand">
+                <span class="footer-premium-logo">سرد</span>
+                <p>مكتبة عربية رقمية تجمع القرّاء والكتّاب في مكان واحد، احتفاءً بالأدب العربي بكل تنوعه.</p>
+            </div>
+            <div class="footer-premium-links">
+                <div class="footer-premium-col"><h4>روابط سريعة</h4><a href="<?= ROOT ?>index">الرئيسية</a><a href="<?= ROOT ?>Browsebooks">المكتبة</a><a href="#">الكتّاب</a><a href="#">من نحن</a></div>
+                <div class="footer-premium-col"><h4>حسابك</h4><a href="<?= ROOT ?>signup">تسجيل الدخول</a><a href="<?= ROOT ?>signup">إنشاء حساب</a></div>
+                <div class="footer-premium-col"><h4>تواصل معنا</h4><a href="#">الدعم الفني</a><a href="#">الأسئلة الشائعة</a><a href="#">سياسة الخصوصية</a></div>
+            </div>
+        </div>
+        <div class="footer-premium-bottom">
+            <span>© 2026 سرد. جميع الحقوق محفوظة.</span>
+            <span>صُنع بحب لمحبي القراءة والكتابة العربية</span>
+        </div>
+    </footer>
+
+    <script src="<?= ROOT ?>assets/js/Browsebooks.js"></script>
+
 </body>
 </html>
-
-
