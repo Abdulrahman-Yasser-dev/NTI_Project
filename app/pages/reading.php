@@ -7,6 +7,8 @@
    statements — the array below is a stand-in for that result).
    ============================================================ */
 
+require_once __DIR__ . "/../core/init.php";
+
 $bookId = isset($_GET['id']) ? (int) $_GET['id'] : 1;
 
 $book = [
@@ -18,8 +20,8 @@ $book = [
     'pages_count' => 312,
     'rating'      => 4.7,
     'description' => 'حكاية حارة مصرية تمتد عبر أجيال، يرويها نجيب محفوظ في نسيج رمزي يمزج بين التاريخ والفلسفة والإنسان.',
-    // TODO: point this to the real cover filename inside /images
-    'cover'       => '../images/Background-desk.png',
+    // TODO: point this to the real cover filename inside assets/images
+    'cover'       => ROOT . 'assets/images/Background-desk.png',
     'quote'       => 'الحارة لا تنسى، والزمن وحده من يملك أن يُنصف أو يظلم.'
 ];
 
@@ -46,9 +48,9 @@ $pages = [
 ];
 
 $related = [
-    ['title' => 'ثرثرة فوق النيل', 'cover' => '../images/ثرثرة فوق النيل-غلاف.jpg'],
-    ['title' => 'اللص والكلاب',    'cover' => '../images/Bg1.png'],
-    ['title' => 'ميرامار',         'cover' => '../images/Bg1.png'],
+    ['title' => 'ثرثرة فوق النيل', 'cover' => ROOT . 'assets/images/غلاف ثرثرة فوق النيل.jpg'],
+    ['title' => 'اللص والكلاب',    'cover' => ROOT . 'assets/images/غلاف اللص والكلاب.jpg'],
+    ['title' => 'ميرامار',         'cover' => ROOT . 'assets/images/غلاف ميرامار.jpg'],
 ];
 
 $today = ['books_read' => 1, 'time_spent' => '45 دقيقة'];
@@ -68,33 +70,33 @@ $achievements = [
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($book['title']) ?> — سرد</title>
-<link rel="icon" href="../images/sarrdd Logo.png">
+<link rel="icon" href="<?= ROOT ?>assets/images/sarrdd Logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;500;700&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../Style/reading.css">
+<link rel="stylesheet" href="<?= ROOT ?>assets/css/reading.css">
 </head>
 <body>
 
 <!-- ============================================================
      NAVBAR — placeholder matching the homepage navbar. Swap this
-     markup for the shared include/component used on HomePage.php.
+     markup for the shared header.php include used elsewhere.
      ============================================================ -->
 <header class="navbar" role="banner">
   <div class="navbar__inner">
-    <a href="HomePage.php" class="navbar__logo">
-      <img src="../images/sarrdd Logo.png" alt="سرد">
+    <a href="<?= ROOT ?>index" class="navbar__logo">
+      <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد">
       <span>سرد</span>
     </a>
     <nav class="navbar__links" aria-label="التنقل الرئيسي">
-      <a href="HomePage.php">الرئيسية</a>
-      <a href="BrowseBooks.php">تصفح الكتب</a>
-      <a href="Writewithus.php">اكتب معنا</a>
+      <a href="<?= ROOT ?>index">الرئيسية</a>
+      <a href="<?= ROOT ?>Browsebooks">تصفح الكتب</a>
+      <a href="<?= ROOT ?>Writewithus">اكتب معنا</a>
     </nav>
     <div class="navbar__actions">
       <button class="navbar__icon-btn" aria-label="بحث">
         <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.6" y2="16.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
-      <a href="signup.php" class="navbar__cta">حسابي</a>
+      <a href="<?= ROOT ?>signup" class="navbar__cta">حسابي</a>
     </div>
   </div>
 </header>
@@ -397,6 +399,6 @@ $achievements = [
 <!-- Page content passed from PHP to JS for the flip/turn logic -->
 <script id="bookPagesData" type="application/json"><?= json_encode($pages, JSON_UNESCAPED_UNICODE) ?></script>
 
-<script src="../Script/reading.js"></script>
+<script src="<?= ROOT ?>assets/js/reading.js"></script>
 </body>
 </html>

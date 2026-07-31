@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . "/../app/core/init.php";
+?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -10,8 +13,7 @@
   <!-- Font Awesome for quill icon -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   
-  <!-- Custom CSS — CORRECT PATH -->
-  <link rel="stylesheet" href="../Style/signup.css">
+  <link rel="stylesheet" href="signup.css">
 </head>
 <body>
 
@@ -148,10 +150,7 @@
   </div>
 </div>
 
-<!-- ============================================================
-JAVASCRIPT — CORRECT PATH
-============================================================ -->
-<script src="../Script/signup.js"></script>
+<script src="signup.js"></script>
 
 </body>
 </html>

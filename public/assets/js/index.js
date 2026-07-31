@@ -11,6 +11,11 @@
     const modalDesc = document.getElementById('modalDesc');
 
     // ============================================================
+    // BASE PATH — matches app/core/config.php's ROOT constant
+    // ============================================================
+    const ROOT = "http://localhost/NTI_project/public/";
+
+    // ============================================================
     // BOOK DATA — All 32 books with their metadata
     // ============================================================
     const books = [
@@ -19,7 +24,7 @@
             id: 1,
             title: "اللص والكلاب",
             author: "نجيب محفوظ",
-            cover: "../images/نجيب-محفوظ-اللص و الكلاب(2).png",
+            cover: ROOT + "assets/images/نجيب-محفوظ-اللص و الكلاب(2).png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٦١",
@@ -30,7 +35,7 @@
             id: 2,
             title: "أولاد الناس",
             author: "نجيب محفوظ",
-            cover: "../images/اولاد الناس.png",
+            cover: ROOT + "assets/images/اولاد الناس.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٦٢",
@@ -41,7 +46,7 @@
             id: 3,
             title: "ثرثرة فوق النيل",
             author: "نجيب محفوظ",
-            cover: "../images/ثرثرة فوق النيل .png",
+            cover: ROOT + "assets/images/ثرثرة فوق النيل .png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٦٦",
@@ -52,7 +57,7 @@
             id: 4,
             title: "طبيب أرياف",
             author: "توفيق الحكيم",
-            cover: "../images/طبيب ارياف.png",
+            cover: ROOT + "assets/images/طبيب ارياف.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٣٦",
@@ -63,7 +68,7 @@
             id: 5,
             title: "ماجدولين",
             author: "مي زيادة",
-            cover: "../images/ماجدولين.png",
+            cover: ROOT + "assets/images/ماجدولين.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٢٥",
@@ -74,7 +79,7 @@
             id: 6,
             title: "إيكادولي",
             author: "توفيق الحكيم",
-            cover: "../images/ايكادولي.png",
+            cover: ROOT + "assets/images/ايكادولي.png",
             genre: "مسرحية",
             category: "أدب عربي",
             year: "١٩٤٢",
@@ -85,7 +90,7 @@
             id: 7,
             title: "شجرتي",
             author: "محمود درويش",
-            cover: "../images/شجرتي.png",
+            cover: ROOT + "assets/images/شجرتي.png",
             genre: "شعر",
             category: "شعر عربي",
             year: "١٩٦٤",
@@ -96,7 +101,7 @@
             id: 8,
             title: "بداية ونهاية",
             author: "نجيب محفوظ",
-            cover: "../images/نجيب-محفوظ-اللص و الكلاب(2).png",
+            cover: ROOT + "assets/images/نجيب-محفوظ-اللص و الكلاب(2).png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٤٩",
@@ -107,7 +112,7 @@
             id: 9,
             title: "الثلاثية",
             author: "نجيب محفوظ",
-            cover: "../images/اولاد الناس.png",
+            cover: ROOT + "assets/images/اولاد الناس.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٥٦",
@@ -118,7 +123,7 @@
             id: 10,
             title: "الحرافيش",
             author: "نجيب محفوظ",
-            cover: "../images/ثرثرة فوق النيل .png",
+            cover: ROOT + "assets/images/ثرثرة فوق النيل .png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٧٧",
@@ -129,7 +134,7 @@
             id: 11,
             title: "مرمر زماني",
             author: "علي أحمد باكثير",
-            cover: "../images/طبيب ارياف.png",
+            cover: ROOT + "assets/images/طبيب ارياف.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٥٠",
@@ -140,7 +145,7 @@
             id: 12,
             title: "رجال في الشمس",
             author: "غسان كنفاني",
-            cover: "../images/ماجدولين.png",
+            cover: ROOT + "assets/images/ماجدولين.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٦٣",
@@ -151,7 +156,7 @@
             id: 13,
             title: "عائد إلى حيفا",
             author: "غسان كنفاني",
-            cover: "../images/ايكادولي.png",
+            cover: ROOT + "assets/images/ايكادولي.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٦٩",
@@ -162,7 +167,7 @@
             id: 14,
             title: "موسم الهجرة",
             author: "الطيب صالح",
-            cover: "../images/شجرتي.png",
+            cover: ROOT + "assets/images/شجرتي.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٦٦",
@@ -173,7 +178,7 @@
             id: 15,
             title: "زقاق المدق",
             author: "نجيب محفوظ",
-            cover: "../images/نجيب-محفوظ-اللص و الكلاب(2).png",
+            cover: ROOT + "assets/images/نجيب-محفوظ-اللص و الكلاب(2).png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٤٧",
@@ -184,7 +189,7 @@
             id: 16,
             title: "السمان والخريف",
             author: "نجيب محفوظ",
-            cover: "../images/اولاد الناس.png",
+            cover: ROOT + "assets/images/اولاد الناس.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٦٢",
@@ -196,7 +201,7 @@
             id: 17,
             title: "أولاد الناس (الجزء الثاني)",
             author: "نجيب محفوظ",
-            cover: "../images/اولاد الناس.png",
+            cover: ROOT + "assets/images/اولاد الناس.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٦٢",
@@ -207,7 +212,7 @@
             id: 18,
             title: "إيكادولي (الجزء الثاني)",
             author: "توفيق الحكيم",
-            cover: "../images/ايكادولي.png",
+            cover: ROOT + "assets/images/ايكادولي.png",
             genre: "مسرحية",
             category: "أدب عربي",
             year: "١٩٤٢",
@@ -218,7 +223,7 @@
             id: 19,
             title: "شجرتي (الجزء الثاني)",
             author: "محمود درويش",
-            cover: "../images/شجرتي.png",
+            cover: ROOT + "assets/images/شجرتي.png",
             genre: "شعر",
             category: "شعر عربي",
             year: "١٩٦٤",
@@ -229,7 +234,7 @@
             id: 20,
             title: "اللص والكلاب (الجزء الثاني)",
             author: "نجيب محفوظ",
-            cover: "../images/نجيب-محفوظ-اللص و الكلاب(2).png",
+            cover: ROOT + "assets/images/نجيب-محفوظ-اللص و الكلاب(2).png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٦١",
@@ -240,7 +245,7 @@
             id: 21,
             title: "ثرثرة فوق النيل (الجزء الثاني)",
             author: "نجيب محفوظ",
-            cover: "../images/ثرثرة فوق النيل .png",
+            cover: ROOT + "assets/images/ثرثرة فوق النيل .png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٦٦",
@@ -251,7 +256,7 @@
             id: 22,
             title: "طبيب أرياف (الجزء الثاني)",
             author: "توفيق الحكيم",
-            cover: "../images/طبيب ارياف.png",
+            cover: ROOT + "assets/images/طبيب ارياف.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٣٦",
@@ -262,7 +267,7 @@
             id: 23,
             title: "ماجدولين (الجزء الثاني)",
             author: "مي زيادة",
-            cover: "../images/ماجدولين.png",
+            cover: ROOT + "assets/images/ماجدولين.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٢٥",
@@ -273,7 +278,7 @@
             id: 24,
             title: "إيكادولي (الجزء الثالث)",
             author: "توفيق الحكيم",
-            cover: "../images/ايكادولي.png",
+            cover: ROOT + "assets/images/ايكادولي.png",
             genre: "مسرحية",
             category: "أدب عربي",
             year: "١٩٤٢",
@@ -284,7 +289,7 @@
             id: 25,
             title: "أولاد الناس (الجزء الثالث)",
             author: "نجيب محفوظ",
-            cover: "../images/اولاد الناس.png",
+            cover: ROOT + "assets/images/اولاد الناس.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٦٢",
@@ -295,7 +300,7 @@
             id: 26,
             title: "شجرتي (الجزء الثالث)",
             author: "محمود درويش",
-            cover: "../images/شجرتي.png",
+            cover: ROOT + "assets/images/شجرتي.png",
             genre: "شعر",
             category: "شعر عربي",
             year: "١٩٦٤",
@@ -306,7 +311,7 @@
             id: 27,
             title: "اللص والكلاب (الجزء الثالث)",
             author: "نجيب محفوظ",
-            cover: "../images/نجيب-محفوظ-اللص و الكلاب(2).png",
+            cover: ROOT + "assets/images/نجيب-محفوظ-اللص و الكلاب(2).png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٦١",
@@ -317,7 +322,7 @@
             id: 28,
             title: "ثرثرة فوق النيل (الجزء الثالث)",
             author: "نجيب محفوظ",
-            cover: "../images/ثرثرة فوق النيل .png",
+            cover: ROOT + "assets/images/ثرثرة فوق النيل .png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٦٦",
@@ -328,7 +333,7 @@
             id: 29,
             title: "طبيب أرياف (الجزء الثالث)",
             author: "توفيق الحكيم",
-            cover: "../images/طبيب ارياف.png",
+            cover: ROOT + "assets/images/طبيب ارياف.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٣٦",
@@ -339,7 +344,7 @@
             id: 30,
             title: "ماجدولين (الجزء الثالث)",
             author: "مي زيادة",
-            cover: "../images/ماجدولين.png",
+            cover: ROOT + "assets/images/ماجدولين.png",
             genre: "رواية",
             category: "أدب عربي",
             year: "١٩٢٥",
@@ -350,7 +355,7 @@
             id: 31,
             title: "إيكادولي (الجزء الرابع)",
             author: "توفيق الحكيم",
-            cover: "../images/ايكادولي.png",
+            cover: ROOT + "assets/images/ايكادولي.png",
             genre: "مسرحية",
             category: "أدب عربي",
             year: "١٩٤٢",
@@ -361,7 +366,7 @@
             id: 32,
             title: "شجرتي (الجزء الرابع)",
             author: "محمود درويش",
-            cover: "../images/شجرتي.png",
+            cover: ROOT + "assets/images/شجرتي.png",
             genre: "شعر",
             category: "شعر عربي",
             year: "١٩٦٤",
@@ -377,23 +382,18 @@
     // OPEN MODAL FUNCTION
     // ============================================================
     function openModal(bookId) {
-        // Store the current book ID
         currentBookId = bookId;
 
-        // Find the book by ID
         const book = books.find(b => b.id === parseInt(bookId));
         if (!book) return;
 
-        // Update modal content
         modalTitle.textContent = book.title;
         modalAuthor.textContent = book.author;
         modalDesc.textContent = book.description;
 
-        // Update cover image
         modalCover.src = book.cover;
         modalCover.alt = book.title;
 
-        // Update meta tags
         modalMeta.innerHTML = `
             <span>${book.genre}</span>
             <span>${book.category}</span>
@@ -401,7 +401,6 @@
             <span>${book.pages} صفحة</span>
         `;
 
-        // Open modal
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
     }
@@ -421,17 +420,14 @@
 
     if (readNowBtn) {
         readNowBtn.addEventListener('click', function() {
-            // Get the current book data from the modal
             const title = document.getElementById('modalTitle').textContent;
             const author = document.getElementById('modalAuthor').textContent;
             const cover = document.getElementById('modalCoverImg').src;
 
-            // Close the modal
             closeModal();
 
-            // Navigate to reading page with book data
             setTimeout(function() {
-                window.location.href = 'reading.php?id=' + encodeURIComponent(currentBookId) +
+                window.location.href = ROOT + 'reading?id=' + encodeURIComponent(currentBookId) +
                     '&title=' + encodeURIComponent(title) +
                     '&author=' + encodeURIComponent(author) +
                     '&cover=' + encodeURIComponent(cover);
@@ -442,7 +438,6 @@
     // ============================================================
     // EVENT LISTENERS
     // ============================================================
-    // Book buttons
     bookButtons.forEach(btn => {
         btn.addEventListener('click', function() {
             const bookId = this.dataset.book;
@@ -450,15 +445,12 @@
         });
     });
 
-    // Close button
     closeBtn.addEventListener('click', closeModal);
 
-    // Click outside modal
     modal.addEventListener('click', function(e) {
         if (e.target === modal) closeModal();
     });
 
-    // Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
     });
