@@ -1,14 +1,12 @@
 <?php
 /* ============================================================
    سرد — Reading Page (reading.php)
-   Clean, distraction-free reading experience
+   Clean, distraction-free reading experience with 3D Realistic Book
    ============================================================ */
 
 require_once __DIR__ . "/../core/init.php";
 
-// ============================================================
-// GET BOOK ID - Accept both 'book_id' and 'id' parameters
-// ============================================================
+// Accept both 'book_id' and 'id' parameters
 $bookId = isset($_GET['book_id']) ? (int) $_GET['book_id'] : (isset($_GET['id']) ? (int) $_GET['id'] : 1);
 
 // ============================================================
@@ -78,7 +76,7 @@ try {
 }
 
 // ============================================================
-// READING PROGRESS (Placeholder - will be from database later)
+// READING PROGRESS
 // ============================================================
 $progress = [
     'current_page' => 128,
@@ -89,7 +87,7 @@ $progress = [
 $progress['percentage'] = round(($progress['current_page'] / $progress['total_pages']) * 100);
 
 // ============================================================
-// GENERATE PAGES (temporary - will come from chapters later)
+// GENERATE PAGES
 // ============================================================
 $pages = [
     "في تلك الحارة التي تمتد بين الجبل والصحراء، وُلدت الحكاية الأولى. كان أهلها لا يعرفون عن الفوتوة إلا أنه القانون الذي يحكم كل شيء، وأن الرضا بالقسمة هو السبيل الوحيد للنجاة من غضب الحارة.",
@@ -194,7 +192,7 @@ $pages = [
     </aside>
 
     <!-- ==========================================================
-         CENTER COLUMN — Open Book (MAIN CONTENT)
+         CENTER COLUMN — 3D REALISTIC BOOK
          ========================================================== -->
     <section class="panel open-book-wrap" aria-label="عرض الكتاب">
       <div class="book-container" id="bookContainer">
@@ -215,34 +213,57 @@ $pages = [
           <span class="book-opening-cover__emblem">سرد</span>
         </div>
 
-        <!-- The Book -->
+        <!-- ======================================================
+             3D REALISTIC BOOK
+             ====================================================== -->
         <div class="book" id="book">
-          <div class="book__spine" aria-hidden="true"></div>
-
-          <div class="page page--right" id="pageRight">
-            <div class="page__inner">
-              <p class="page__text" id="pageTextRight" style="font-family:'Amiri', serif; font-size: 19px; line-height: 1.9;"><?= nl2br(htmlspecialchars($pages[0] ?? '')) ?></p>
-              <span class="page__number">1</span>
-            </div>
+          
+          <!-- 3D Spine with depth -->
+          <div class="book__spine">
+            <div class="book__spine-inner"></div>
+            <div class="book__spine-shadow"></div>
           </div>
 
+          <!-- Left Page (previous page) -->
           <div class="page page--left" id="pageLeft">
             <div class="page__inner">
+              <div class="page__paper-texture"></div>
               <p class="page__text" id="pageTextLeft" style="font-family:'Amiri', serif; font-size: 19px; line-height: 1.9;"><?= nl2br(htmlspecialchars($pages[1] ?? '')) ?></p>
-              <span class="page__number">2</span>
+              <span class="page__number">1</span>
             </div>
+            <div class="page__thickness"></div>
           </div>
 
-          <div class="page page--flip" id="pageFlip" aria-hidden="true">
+          <!-- Right Page (current page - reader is here) -->
+          <div class="page page--right" id="pageRight">
             <div class="page__inner">
-              <p class="page__text" id="pageTextFlip" style="font-family:'Amiri', serif;"></p>
+              <div class="page__paper-texture"></div>
+              <p class="page__text" id="pageTextRight" style="font-family:'Amiri', serif; font-size: 19px; line-height: 1.9;"><?= nl2br(htmlspecialchars($pages[0] ?? '')) ?></p>
+              <span class="page__number">2</span>
             </div>
+            <div class="page__thickness"></div>
           </div>
+
+          <!-- Flip Page (for 3D curl animation) -->
+          <div class="page page--flip" id="pageFlip">
+            <div class="page__inner">
+              <div class="page__paper-texture"></div>
+              <p class="page__text" id="pageTextFlip" style="font-family:'Amiri', serif; font-size: 19px; line-height: 1.9;"></p>
+              <span class="page__number" id="pageFlipNumber"></span>
+            </div>
+            <div class="page__thickness"></div>
+          </div>
+
+          <!-- Book shadow overlay for depth -->
+          <div class="book__shadow-overlay"></div>
+
         </div>
+        <!-- ===== End of 3D Book ===== -->
+
       </div>
 
       <!-- ======================================================
-           FLOATING READING TOOLBAR
+           FLOATING READING TOOLBAR WITH SETTINGS POPOVER
            ====================================================== -->
       <div class="toolbar glass-card" role="toolbar" aria-label="أدوات القراءة" id="readingToolbar"
            data-total-pages="<?= (int) $progress['total_pages'] ?>" data-start-page="<?= (int) $progress['current_page'] ?>">
@@ -252,7 +273,7 @@ $pages = [
         </button>
 
         <div class="toolbar__center">
-          <span class="toolbar__page-indicator" id="toolbarPageIndicator">1 / <?= $progress['total_pages'] ?></span>
+          <span class="toolbar__page-indicator" id="toolbarPageIndicator">2 / <?= $progress['total_pages'] ?></span>
           <div class="toolbar__dots" id="toolbarDots" aria-hidden="true">
             <span class="toolbar__dot"></span><span class="toolbar__dot"></span><span class="toolbar__dot"></span><span class="toolbar__dot"></span><span class="toolbar__dot"></span>
           </div>
@@ -278,7 +299,7 @@ $pages = [
         </button>
 
         <!-- ======================================================
-             SETTINGS POPOVER — Above Aa Button
+             SETTINGS POPOVER
              ====================================================== -->
         <div class="settings-popover" id="settingsPopover" role="dialog" aria-label="إعدادات القراءة">
           <h3 class="card-title">إعدادات القراءة</h3>
@@ -356,7 +377,7 @@ $pages = [
 
 </main>
 
-<!-- Page content passed from PHP to JS for the flip/turn logic -->
+<!-- Page content passed from PHP to JS -->
 <script id="bookPagesData" type="application/json"><?= json_encode($pages, JSON_UNESCAPED_UNICODE) ?></script>
 
 <script src="<?= ROOT ?>assets/js/reading.js"></script>

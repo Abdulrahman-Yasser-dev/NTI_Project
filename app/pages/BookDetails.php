@@ -79,6 +79,54 @@ if (isset($_GET['rating']) && $_GET['rating'] === 'success') {
 }
 
 // ============================================================
+// HANDLE COMMENT SUBMISSION
+// ============================================================
+$commentSuccess = '';
+$commentError = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_comment'])) {
+    $commentText = trim($_POST['comment_text'] ?? '');
+    $commentRating = (int)($_POST['comment_rating'] ?? 0);
+    $userId = $_SESSION['user_id'] ?? 0;
+    $bookId = (int)($_POST['book_id'] ?? $bookId);
+    
+    if ($userId <= 0) {
+        $commentError = 'يجب تسجيل الدخول أولاً.';
+    } elseif (empty($commentText)) {
+        $commentError = 'الرجاء كتابة تعليقك.';
+    } elseif ($bookId <= 0) {
+        $commentError = 'معرف الكتاب غير صحيح.';
+    } else {
+        try {
+            $insertCommentQuery = "
+                INSERT INTO comments (book_id, user_id, comment, rating, created_at) 
+                VALUES (:book_id, :user_id, :comment, :rating, NOW())
+            ";
+            $insertCommentStmt = $conn->prepare($insertCommentQuery);
+            $insertCommentStmt->execute([
+                ':book_id' => $bookId,
+                ':user_id' => $userId,
+                ':comment' => $commentText,
+                ':rating' => $commentRating
+            ]);
+            
+            // Redirect to refresh the page and show the new comment
+            header('Location: ' . ROOT . 'BookDetails?id=' . $bookId . '&comment=success');
+            exit;
+            
+        } catch (PDOException $e) {
+            $commentError = 'حدث خطأ في إضافة التعليق. حاول مرة أخرى.';
+            error_log("Comment Error: " . $e->getMessage());
+        }
+    }
+}
+
+// Show success message if comment was added
+if (isset($_GET['comment']) && $_GET['comment'] === 'success') {
+    $commentSuccess = '✓ تم إضافة تعليقك بنجاح!';
+}
+
+// ============================================================
 // FETCH BOOK FROM DATABASE
 // ============================================================
 try {
@@ -186,6 +234,35 @@ try {
     
 } catch (PDOException $e) {
     $chapters = [];
+}
+
+// ============================================================
+// FETCH COMMENTS
+// ============================================================
+try {
+    $commentQuery = "
+        SELECT 
+            c.id,
+            c.comment,
+            c.created_at,
+            c.rating,
+            u.name AS user_name,
+            u.photo AS user_photo
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.book_id = :book_id
+        AND c.status = 'approved'
+        ORDER BY c.created_at DESC
+        LIMIT 10
+    ";
+    
+    $commentStmt = $conn->prepare($commentQuery);
+    $commentStmt->execute([':book_id' => $bookId]);
+    $comments = $commentStmt->fetchAll(PDO::FETCH_ASSOC);
+    
+} catch (PDOException $e) {
+    $comments = [];
+    error_log("Database Error fetching comments: " . $e->getMessage());
 }
 
 // ============================================================
@@ -413,16 +490,15 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
                             <?php endif; ?>
                         </div>
 
-<!-- ===== ACTIONS BUTTONS ===== -->
-<div class="actions">
-    <!-- زر القراءة - بنفس طريقة signup -->
-    <a href="<?= ROOT ?>reading.php?book_id=<?php echo $book['id']; ?>" class="btn-primary">
-        <i class="fas fa-book-open"></i> <?php echo $hasStarted ? 'متابعة القراءة' : 'قراءة'; ?>
-    </a>
-    
-    <button class="btn-secondary"><i class="fas fa-download"></i> تحميل</button>
-    <button class="fav-btn" id="favBtn"><i class="far fa-heart"></i></button>
-</div>
+                        <!-- ===== ACTIONS BUTTONS ===== -->
+                        <div class="actions">
+                            <a href="<?= ROOT ?>reading?book_id=<?php echo $book['id']; ?>" class="btn-primary">
+                                <i class="fas fa-book-open"></i> <?php echo $hasStarted ? 'متابعة القراءة' : 'قراءة'; ?>
+                            </a>
+                            
+                            <button class="btn-secondary"><i class="fas fa-download"></i> تحميل</button>
+                            <button class="fav-btn" id="favBtn"><i class="far fa-heart"></i></button>
+                        </div>
                     </div>
                 </div>
 
@@ -491,7 +567,7 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
                                     $isHidden = $index >= 5;
                                 ?>
                                     <div class="chapter-row <?php echo $isHidden ? 'chapter-hidden' : ''; ?>" 
-                                         onclick="location.href='<?= ROOT ?>reading.php?book_id=<?php echo $book['id']; ?>&chapter=<?php echo $chapter['id']; ?>'">
+                                        onclick="location.href='<?= ROOT ?>reading?book_id=<?php echo $book['id']; ?>&chapter=<?php echo $chapter['id']; ?>'"
                                         <div class="chapter-info">
                                             <span class="chapter-number">الفصل <?php echo sprintf('%02d', $chapter['chapter_number']); ?></span>
                                             <span class="chapter-title"><?php echo htmlspecialchars($chapter['title']); ?></span>
@@ -583,6 +659,86 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
                     <?php else: ?>
                         <div style="padding: 10px 0; color: var(--text-secondary);">
                             <a href="<?= ROOT ?>signup" style="color: var(--gold); font-weight: 600;">سجل الدخول</a> لتقييم هذا الكتاب
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- ===== COMMENTS SECTION ===== -->
+                <div class="card comments-card">
+                    <h3><i class="fas fa-comments"></i> آراء القراء</h3>
+                    
+                    <?php if (!empty($commentSuccess)): ?>
+                        <div style="background: #e8f5e9; color: #2e7d32; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; border-right: 4px solid #2e7d32; font-weight: 600;">
+                            <i class="fas fa-check-circle"></i> <?php echo $commentSuccess; ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($commentError)): ?>
+                        <div style="background: #ffebee; color: #c62828; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; border-right: 4px solid #c62828; font-weight: 600;">
+                            <i class="fas fa-exclamation-circle"></i> <?php echo $commentError; ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <!-- Add Comment Form -->
+                    <?php if ($isLoggedIn): ?>
+                    <div class="add-comment">
+                        <form method="POST" action="" class="comment-form">
+                            <input type="hidden" name="book_id" value="<?php echo $bookId; ?>" />
+                            <div class="comment-rating">
+                                <label>تقييمك للكتاب:</label>
+                                <div class="comment-stars" id="commentStars">
+                                    <input type="hidden" name="comment_rating" id="commentRatingInput" value="0" />
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <i class="far fa-star" data-value="<?php echo $i; ?>"></i>
+                                    <?php endfor; ?>
+                                </div>
+                            </div>
+                            <div class="comment-input-group">
+                                <textarea name="comment_text" placeholder="شارك رأيك في الكتاب..." required></textarea>
+                                <button type="submit" name="submit_comment" class="btn-primary">
+                                    <i class="fas fa-paper-plane"></i> نشر
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <?php else: ?>
+                    <div class="login-to-comment">
+                        <p><a href="<?= ROOT ?>signup" style="color: var(--gold); font-weight: 600;">سجل الدخول</a> لتشارك رأيك</p>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <!-- Comments List -->
+                    <?php if (!empty($comments)): ?>
+                        <div class="comments-list">
+                            <?php foreach ($comments as $comment): ?>
+                                <div class="comment-item">
+                                    <div class="comment-header">
+                                        <div class="comment-user">
+                                            <img src="<?= ROOT ?>assets/images/users/<?= $comment['user_photo'] ?? 'avatar-placeholder.png' ?>" 
+                                                 alt="<?= htmlspecialchars($comment['user_name']) ?>"
+                                                 onerror="this.src='<?= ROOT ?>assets/images/avatar-placeholder.png'" />
+                                            <span class="comment-username"><?= htmlspecialchars($comment['user_name']) ?></span>
+                                        </div>
+                                        <div class="comment-meta">
+                                            <?php if ($comment['rating'] > 0): ?>
+                                                <span class="comment-rating-display">
+                                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                        <i class="fas fa-star <?php echo $i <= $comment['rating'] ? 'active' : ''; ?>"></i>
+                                                    <?php endfor; ?>
+                                                </span>
+                                            <?php endif; ?>
+                                            <span class="comment-date"><?= date('d/m/Y', strtotime($comment['created_at'])) ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="comment-body">
+                                        <p><?= nl2br(htmlspecialchars($comment['comment'])) ?></p>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="no-comments">
+                            <p>لا توجد تعليقات حتى الآن. كن أول من يشارك رأيه!</p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -687,6 +843,42 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
                     row.setAttribute('onclick', newOnclick);
                 }
             });
+
+            // ===== COMMENT STARS INTERACTION =====
+            const commentStars = document.querySelectorAll('#commentStars i');
+            const commentRatingInput = document.getElementById('commentRatingInput');
+
+            if (commentStars.length > 0 && commentRatingInput) {
+                let currentCommentRating = 0;
+
+                commentStars.forEach((star, index) => {
+                    const value = index + 1;
+                    
+                    star.addEventListener('click', function() {
+                        currentCommentRating = value;
+                        updateCommentStars(value);
+                        commentRatingInput.value = value;
+                    });
+
+                    star.addEventListener('mouseenter', function() {
+                        updateCommentStars(value);
+                    });
+
+                    star.addEventListener('mouseleave', function() {
+                        updateCommentStars(currentCommentRating);
+                    });
+                });
+
+                function updateCommentStars(value) {
+                    commentStars.forEach((s, i) => {
+                        if (i < value) {
+                            s.className = 'fas fa-star active';
+                        } else {
+                            s.className = 'far fa-star';
+                        }
+                    });
+                }
+            }
         });
     </script>
     <script src="<?= ROOT ?>assets/js/BookDetails.js"></script>
