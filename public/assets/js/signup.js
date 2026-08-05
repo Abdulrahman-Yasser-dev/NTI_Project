@@ -23,9 +23,16 @@ emailInput.addEventListener('input', () => {
 
 passwordInput.addEventListener('input', () => {
     const val = passwordInput.value;
-    ruleLength.className = val.length >= 8 ? 'valid' : 'invalid';
-    ruleCase.className = (/[a-z]/.test(val) && /[A-Z]/.test(val)) ? 'valid' : 'invalid';
-    ruleNumber.className = /[0-9]/.test(val) ? 'valid' : 'invalid';
+
+    const lengthValid = val.length >= 8 && /[A-Z]/.test(val);
+    ruleLength.className = lengthValid ? 'valid' : 'invalid';
+
+    const caseValid = /[@#]/.test(val);
+    ruleCase.className = caseValid ? 'valid' : 'invalid';
+
+    const numberValid = /[0-9]/.test(val);
+    ruleNumber.className = numberValid ? 'valid' : 'invalid';
+
     checkConfirm();
 });
 
@@ -34,17 +41,20 @@ confirmInput.addEventListener('input', checkConfirm);
 function checkConfirm() {
     if (confirmInput.value.length === 0) {
         ruleConfirm.className = 'field-rule';
+        ruleConfirm.textContent = 'يجب أن تطابق كلمة المرور';
         return;
     }
     const valid = confirmInput.value === passwordInput.value;
     ruleConfirm.className = 'field-rule ' + (valid ? 'valid' : 'invalid');
+    ruleConfirm.textContent = valid ? 'كلمة المرور متطابقة ✓' : 'كلمة المرور غير متطابقة';
 }
 
 form.addEventListener('submit', (e) => {
     const usernameValid = usernameInput.value.trim().length >= 3;
     const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value);
+
     const val = passwordInput.value;
-    const passwordValid = val.length >= 8 && /[a-z]/.test(val) && /[A-Z]/.test(val) && /[0-9]/.test(val);
+    const passwordValid = val.length >= 8 && /[A-Z]/.test(val) && /[@#]/.test(val) && /[0-9]/.test(val);
     const confirmValid = confirmInput.value === passwordInput.value && confirmInput.value.length > 0;
 
     if (!usernameValid || !emailValid || !passwordValid || !confirmValid) {
