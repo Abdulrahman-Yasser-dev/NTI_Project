@@ -5,7 +5,7 @@
 require_once __DIR__ . "/../core/init.php";
 
 // ============================================================
-// FETCH BOOKS FROM DATABASE
+// FETCH HOMEPAGE BOOKS FROM DATABASE (Using homepage_books table)
 // ============================================================
 try {
     $query = "
@@ -15,28 +15,23 @@ try {
             n.slug,
             n.description,
             n.cover_image,
-            n.spine_image,
-            n.banner_image,
             n.publish_year,
             n.pages,
-            n.language,
-            n.country,
             n.rating,
-            n.keywords,
             n.is_featured,
             n.status,
             a.name AS author_name,
-            a.bio AS author_bio,
-            a.photo AS author_photo,
             c.name_ar AS category_name,
-            c.name_en AS category_name_en,
-            p.name AS publisher_name
-        FROM novels n
+            hb.shelf_row,
+            hb.display_order
+        FROM homepage_books hb
+        JOIN novels n ON hb.book_id = n.id
         JOIN authors a ON n.author_id = a.id
         JOIN categories c ON n.category_id = c.id
-        LEFT JOIN publishers p ON n.publisher_id = p.id
         WHERE n.status = 'published'
-        ORDER BY n.is_featured DESC, n.id ASC
+        AND n.cover_image IS NOT NULL
+        AND n.cover_image != ''
+        ORDER BY hb.shelf_row ASC, hb.display_order ASC
     ";
     
     $stmt = $conn->prepare($query);
@@ -44,39 +39,26 @@ try {
     $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
 } catch (PDOException $e) {
-    // If there's an error, show empty array
     $books = [];
     error_log("Database Error in index.php: " . $e->getMessage());
 }
 
 // ============================================================
-// SPINE IMAGE POOL (Existing spine images from the old homepage)
+// SPLIT BOOKS INTO ROWS
 // ============================================================
-$spinePool = [
-    "نجيب-محفوظ-اللص و الكلاب(2).png",
-    "اولاد الناس.png",
-    "ثرثرة فوق النيل .png",
-    "طبيب ارياف.png",
-    "ماجدولين.png",
-    "ايكادولي.png",
-    "شجرتي.png",
-];
+$row1Books = [];
+$row2Books = [];
 
-// Build the spine images array
-$bookSpines = [];
-foreach ($books as $index => $book) {
-    // If spine_image exists in database, use it
-    if (!empty($book['spine_image'])) {
-        $bookSpines[] = ROOT . "assets/images/" . $book['spine_image'];
-    } else {
-        // Use fallback based on index
-        $fallbackIndex = $index % count($spinePool);
-        $bookSpines[] = ROOT . "assets/images/" . $spinePool[$fallbackIndex];
+foreach ($books as $book) {
+    if ($book['shelf_row'] == 1) {
+        $row1Books[] = $book;
+    } elseif ($book['shelf_row'] == 2) {
+        $row2Books[] = $book;
     }
 }
 
 // ============================================================
-// MODAL DATA (for the book modal popup)
+// MODAL DATA
 // ============================================================
 $modalData = [];
 foreach ($books as $book) {
@@ -86,37 +68,41 @@ foreach ($books as $book) {
         "category" => $book['category_name'],
         "year" => $book['publish_year'],
         "pages" => $book['pages'],
-        "desc" => $book['description']
+        "desc" => $book['description'],
+        "cover_image" => $book['cover_image'],
+        "rating" => $book['rating']
     ];
 }
+
+// ============================================================
+// PASS DATA TO JAVASCRIPT
+// ============================================================
+echo '<script>const ROOT_URL = "' . ROOT . '";</script>';
+echo '<script>const MODAL_DATA = ' . json_encode($modalData) . ';</script>';
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>سرد</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="<?= ROOT ?>assets/css/index.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سرد — المكتبة العربية الرقمية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="<?= ROOT ?>assets/css/index.css" />
 </head>
 <body>
-
-  <!-- ─────────────────────────  SECTION 1: NAVBAR  ───────────────────────── -->
+  <!-- ─── NAVBAR ─── -->
   <nav class="navbar" id="navbar">
     <a href="<?= ROOT ?>index" class="nav-brand">
-      <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد logo">
+      <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد">
       <span>سرد</span>
     </a>
-
     <ul class="nav-links">
-      <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
+      <li><a href="<?= ROOT ?>index" class="active">الرئيسية</a></li>
       <li><a href="<?= ROOT ?>Browsebooks">تصفح الكتب</a></li>
-      <li><a href="<?= ROOT ?>Writewithus">الكتّاب</a></li>
       <li><a href="#">من نحن</a></li>
     </ul>
-
     <div class="nav-actions">
       <a href="<?= ROOT ?>signup" class="nav-btn glass">تسجيل الدخول</a>
       <a href="<?= ROOT ?>signup" class="nav-btn filled">إنشاء حساب</a>
@@ -124,41 +110,45 @@ foreach ($books as $book) {
     </div>
   </nav>
 
-  <!-- ─────────────────────────  SECTION 2: HERO IMAGE  ───────────────────────── -->
-  <section class="hero-section">
-    <div class="hero-bg-image"></div>
-  </section>
+  <!-- ─── HERO ─── -->
+  <section class="hero-section"><div class="hero-bg-image"></div></section>
 
-  <!-- ─────────────────────────  SECTION 3: SHELF / LIBRARY  ───────────────────────── -->
+  <!-- ─── SHELF ─── -->
   <section class="shelf-wrapper">
     <div class="shelf-hero">
-
-      <!-- Row 1: First 9 books -->
+      <!-- Row 1: First books -->
       <div class="shelf-row row-1" aria-label="الرف الأول">
-        <?php for ($i = 0; $i < 9 && $i < count($books); $i++): ?>
+        <?php foreach ($row1Books as $book): 
+          $coverPath = !empty($book['cover_image']) 
+              ? ROOT . 'assets/images/' . $book['cover_image'] 
+              : ROOT . 'assets/images/placeholder.jpg';
+        ?>
           <div class="book-wrapper">
-            <button class="book-btn" data-book="<?= $books[$i]['id'] ?>" onclick="openBookModal(<?= $books[$i]['id'] ?>)">
-              <img src="<?= htmlspecialchars($bookSpines[$i]) ?>" alt="<?= htmlspecialchars($books[$i]['title']) ?>">
+            <button class="book-btn" data-book="<?= $book['id'] ?>">
+              <img src="<?= htmlspecialchars($coverPath) ?>" alt="<?= htmlspecialchars($book['title']) ?>">
             </button>
           </div>
-        <?php endfor; ?>
+        <?php endforeach; ?>
       </div>
-
-      <!-- Row 2: Last 9 books -->
+      
+      <!-- Row 2: Next books -->
       <div class="shelf-row row-2" aria-label="الرف الثاني">
-        <?php for ($i = 9; $i < 18 && $i < count($books); $i++): ?>
+        <?php foreach ($row2Books as $book): 
+          $coverPath = !empty($book['cover_image']) 
+              ? ROOT . 'assets/images/' . $book['cover_image'] 
+              : ROOT . 'assets/images/placeholder.jpg';
+        ?>
           <div class="book-wrapper">
-            <button class="book-btn" data-book="<?= $books[$i]['id'] ?>" onclick="openBookModal(<?= $books[$i]['id'] ?>)">
-              <img src="<?= htmlspecialchars($bookSpines[$i]) ?>" alt="<?= htmlspecialchars($books[$i]['title']) ?>">
+            <button class="book-btn" data-book="<?= $book['id'] ?>">
+              <img src="<?= htmlspecialchars($coverPath) ?>" alt="<?= htmlspecialchars($book['title']) ?>">
             </button>
           </div>
-        <?php endfor; ?>
+        <?php endforeach; ?>
       </div>
-
     </div>
   </section>
 
-  <!-- ─────────────────────────  SECTION 4: READER / WRITER  ───────────────────────── -->
+  <!-- ─── INFO SECTION: READER / WRITER ─── -->
   <section class="info-section">
     <div class="info-col">
       <div class="info-image">
@@ -189,131 +179,42 @@ foreach ($books as $book) {
     </div>
   </section>
 
-  <!-- ─────────────────────────  SECTION 5: FOOTER  ───────────────────────── -->
+  <!-- ─── FOOTER ─── -->
   <footer class="site-footer">
     <div class="footer-top">
-      <div class="footer-brand">
-        <span class="brand-name">سرد</span>
-        <p>مكتبة عربية رقمية تجمع القرّاء والكتّاب في مكان واحد، احتفاءً بالأدب العربي بكل تنوعه.</p>
-      </div>
-
-      <div class="footer-col">
-        <h4>روابط سريعة</h4>
-        <ul>
-          <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
-          <li><a href="<?= ROOT ?>Browsebooks">تصفح الكتب</a></li>
-          <li><a href="<?= ROOT ?>Writewithus">الكتّاب</a></li>
-          <li><a href="#">من نحن</a></li>
-        </ul>
-      </div>
-
-      <div class="footer-col">
-        <h4>حسابك</h4>
-        <ul>
-          <li><a href="<?= ROOT ?>signup">تسجيل الدخول</a></li>
-          <li><a href="<?= ROOT ?>signup">إنشاء حساب</a></li>
-        </ul>
-      </div>
-
-      <div class="footer-col">
-        <h4>تواصل معنا</h4>
-        <ul>
-          <li><a href="#">الدعم الفني</a></li>
-          <li><a href="#">الأسئلة الشائعة</a></li>
-          <li><a href="#">سياسة الخصوصية</a></li>
-        </ul>
-      </div>
+      <div class="footer-brand"><span class="brand-name">سرد</span><p>مكتبة عربية رقمية تجمع القرّاء والكتّاب في مكان واحد، احتفاءً بالأدب العربي بكل تنوعه.</p></div>
+      <div class="footer-col"><h4>روابط سريعة</h4><ul><li><a href="<?= ROOT ?>index">الرئيسية</a></li><li><a href="<?= ROOT ?>Browsebooks">تصفح الكتب</a></li><li><a href="#">الكتّاب</a></li><li><a href="#">من نحن</a></li></ul></div>
+      <div class="footer-col"><h4>حسابك</h4><ul><li><a href="<?= ROOT ?>signup">تسجيل الدخول</a></li><li><a href="<?= ROOT ?>signup">إنشاء حساب</a></li></ul></div>
+      <div class="footer-col"><h4>تواصل معنا</h4><ul><li><a href="#">الدعم الفني</a></li><li><a href="#">الأسئلة الشائعة</a></li><li><a href="#">سياسة الخصوصية</a></li></ul></div>
     </div>
-
-    <div class="footer-bottom">
-      <span>© 2026 سرد. جميع الحقوق محفوظة.</span>
-      <span>صُنع بحب لمحبي القراءة والكتابة العربية</span>
-    </div>
+    <div class="footer-bottom"><span>© 2026 سرد. جميع الحقوق محفوظة.</span><span>صُنع بحب لمحبي القراءة والكتابة العربية</span></div>
   </footer>
 
-  <!-- ─────────────────────────  BOOK MODAL  ───────────────────────── -->
-  <div class="modal-overlay" id="bookModal">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <button class="modal-close" id="modalClose" aria-label="إغلاق">✕</button>
-
-        <div class="modal-cover">
-            <img id="modalCoverImg" src="<?= ROOT ?>assets/images/نجيب-محفوظ-اللص و الكلاب(2).png" alt="غلاف الكتاب">
+  <!-- ─── VIEWER ─── -->
+  <div class="book-viewer-overlay" id="bookViewer">
+    <div class="overlay-bg"></div>
+    <div class="book-modal" id="bookModal">
+      <div class="book-panel">
+        <img class="book-cover" id="bookCover" src="" alt="book cover" />
+      </div>
+      <div class="paper-panel" id="paperPanel">
+        <div class="paper-content" id="paperContent">
+          <h2 class="book-title content-hidden" id="pTitle"></h2>
+          <div class="book-author content-hidden" id="pAuthor"></div>
+          <div class="book-meta-grid content-hidden" id="pMeta"></div>
+          <div class="book-description content-hidden" id="pDesc"></div>
+          <div class="book-actions content-hidden" id="pActions">
+            <button class="action-btn primary" onclick="window.location.href='<?= ROOT ?>BookDetails?id=' + (typeof selectedBookId !== 'undefined' ? selectedBookId : '')">
+              <span class="icon"><i class="fa-solid fa-book-open"></i></span> اقرأ الآن
+            </button>
+            <button class="action-btn outline"><span class="icon"><i class="fa-regular fa-heart"></i></span> أضف للمفضلة</button>
+          </div>
         </div>
-
-        <div class="modal-body">
-            <h2 class="modal-title" id="modalTitle">اللص والكلاب</h2>
-            <div class="modal-author" id="modalAuthor">نجيب محفوظ</div>
-
-            <div class="modal-meta" id="modalMeta">
-                <span id="modalCategory">رواية</span>
-                <span id="modalYear">١٩٦١</span>
-                <span id="modalPages">١٤٤ صفحة</span>
-            </div>
-
-            <p class="modal-desc" id="modalDesc">
-                تدور أحداث الرواية حول سعيد مهران بعد خروجه من السجن، وسعيه للانتقام ممن خانوه، في عمل يعكس صراع الإنسان مع المجتمع ومع ذاته. من أبرز أعمال نجيب محفوظ الفلسفية.
-            </p>
-
-            <div class="modal-actions">
-                <button class="read-now" id="readNowBtn">اقرأ الآن</button>
-                <button class="save-btn">حفظ للاحقًا</button>
-            </div>
-        </div>
+      </div>
     </div>
+    <button class="book-close-btn" id="bookCloseBtn"><i class="fa-solid fa-xmark"></i></button>
   </div>
 
-  <!-- ─────────────────────────  JAVASCRIPT  ───────────────────────── -->
-  <script>
-    // ============================================================
-    // MODAL DATA (from PHP)
-    // ============================================================
-    const modalData = <?= json_encode($modalData) ?>;
-
-    // ============================================================
-    // OPEN MODAL FUNCTION
-    // ============================================================
-    function openBookModal(bookId) {
-        const data = modalData[bookId];
-        if (!data) return;
-
-        document.getElementById('modalTitle').textContent = data.title;
-        document.getElementById('modalAuthor').textContent = data.author;
-        document.getElementById('modalCategory').textContent = data.category;
-        document.getElementById('modalYear').textContent = data.year;
-        document.getElementById('modalPages').textContent = data.pages + ' صفحة';
-        document.getElementById('modalDesc').textContent = data.desc;
-
-        // Update read button to go to BookDetails
-        document.getElementById('readNowBtn').onclick = function() {
-            window.location.href = 'BookDetails?id=' + bookId;
-        };
-
-        document.getElementById('bookModal').classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-
-    // ============================================================
-    // CLOSE MODAL
-    // ============================================================
-    document.getElementById('modalClose').addEventListener('click', function() {
-        document.getElementById('bookModal').classList.remove('active');
-        document.body.style.overflow = '';
-    });
-
-    document.getElementById('bookModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            document.getElementById('bookModal').classList.remove('active');
-            document.body.style.overflow = '';
-        }
-    });
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            document.getElementById('bookModal').classList.remove('active');
-            document.body.style.overflow = '';
-        }
-    });
-  </script>
-
+  <script src="<?= ROOT ?>assets/js/index.js"></script>
 </body>
 </html>

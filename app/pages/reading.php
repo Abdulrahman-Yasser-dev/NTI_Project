@@ -6,7 +6,10 @@
 
 require_once __DIR__ . "/../core/init.php";
 
-$bookId = isset($_GET['id']) ? (int) $_GET['id'] : 1;
+// ============================================================
+// GET BOOK ID - Accept both 'book_id' and 'id' parameters
+// ============================================================
+$bookId = isset($_GET['book_id']) ? (int) $_GET['book_id'] : (isset($_GET['id']) ? (int) $_GET['id'] : 1);
 
 // ============================================================
 // FETCH BOOK FROM DATABASE
@@ -172,7 +175,7 @@ $pages = [
             <li class="chapter-row <?= $ch['chapter_number'] <= 2 ? 'chapter-row--completed' : ($ch['chapter_number'] == 3 ? 'chapter-row--current' : 'chapter-row--unread') ?>" 
                 data-title="<?= htmlspecialchars($ch['title']) ?>" 
                 tabindex="0"
-                onclick="location.href='reading.php?id=<?= $bookId ?>&chapter=<?= $ch['chapter_number'] ?>'">
+                onclick="location.href='reading.php?book_id=<?= $bookId ?>&chapter=<?= $ch['chapter_number'] ?>'">
               <span class="chapter-row__status" aria-hidden="true"></span>
               <span class="chapter-row__number"><?= sprintf('%02d', $ch['chapter_number']) ?></span>
               <span class="chapter-row__title"><?= htmlspecialchars($ch['title']) ?></span>

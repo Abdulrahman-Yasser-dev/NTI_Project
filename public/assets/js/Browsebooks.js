@@ -185,6 +185,6 @@ document.addEventListener('DOMContentLoaded', function() {
     filterBooks();
 
     console.log('%c📖 سرد — Premium Luxury Bookstore', 'font-size:20px; font-weight:bold; color:#D4A64A;');
-    console.log('%c18 books loaded — 3 categories', 'color:#E8C86A;');
+    console.log('%cAll books loaded — 3 categories', 'color:#E8C86A;');
 
 });
