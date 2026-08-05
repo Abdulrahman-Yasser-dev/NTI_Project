@@ -58,6 +58,7 @@ try {
         $params[':category'] = $categoryFilter;
     }
     
+    // No LIMIT - show ALL books (7 per category)
     $sql .= " ORDER BY c.id, n.id";
     
     $stmt = $conn->prepare($sql);
@@ -149,7 +150,6 @@ foreach ($dbCategories as $cat) {
             <ul class="nav-premium-links">
                 <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
                 <li><a href="<?= ROOT ?>Browsebooks" class="active">المكتبة</a></li>
-                <li><a href="#">الكتّاب</a></li>
                 <li><a href="#">من نحن</a></li>
             </ul>
             <div class="nav-premium-actions">
@@ -217,85 +217,85 @@ foreach ($dbCategories as $cat) {
     </div>
 
     <!-- ============================================================
-    BOOKSHELVES — Only One Visible at a Time
-    ============================================================ -->
-    <main class="library-premium-hall">
+BOOKSHELVES — Full Width Redesign
+============================================================ -->
+<main class="library-premium-hall">
+    
+    <?php if (empty($books)): ?>
+        <!-- Empty State -->
+        <div class="empty-premium-state" id="emptyState" style="display: flex !important;">
+            <div class="empty-premium-icon"><i class="fas fa-book-open"></i></div>
+            <h3 class="empty-premium-title">لم يتم العثور على كتب</h3>
+            <p class="empty-premium-text">حاول تغيير كلمات البحث أو التصنيف</p>
+            <a href="<?= ROOT ?>Browsebooks" class="info-cta" style="margin-top: 20px; display: inline-block; padding: 12px 30px; background: #8B7355; color: white; border-radius: 8px; text-decoration: none;">
+                عرض جميع الكتب
+            </a>
+        </div>
+    <?php else: ?>
         
-        <?php if (empty($books)): ?>
-            <!-- Empty State -->
-            <div class="empty-premium-state" id="emptyState" style="display: flex !important;">
-                <div class="empty-premium-icon"><i class="fas fa-book-open"></i></div>
-                <h3 class="empty-premium-title">لم يتم العثور على كتب</h3>
-                <p class="empty-premium-text">حاول تغيير كلمات البحث أو التصنيف</p>
-                <a href="<?= ROOT ?>Browsebooks" class="info-cta" style="margin-top: 20px; display: inline-block; padding: 12px 30px; background: #8B7355; color: white; border-radius: 8px; text-decoration: none;">
-                    عرض جميع الكتب
-                </a>
-            </div>
-        <?php else: ?>
-            
-            <?php foreach ($shelves as $shelfName => $shelfBooks): 
-                // Determine category key for filtering
-                $categoryKey = '';
-                if (strpos($shelfName, 'التاريخية') !== false) $categoryKey = 'رواية تاريخية';
-                elseif (strpos($shelfName, 'الغموض') !== false) $categoryKey = 'رواية غموض';
-                elseif (strpos($shelfName, 'الفانتازيا') !== false) $categoryKey = 'رواية فانتازيا';
-            ?>
-                <section class="shelf-premium-section" data-category="<?php echo $categoryKey; ?>">
-                    <div class="shelf-premium-header">
-                        <h2 class="shelf-premium-title"><?php echo $shelfName; ?></h2>
-                        <span class="shelf-premium-line"></span>
-                    </div>
-                    <div class="shelf-premium-wrapper">
-                        <div class="shelf-premium-wood">
-                            <div class="shelf-premium-books">
-                                <?php 
-                                $heights = [175, 185, 165, 190, 180, 170];
-                                $rotations = [-1, 0, 2, -0.5, 1.5, -2];
-                                $i = 0;
-                                foreach ($shelfBooks as $book): 
-                                    // Build cover image path
-                                    $coverPath = !empty($book['cover_image']) 
-                                        ? ROOT . 'assets/images/' . $book['cover_image'] 
-                                        : ROOT . 'assets/images/placeholder.jpg';
-                                    
-                                    $h = $heights[$i % count($heights)] + rand(-3, 3);
-                                    $r = $rotations[$i % count($rotations)] + (rand(-15, 15) / 100);
-                                    $i++;
-                                ?>
-                                    <div class="book-premium-stand" 
-                                         data-category="<?php echo $book['category_name']; ?>"
-                                         style="--book-height: <?php echo $h; ?>px; --book-rotation: <?php echo $r; ?>deg;"
-                                         onclick="location.href='BookDetails?id=<?php echo $book['id']; ?>'"
-                                         title="<?php echo htmlspecialchars($book['title']); ?>">
-                                        <div class="book-premium-3d">
-                                            <div class="book-premium-cover">
-                                                <?php if (!empty($coverPath)): ?>
-                                                    <img src="<?php echo htmlspecialchars($coverPath); ?>" alt="<?php echo htmlspecialchars($book['title']); ?>" class="book-premium-img" loading="lazy">
-                                                <?php else: ?>
-                                                    <div class="book-premium-placeholder">
-                                                        <i class="fas fa-book"></i>
-                                                    </div>
-                                                <?php endif; ?>
-                                                <div class="book-premium-spine"></div>
-                                                <div class="book-premium-glow"></div>
-                                            </div>
+        <?php foreach ($shelves as $shelfName => $shelfBooks): 
+            // Determine category key for filtering
+            $categoryKey = '';
+            if (strpos($shelfName, 'التاريخية') !== false) $categoryKey = 'رواية تاريخية';
+            elseif (strpos($shelfName, 'الغموض') !== false) $categoryKey = 'رواية غموض';
+            elseif (strpos($shelfName, 'الفانتازيا') !== false) $categoryKey = 'رواية فانتازيا';
+        ?>
+            <section class="shelf-premium-section" data-category="<?php echo $categoryKey; ?>">
+                <div class="shelf-premium-header">
+                    <h2 class="shelf-premium-title"><?php echo $shelfName; ?></h2>
+                    <span class="shelf-premium-line"></span>
+                </div>
+                <div class="shelf-premium-wrapper">
+                    <div class="shelf-premium-wood">
+                        <div class="shelf-premium-books">
+                            <?php 
+                            $heights = [175, 185, 165, 190, 180, 170];
+                            $rotations = [-1, 0, 2, -0.5, 1.5, -2];
+                            $i = 0;
+                            foreach ($shelfBooks as $book): 
+                                // Build cover image path
+                                $coverPath = !empty($book['cover_image']) 
+                                    ? ROOT . 'assets/images/' . $book['cover_image'] 
+                                    : ROOT . 'assets/images/placeholder.jpg';
+                                
+                                $h = $heights[$i % count($heights)] + rand(-3, 3);
+                                $r = $rotations[$i % count($rotations)] + (rand(-15, 15) / 100);
+                                $i++;
+                            ?>
+                                <div class="book-premium-stand" 
+                                     data-category="<?php echo $book['category_name']; ?>"
+                                     style="--book-height: <?php echo $h; ?>px; --book-rotation: <?php echo $r; ?>deg;"
+                                     onclick="location.href='BookDetails?id=<?php echo $book['id']; ?>'"
+                                     title="<?php echo htmlspecialchars($book['title']); ?>">
+                                    <div class="book-premium-3d">
+                                        <div class="book-premium-cover">
+                                            <?php if (!empty($coverPath)): ?>
+                                                <img src="<?php echo htmlspecialchars($coverPath); ?>" alt="<?php echo htmlspecialchars($book['title']); ?>" class="book-premium-img" loading="lazy">
+                                            <?php else: ?>
+                                                <div class="book-premium-placeholder">
+                                                    <i class="fas fa-book"></i>
+                                                </div>
+                                            <?php endif; ?>
+                                            <div class="book-premium-spine"></div>
+                                            <div class="book-premium-glow"></div>
                                         </div>
                                     </div>
-                                <?php endforeach; ?>
-                            </div>
-                            <div class="shelf-premium-board">
-                                <div class="shelf-premium-grain"></div>
-                                <div class="shelf-premium-edge"></div>
-                            </div>
-                            <div class="shelf-premium-shadow"></div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
+                        <div class="shelf-premium-board">
+                            <div class="shelf-premium-grain"></div>
+                            <div class="shelf-premium-edge"></div>
+                        </div>
+                        <div class="shelf-premium-shadow"></div>
                     </div>
-                </section>
-            <?php endforeach; ?>
-            
-        <?php endif; ?>
+                </div>
+            </section>
+        <?php endforeach; ?>
+        
+    <?php endif; ?>
 
-    </main>
+</main>
 
     <!-- ============================================================
     FOOTER — Premium with Curve

@@ -34,23 +34,23 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
 
 /* ================================================================
-   NAVBAR — Premium Floating
+   NAVBAR — Premium Floating (Same as BookDetails)
    ================================================================ */
 .navbar-premium {
     position: fixed;
-    top: 16px;
+    top: 14px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 1000;
-    width: 92%;
-    max-width: 1320px;
+    width: calc(100% - 32px);
+    max-width: 1700px;
     background: rgba(44, 26, 14, 0.92);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 20px;
-    box-shadow: 0 8px 40px rgba(44, 26, 14, 0.12);
-    padding: 0 1.8rem;
-    transition: all 0.3s ease;
+    padding: 0 2rem;
+    box-shadow: 0 10px 35px rgba(44,26,14,.15), inset 0 1px rgba(255,255,255,.08);
+    transition: .3s ease;
+    z-index: 1000;
 }
 
 .navbar-premium.scrolled {
@@ -72,7 +72,10 @@ body {
     gap: 10px;
     text-decoration: none;
 }
-.brand-premium-logo { height: 36px; width: auto; }
+.brand-premium-logo { 
+    height: 36px; 
+    width: auto; 
+}
 .brand-premium-name {
     font-family: 'Aref Ruqaa', serif;
     font-weight: 700;
@@ -81,7 +84,9 @@ body {
     letter-spacing: 0.5px;
     transition: color 0.3s ease;
 }
-.brand-premium-link:hover .brand-premium-name { color: var(--gold-light); }
+.brand-premium-link:hover .brand-premium-name { 
+    color: var(--gold-light); 
+}
 
 .nav-premium-links {
     display: flex;
@@ -266,18 +271,22 @@ body {
 }
 
 /* ================================================================
-   BOOKSHELVES
+   BOOKSHELVES — Wide but Contained
    ================================================================ */
+
 .library-premium-hall {
-    max-width: 1200px;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 0 2rem 40px;
+    padding: 0 24px 40px;
     min-height: 400px;
+    overflow: hidden;
 }
 
 .shelf-premium-section {
-    margin-bottom: 48px;
+    margin-bottom: 56px;
     animation: shelfFadeIn 0.6s ease forwards;
+    width: 100%;
 }
 .shelf-premium-section.hidden {
     display: none;
@@ -292,8 +301,9 @@ body {
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 14px;
+    margin-bottom: 18px;
     padding-right: 4px;
+    width: 100%;
 }
 .shelf-premium-title {
     font-family: 'Aref Ruqaa', serif;
@@ -301,47 +311,56 @@ body {
     font-weight: 700;
     color: var(--walnut);
     letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 .shelf-premium-line {
     flex: 1;
-    max-width: 80px;
+    min-width: 40px;
     height: 2px;
     background: linear-gradient(90deg, var(--gold), rgba(212, 166, 74, 0.05));
     border-radius: 2px;
 }
 
 /* ================================================================
-   WOODEN SHELF
+   WOODEN SHELF — Full Width Inside Container
    ================================================================ */
 .shelf-premium-wrapper {
     position: relative;
-    padding: 0 2px;
-}
-.shelf-premium-wood {
-    position: relative;
-    padding: 0 2px;
-    border-radius: 4px;
-    background: rgba(44, 26, 14, 0.01);
+    width: 100%;
+    padding: 0;
 }
 
-.shelf-premium-books {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 12px;
-    padding: 0 4px 10px;
-    min-height: 220px;
+.shelf-premium-wood {
+    position: relative;
+    width: 100%;
+    padding: 0;
+    border-radius: 4px;
+    background: rgba(44, 26, 14, 0.01);
+    max-width: 100%;
+    margin: 0;
 }
 
 /* ================================================================
-   BOOK STAND — Premium Size
+   BOOKS GRID — 7 Books per row, full width
+   ================================================================ */
+.shelf-premium-books {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 16px 12px;
+    padding: 8px 4px 14px;
+    min-height: 340px;
+    align-items: end;
+    justify-items: center;
+    width: 100%;
+}
+
+/* ================================================================
+   BOOK STAND — Premium Size for 7 books
    ================================================================ */
 .book-premium-stand {
-    flex: 0 0 auto;
-    width: 110px;
-    max-width: 110px;
-    min-width: 80px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -349,6 +368,7 @@ body {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     animation: bookRise 0.5s ease forwards;
     opacity: 0;
+    justify-self: center;
 }
 .book-premium-stand:nth-child(1) { animation-delay: 0.04s; }
 .book-premium-stand:nth-child(2) { animation-delay: 0.08s; }
@@ -356,6 +376,12 @@ body {
 .book-premium-stand:nth-child(4) { animation-delay: 0.16s; }
 .book-premium-stand:nth-child(5) { animation-delay: 0.20s; }
 .book-premium-stand:nth-child(6) { animation-delay: 0.24s; }
+.book-premium-stand:nth-child(7) { animation-delay: 0.28s; }
+.book-premium-stand:nth-child(8) { animation-delay: 0.32s; }
+.book-premium-stand:nth-child(9) { animation-delay: 0.36s; }
+.book-premium-stand:nth-child(10) { animation-delay: 0.40s; }
+.book-premium-stand:nth-child(11) { animation-delay: 0.44s; }
+.book-premium-stand:nth-child(12) { animation-delay: 0.48s; }
 
 @keyframes bookRise {
     from { opacity: 0; transform: translateY(20px) scale(0.94); }
@@ -364,14 +390,15 @@ body {
 
 .book-premium-stand:hover {
     z-index: 10;
+    transform: translateY(-4px);
 }
 
 .book-premium-3d {
     perspective: 800px;
     width: 100%;
-    max-width: 110px;
     aspect-ratio: 2/3;
     flex-shrink: 0;
+    max-width: 160px;
 }
 
 .book-premium-cover {
@@ -381,19 +408,24 @@ body {
     border-radius: 2px 8px 8px 2px;
     overflow: hidden;
     box-shadow: 
-        -4px 0 16px rgba(0, 0, 0, 0.04),
-        0 8px 28px rgba(0, 0, 0, 0.02);
+        0 4px 12px rgba(44, 26, 14, 0.10),
+        0 8px 24px rgba(44, 26, 14, 0.04);
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform: rotateY(var(--book-rotation, 0deg));
     transform-origin: right center;
     background: #F0E8DE;
 }
 
+/* Remove any white border/frame */
+.book-premium-cover::before {
+    display: none;
+}
+
 .book-premium-stand:hover .book-premium-cover {
-    transform: translateY(-16px) scale(1.05) rotateY(-3deg);
+    transform: translateY(-12px) scale(1.04) rotateY(-3deg);
     box-shadow: 
-        -6px 0 32px rgba(0, 0, 0, 0.08),
-        0 24px 64px rgba(0, 0, 0, 0.08);
+        0 8px 24px rgba(44, 26, 14, 0.12),
+        0 16px 48px rgba(44, 26, 14, 0.06);
 }
 
 .book-premium-img {
@@ -445,12 +477,16 @@ body {
 .book-premium-stand:hover .book-premium-glow { opacity: 1; }
 
 /* ================================================================
-   SHELF BOARD
+   SHELF BOARD — Full Width
    ================================================================ */
 .shelf-premium-board {
     position: relative;
     height: 14px;
     margin-top: -2px;
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
     background: linear-gradient(180deg,
         #7b5a38 0%,
         #5a3d28 30%,
@@ -495,6 +531,10 @@ body {
     position: relative;
     height: 24px;
     margin-top: -8px;
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
     background: linear-gradient(180deg,
         rgba(44, 26, 14, 0.10) 0%,
         rgba(44, 26, 14, 0.03) 40%,
@@ -534,16 +574,17 @@ body {
 }
 
 /* ================================================================
-   FOOTER — Premium with Curve
+   FOOTER — Premium Full Width
    ================================================================ */
 .footer-premium {
     background: var(--walnut);
     color: rgba(252, 248, 242, 0.5);
-    padding: 60px 2rem 24px;
+    padding: 60px 40px 24px;
     border-top: 1px solid rgba(255, 255, 255, 0.02);
     position: relative;
     margin-top: 20px;
     animation: footerFadeIn 0.8s ease forwards;
+    width: 100%;
 }
 
 @keyframes footerFadeIn {
@@ -562,12 +603,14 @@ body {
 }
 
 .footer-premium-content {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1.4fr 2fr;
+    grid-template-columns: 1.8fr 1fr 1fr 1fr;
     gap: 40px;
+    width: 100%;
 }
+
 .footer-premium-brand .footer-premium-logo {
     font-family: 'Aref Ruqaa', serif;
     font-weight: 700;
@@ -576,9 +619,27 @@ body {
     display: block;
     margin-bottom: 8px;
 }
-.footer-premium-brand p { font-size: 0.85rem; line-height: 1.9; color: rgba(252, 248, 242, 0.3); }
-.footer-premium-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.footer-premium-col h4 { color: #FCF8F2; font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; }
+
+.footer-premium-brand p {
+    font-size: 0.85rem;
+    line-height: 1.9;
+    color: rgba(252, 248, 242, 0.3);
+    max-width: 400px;
+}
+
+.footer-premium-links {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.footer-premium-col h4 {
+    color: #FCF8F2;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
 .footer-premium-col a {
     display: block;
     color: rgba(252, 248, 242, 0.3);
@@ -587,9 +648,13 @@ body {
     padding: 4px 0;
     transition: color 0.3s ease;
 }
-.footer-premium-col a:hover { color: #FCF8F2; }
+
+.footer-premium-col a:hover {
+    color: #FCF8F2;
+}
+
 .footer-premium-bottom {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 32px auto 0;
     padding-top: 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.02);
@@ -599,70 +664,279 @@ body {
     gap: 10px;
     font-size: 0.75rem;
     color: rgba(252, 248, 242, 0.15);
+    width: 100%;
 }
 
 /* ================================================================
-   RESPONSIVE
+   RESPONSIVE — 7 Books on All Screens
    ================================================================ */
+
+/* Large Desktop (1400px+) */
+@media (min-width: 1400px) {
+    .shelf-premium-books {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 20px 16px;
+        padding: 8px 12px 16px;
+        min-height: 370px;
+    }
+    .book-premium-3d {
+        max-width: 180px;
+    }
+    .library-premium-hall {
+        padding: 0 40px 48px;
+    }
+    .footer-premium {
+        padding: 60px 60px 24px;
+    }
+}
+
+/* Desktop (1100-1400px) */
+@media (max-width: 1399px) and (min-width: 1101px) {
+    .shelf-premium-books {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 16px 12px;
+        min-height: 340px;
+    }
+    .book-premium-3d {
+        max-width: 160px;
+    }
+}
+
 @media (max-width: 1100px) {
-    .book-premium-stand { width: 100px; max-width: 100px; min-width: 70px; }
-    .book-premium-3d { max-width: 100px; }
+    .shelf-premium-books {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 14px 10px;
+        min-height: 290px;
+    }
+    .book-premium-3d {
+        max-width: 140px;
+    }
+    .library-premium-hall {
+        padding: 0 24px 36px;
+    }
 }
 
 @media (max-width: 900px) {
-    .book-premium-stand { width: 90px; max-width: 90px; min-width: 60px; }
-    .book-premium-3d { max-width: 90px; }
-    .shelf-premium-title { font-size: 1.5rem; }
-    .shelf-premium-line { max-width: 50px; }
-    .shelf-premium-books { gap: 8px; }
+    .shelf-premium-books {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 12px 8px;
+        padding: 6px 4px 12px;
+        min-height: 260px;
+    }
+    .book-premium-3d {
+        max-width: 120px;
+    }
+    .shelf-premium-title {
+        font-size: 1.5rem;
+    }
+    .shelf-premium-line {
+        min-width: 30px;
+    }
+    .library-premium-hall {
+        padding: 0 20px 30px;
+    }
+    .shelf-premium-section {
+        margin-bottom: 40px;
+    }
+    .footer-premium-content {
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+    .footer-premium {
+        padding: 40px 30px 20px;
+    }
 }
 
 @media (max-width: 768px) {
+    /* Navbar */
     .navbar-premium {
         top: 10px;
         width: 96%;
-        border-radius: 16px;
         padding: 0 1rem;
+        border-radius: 16px;
     }
-    .nav-premium-links { display: none; }
-    .brand-premium-name { font-size: 1.3rem; }
-    .brand-premium-logo { height: 30px; }
-    .search-premium-section { padding: 82px 1rem 8px; }
-    .search-premium-wrapper { height: 50px; }
-    .search-premium-input { font-size: 0.85rem; padding: 12px 48px 12px 16px; }
-    .search-premium-icon { right: 16px; font-size: 0.85rem; }
-    .search-premium-clear { left: 14px; }
-    .category-premium-section { padding: 4px 1rem 14px; }
-    .category-premium-chip { font-size: 0.75rem; padding: 6px 16px; }
-    .library-premium-hall { padding: 0 1rem 30px; }
-    .book-premium-stand { width: 75px; max-width: 75px; min-width: 50px; }
-    .book-premium-3d { max-width: 75px; }
-    .shelf-premium-title { font-size: 1.3rem; }
-    .shelf-premium-books { gap: 6px; min-height: 170px; }
-    .shelf-premium-board { height: 10px; }
-    .shelf-premium-shadow { height: 18px; }
-    .footer-premium-content { grid-template-columns: 1fr; gap: 28px; text-align: center; }
-    .footer-premium-links { grid-template-columns: repeat(3, 1fr); }
-    .nav-premium-btn-outline { display: none; }
+    .nav-premium-links {
+        display: none;
+    }
+    .brand-premium-name {
+        font-size: 1.3rem;
+    }
+    .brand-premium-logo {
+        height: 30px;
+    }
+    .nav-premium-btn-outline {
+        display: none;
+    }
+    .nav-premium-btn-filled {
+        padding: 6px 14px;
+        font-size: 0.75rem;
+    }
+    .nav-premium-actions {
+        gap: 6px;
+    }
+    .navbar-premium-container {
+        min-height: 56px;
+        padding: 8px 0;
+    }
+    
+    /* Search */
+    .search-premium-section {
+        padding: 82px 1rem 8px;
+    }
+    .search-premium-wrapper {
+        height: 50px;
+    }
+    .search-premium-input {
+        font-size: 0.85rem;
+        padding: 12px 48px 12px 16px;
+    }
+    .search-premium-icon {
+        right: 16px;
+        font-size: 0.85rem;
+    }
+    .search-premium-clear {
+        left: 14px;
+    }
+    
+    /* Categories */
+    .category-premium-section {
+        padding: 4px 1rem 14px;
+    }
+    .category-premium-chip {
+        font-size: 0.75rem;
+        padding: 6px 16px;
+    }
+    
+    /* Bookshelf */
+    .library-premium-hall {
+        padding: 0 16px 30px;
+    }
+    .shelf-premium-books {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px 6px;
+        padding: 4px 2px 10px;
+        min-height: 220px;
+    }
+    .book-premium-3d {
+        max-width: 110px;
+    }
+    .shelf-premium-title {
+        font-size: 1.3rem;
+    }
+    .shelf-premium-section {
+        margin-bottom: 32px;
+    }
+    .shelf-premium-board {
+        height: 10px;
+    }
+    .shelf-premium-shadow {
+        height: 18px;
+        margin-top: -6px;
+    }
+    
+    /* Footer */
+    .footer-premium-content {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        text-align: center;
+    }
+    .footer-premium-links {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .footer-premium-brand p {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    .footer-premium {
+        padding: 40px 20px 20px;
+    }
 }
 
 @media (max-width: 500px) {
-    .book-premium-stand { width: 65px; max-width: 65px; min-width: 42px; }
-    .book-premium-3d { max-width: 65px; }
-    .shelf-premium-books { gap: 4px; min-height: 140px; }
-    .shelf-premium-title { font-size: 1.1rem; }
-    .category-premium-chip { font-size: 0.65rem; padding: 4px 12px; }
-    .search-premium-wrapper { height: 44px; }
-    .search-premium-input { font-size: 0.8rem; padding: 10px 40px 10px 14px; }
-    .shelf-premium-board { height: 8px; }
-    .shelf-premium-shadow { height: 14px; }
-    .nav-premium-btn-filled { padding: 4px 12px; font-size: 0.7rem; }
-    .footer-premium-links { grid-template-columns: 1fr; }
-    .footer-premium-bottom { flex-direction: column; text-align: center; }
+    .library-premium-hall {
+        padding: 0 12px 20px;
+    }
+    .shelf-premium-books {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px 5px;
+        padding: 4px 2px 8px;
+        min-height: 180px;
+    }
+    .book-premium-3d {
+        max-width: 90px;
+    }
+    .shelf-premium-title {
+        font-size: 1.1rem;
+    }
+    .shelf-premium-section {
+        margin-bottom: 24px;
+    }
+    .shelf-premium-line {
+        min-width: 20px;
+    }
+    .category-premium-chip {
+        font-size: 0.65rem;
+        padding: 4px 12px;
+    }
+    .search-premium-wrapper {
+        height: 44px;
+    }
+    .search-premium-input {
+        font-size: 0.8rem;
+        padding: 10px 40px 10px 14px;
+    }
+    .shelf-premium-board {
+        height: 8px;
+    }
+    .shelf-premium-shadow {
+        height: 14px;
+        margin-top: -4px;
+    }
+    .nav-premium-btn-filled {
+        padding: 4px 12px;
+        font-size: 0.7rem;
+    }
+    .footer-premium-links {
+        grid-template-columns: 1fr;
+    }
+    .footer-premium-bottom {
+        flex-direction: column;
+        text-align: center;
+    }
+    .footer-premium {
+        padding: 30px 16px 16px;
+    }
 }
 
+/* Extra Small */
+@media (max-width: 380px) {
+    .library-premium-hall {
+        padding: 0 8px 16px;
+    }
+    .shelf-premium-books {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px 4px;
+        min-height: 150px;
+    }
+    .book-premium-3d {
+        max-width: 75px;
+    }
+    .shelf-premium-title {
+        font-size: 0.95rem;
+    }
+}
+
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
-    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-    .book-premium-stand { opacity: 1; animation: none; }
-    .book-premium-stand:hover .book-premium-cover { transform: none; }
+    * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+    .book-premium-stand {
+        opacity: 1;
+        animation: none;
+    }
+    .book-premium-stand:hover .book-premium-cover {
+        transform: none;
+    }
 }

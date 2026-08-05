@@ -8,6 +8,77 @@ require_once __DIR__ . "/../core/init.php";
 $bookId = isset($_GET['id']) ? (int)$_GET['id'] : 1;
 
 // ============================================================
+// HANDLE RATING SUBMISSION
+// ============================================================
+$ratingSuccess = '';
+$ratingError = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_rating'])) {
+    $bookId = (int)($_POST['book_id'] ?? 0);
+    $rating = (int)($_POST['rating'] ?? 0);
+    $userId = $_SESSION['user_id'] ?? 0;
+    
+    if ($userId <= 0) {
+        $ratingError = 'يجب تسجيل الدخول أولاً.';
+    } elseif ($rating < 1 || $rating > 5) {
+        $ratingError = 'التقييم يجب أن يكون بين 1 و 5.';
+    } elseif ($bookId <= 0) {
+        $ratingError = 'معرف الكتاب غير صحيح.';
+    } else {
+        try {
+            // Check if user already rated this book
+            $checkQuery = "SELECT id FROM book_ratings WHERE user_id = :user_id AND book_id = :book_id";
+            $checkStmt = $conn->prepare($checkQuery);
+            $checkStmt->execute([':user_id' => $userId, ':book_id' => $bookId]);
+            $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($existing) {
+                // Update existing rating
+                $updateQuery = "UPDATE book_ratings SET rating = :rating, updated_at = NOW() WHERE id = :id";
+                $updateStmt = $conn->prepare($updateQuery);
+                $updateStmt->execute([':rating' => $rating, ':id' => $existing['id']]);
+            } else {
+                // Insert new rating
+                $insertQuery = "INSERT INTO book_ratings (book_id, user_id, rating) VALUES (:book_id, :user_id, :rating)";
+                $insertStmt = $conn->prepare($insertQuery);
+                $insertStmt->execute([
+                    ':book_id' => $bookId,
+                    ':user_id' => $userId,
+                    ':rating' => $rating
+                ]);
+            }
+            
+            // Update average rating in novels table
+            $avgQuery = "SELECT AVG(rating) as avg_rating, COUNT(*) as total_ratings FROM book_ratings WHERE book_id = :book_id";
+            $avgStmt = $conn->prepare($avgQuery);
+            $avgStmt->execute([':book_id' => $bookId]);
+            $avgData = $avgStmt->fetch(PDO::FETCH_ASSOC);
+            
+            $newAvg = round($avgData['avg_rating'] ?? 0, 1);
+            $totalRatings = $avgData['total_ratings'] ?? 0;
+            
+            // Update novels table
+            $updateNovelQuery = "UPDATE novels SET rating = :rating WHERE id = :book_id";
+            $updateNovelStmt = $conn->prepare($updateNovelQuery);
+            $updateNovelStmt->execute([':rating' => $newAvg, ':book_id' => $bookId]);
+            
+            // Redirect to refresh the page and show the new rating
+            header('Location: ' . ROOT . 'BookDetails?id=' . $bookId . '&rating=success');
+            exit;
+            
+        } catch (PDOException $e) {
+            $ratingError = 'حدث خطأ في قاعدة البيانات. حاول مرة أخرى.';
+            error_log("Rating Error: " . $e->getMessage());
+        }
+    }
+}
+
+// Show success message if rating was added
+if (isset($_GET['rating']) && $_GET['rating'] === 'success') {
+    $ratingSuccess = '✓ تم تحديث تقييمك بنجاح!';
+}
+
+// ============================================================
 // FETCH BOOK FROM DATABASE
 // ============================================================
 try {
@@ -62,7 +133,38 @@ if (!$book) {
 }
 
 // ============================================================
-// FETCH CHAPTERS FROM DATABASE
+// GET USER'S EXISTING RATING
+// ============================================================
+$userRating = 0;
+$isLoggedIn = isset($_SESSION['user_id']);
+$currentUserId = $_SESSION['user_id'] ?? 0;
+
+if ($isLoggedIn) {
+    try {
+        $userRatingQuery = "SELECT rating FROM book_ratings WHERE user_id = :user_id AND book_id = :book_id";
+        $userRatingStmt = $conn->prepare($userRatingQuery);
+        $userRatingStmt->execute([':user_id' => $currentUserId, ':book_id' => $bookId]);
+        $userRatingData = $userRatingStmt->fetch(PDO::FETCH_ASSOC);
+        $userRating = $userRatingData['rating'] ?? 0;
+    } catch (PDOException $e) {
+        $userRating = 0;
+    }
+}
+
+// ============================================================
+// GET TOTAL RATINGS COUNT
+// ============================================================
+try {
+    $countQuery = "SELECT COUNT(*) as total FROM book_ratings WHERE book_id = :book_id";
+    $countStmt = $conn->prepare($countQuery);
+    $countStmt->execute([':book_id' => $bookId]);
+    $totalRatings = $countStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+} catch (PDOException $e) {
+    $totalRatings = 0;
+}
+
+// ============================================================
+// FETCH CHAPTERS
 // ============================================================
 try {
     $chapterQuery = "
@@ -84,38 +186,68 @@ try {
     
 } catch (PDOException $e) {
     $chapters = [];
-    error_log("Database Error fetching chapters: " . $e->getMessage());
 }
 
 // ============================================================
-// FETCH SIMILAR BOOKS (Same category, different ID)
+// FETCH RELATED BOOKS (Same category)
 // ============================================================
 try {
-    $similarQuery = "
+    $relatedQuery = "
         SELECT 
             n.id,
             n.title,
             n.slug,
             n.cover_image,
+            n.rating,
             a.name AS author_name
         FROM novels n
         JOIN authors a ON n.author_id = a.id
         WHERE n.category_id = :category_id 
         AND n.id != :book_id 
         AND n.status = 'published'
-        LIMIT 4
+        LIMIT 8
     ";
     
-    $similarStmt = $conn->prepare($similarQuery);
-    $similarStmt->execute([
+    $relatedStmt = $conn->prepare($relatedQuery);
+    $relatedStmt->execute([
         ':category_id' => $book['category_id'],
         ':book_id' => $bookId
     ]);
-    $similarBooks = $similarStmt->fetchAll(PDO::FETCH_ASSOC);
+    $relatedBooks = $relatedStmt->fetchAll(PDO::FETCH_ASSOC);
     
 } catch (PDOException $e) {
-    $similarBooks = [];
-    error_log("Database Error fetching similar books: " . $e->getMessage());
+    $relatedBooks = [];
+}
+
+// ============================================================
+// FETCH CATEGORIES FOR SIDEBAR
+// ============================================================
+try {
+    $catQuery = "SELECT id, name_ar, name_en FROM categories ORDER BY name_ar";
+    $catStmt = $conn->prepare($catQuery);
+    $catStmt->execute();
+    $sidebarCategories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $sidebarCategories = [];
+}
+
+// ============================================================
+// FETCH AUTHORS FOR SIDEBAR
+// ============================================================
+try {
+    $authorQuery = "
+        SELECT DISTINCT a.id, a.name, a.photo 
+        FROM authors a
+        JOIN novels n ON a.id = n.author_id
+        WHERE n.status = 'published'
+        ORDER BY a.name
+        LIMIT 8
+    ";
+    $authorStmt = $conn->prepare($authorQuery);
+    $authorStmt->execute();
+    $sidebarAuthors = $authorStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $sidebarAuthors = [];
 }
 
 // ============================================================
@@ -126,350 +258,437 @@ $coverPath = !empty($book['cover_image'])
     : ROOT . 'assets/images/placeholder.jpg';
 
 // ============================================================
-// CALCULATE READING PROGRESS (Placeholder for now)
+// CALCULATE RATING
 // ============================================================
-$progress = 0;
-$progressText = 'لم تبدأ بعد';
-$isStarted = false;
+$rating = round($book['rating'] ?? 0, 1);
+$fullStars = floor($rating);
+$hasHalfStar = ($rating - $fullStars) >= 0.5;
 
+// ============================================================
+// CHECK IF USER HAS STARTED READING
+// ============================================================
+$hasStarted = false; // Placeholder - will come from user data later
+
+// ============================================================
+// AUTHOR BOOK COUNT
+// ============================================================
+try {
+    $countQuery = "SELECT COUNT(*) as total FROM novels WHERE author_id = :author_id AND status = 'published'";
+    $countStmt = $conn->prepare($countQuery);
+    $countStmt->execute([':author_id' => $book['author_id']]);
+    $authorBookCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+} catch (PDOException $e) {
+    $authorBookCount = 0;
+}
+
+// ============================================================
+// PASS ROOT TO JAVASCRIPT
+// ============================================================
+echo '<script>const ROOT_URL = "' . ROOT . '";</script>';
+echo '<script>const BOOK_ID = ' . $bookId . ';</script>';
+echo '<script>const USER_RATING = ' . $userRating . ';</script>';
+echo '<script>const IS_LOGGED_IN = ' . ($isLoggedIn ? 'true' : 'false') . ';</script>';
+
+// ============================================================
+// BUILD READING URL
+// ============================================================
+$readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?php echo htmlspecialchars($book['title']); ?> — سرد</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;500;600;700;800;900&family=Noto+Naskh+Arabic:wght@400;700&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="<?= ROOT ?>assets/css/BookDetails.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;500;600;700;800;900&family=Noto+Naskh+Arabic:wght@400;700&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <!-- CSS -->
+    <link rel="stylesheet" href="<?= ROOT ?>assets/css/BookDetails.css" />
 </head>
 <body>
 
-    <!-- ============================================================
-    NAVBAR (Reused from existing design)
-    ============================================================ -->
-    <nav class="navbar" id="navbar">
-        <div class="navbar-container">
-            <div class="navbar-brand">
-                <a href="<?= ROOT ?>index" class="brand-link">
-                    <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد logo" class="brand-logo">
-                    <span class="brand-name">سرد</span>
+    <!-- ===== NAVBAR — Premium Floating (Same as BrowseBooks) ===== -->
+    <nav class="navbar-premium" id="navbar">
+        <div class="navbar-premium-container">
+            <div class="navbar-premium-brand">
+                <a href="<?= ROOT ?>index" class="brand-premium-link">
+                    <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد logo" class="brand-premium-logo">
+                    <span class="brand-premium-name">سرد</span>
                 </a>
             </div>
-            <ul class="nav-links">
+            <ul class="nav-premium-links">
                 <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
                 <li><a href="<?= ROOT ?>Browsebooks" class="active">المكتبة</a></li>
-                <li><a href="#">الكتّاب</a></li>
                 <li><a href="#">من نحن</a></li>
             </ul>
-            <div class="nav-actions">
-                <a href="<?= ROOT ?>signup" class="nav-btn nav-btn-outline">تسجيل الدخول</a>
-                <a href="<?= ROOT ?>signup" class="nav-btn nav-btn-filled">إنشاء حساب</a>
+            <div class="nav-premium-actions">
+                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
+                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-filled">إنشاء حساب</a>
             </div>
         </div>
     </nav>
 
-    <!-- ============================================================
-    HERO SECTION — Two Columns
-    ============================================================ -->
-    <section class="book-hero">
-        <div class="book-hero-container">
-            <!-- Left Column: Cover -->
-            <div class="book-hero-cover">
-                <div class="book-cover-floating">
-                    <img src="<?php echo htmlspecialchars($coverPath); ?>" alt="<?php echo htmlspecialchars($book['title']); ?>" class="book-cover-large">
-                    <div class="book-cover-actions">
-                        <button class="cover-action" aria-label="إضافة للمفضلة">
-                            <i class="far fa-heart"></i>
-                        </button>
-                        <button class="cover-action" aria-label="مشاركة">
-                            <i class="fas fa-share-alt"></i>
-                        </button>
-                        <button class="cover-action" aria-label="حفظ للإشارة">
-                            <i class="far fa-bookmark"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="container">
 
-            <!-- Right Column: Info -->
-            <div class="book-hero-info">
-                <h1 class="book-title-large"><?php echo htmlspecialchars($book['title']); ?></h1>
-                <p class="book-author-large"><?php echo htmlspecialchars($book['author_name']); ?></p>
-
-                <!-- Rating -->
-                <div class="book-rating-large">
-                    <div class="stars">
-                        <?php 
-                        $rating = round($book['rating'] ?? 0);
-                        for ($i = 1; $i <= 5; $i++): ?>
-                            <?php if ($i <= $rating): ?>
-                                <i class="fas fa-star"></i>
-                            <?php else: ?>
-                                <i class="far fa-star"></i>
-                            <?php endif; ?>
-                        <?php endfor; ?>
-                    </div>
-                    <span class="rating-number"><?php echo number_format($book['rating'] ?? 0, 1); ?></span>
-                </div>
-
-                <!-- Metadata Chips -->
-                <div class="book-metadata-chips">
-                    <div class="chip">
-                        <span class="chip-label">عدد الصفحات</span>
-                        <span class="chip-value"><?php echo $book['pages'] ?? '—'; ?></span>
-                    </div>
-                    <div class="chip">
-                        <span class="chip-label">اللغة</span>
-                        <span class="chip-value"><?php echo $book['language'] ?? 'العربية'; ?></span>
-                    </div>
-                    <div class="chip">
-                        <span class="chip-label">الناشر</span>
-                        <span class="chip-value"><?php echo $book['publisher_name'] ?? '—'; ?></span>
-                    </div>
-                    <div class="chip">
-                        <span class="chip-label">التصنيف</span>
-                        <span class="chip-value"><?php echo $book['category_name']; ?></span>
-                    </div>
-                    <div class="chip">
-                        <span class="chip-label">سنة النشر</span>
-                        <span class="chip-value"><?php echo $book['publish_year'] ?? '—'; ?></span>
-                    </div>
-                    <div class="chip">
-                        <span class="chip-label">الدولة</span>
-                        <span class="chip-value"><?php echo $book['country'] ?? '—'; ?></span>
-                    </div>
-                </div>
-
-                <!-- Progress (Placeholder for now) -->
-                <div class="book-progress">
-                    <div class="progress-header">
-                        <span class="progress-label">تقدم القراءة</span>
-                        <span class="progress-value"><?php echo $progressText; ?></span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" style="width: <?php echo $progress; ?>%;"></div>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="book-actions-large">
-                    <button class="btn-primary-large" onclick="location.href='reading?id=<?php echo $book['id']; ?>'">
-                        <i class="fas fa-book-open"></i>
-                        <?php echo $isStarted ? 'متابعة القراءة' : 'ابدأ القراءة'; ?>
-                    </button>
-                    <button class="btn-secondary-large">
-                        <i class="far fa-heart"></i>
-                        إضافة للمفضلة
-                    </button>
-                </div>
-            </div>
+        <!-- ===== BREADCRUMB ===== -->
+        <div class="breadcrumb-wrap">
+            <a href="<?= ROOT ?>index">الرئيسية</a> <i class="fas fa-chevron-left"></i>
+            <a href="<?= ROOT ?>Browsebooks">المكتبة</a> <i class="fas fa-chevron-left"></i>
+            <a href="<?= ROOT ?>Browsebooks?category=<?= urlencode($book['category_name']) ?>"><?= htmlspecialchars($book['category_name']) ?></a> <i class="fas fa-chevron-left"></i>
+            <span><?php echo htmlspecialchars($book['title']); ?></span>
         </div>
-    </section>
 
-    <!-- ============================================================
-    DESCRIPTION SECTION
-    ============================================================ -->
-    <section class="book-description">
-        <div class="description-container">
-            <h2 class="section-title">نبذة عن الكتاب</h2>
-            <div class="section-divider"></div>
-            <div class="description-content">
-                <p><?php echo htmlspecialchars($book['description'] ?? 'لا يوجد وصف متاح'); ?></p>
-            </div>
-        </div>
-    </section>
+        <!-- ===== PAGE GRID: SIDEBAR + MAIN ===== -->
+        <div class="page-grid">
 
-    <!-- ============================================================
-    BOOK INFORMATION GRID
-    ============================================================ -->
-    <section class="book-info-grid">
-        <div class="info-grid-container">
-            <h2 class="section-title">معلومات الكتاب</h2>
-            <div class="section-divider"></div>
-            <div class="info-cards">
-                <div class="info-card">
-                    <div class="info-card-icon"><i class="fas fa-book"></i></div>
-                    <span class="info-card-label">عدد الصفحات</span>
-                    <span class="info-card-value"><?php echo $book['pages'] ?? '—'; ?></span>
+            <!-- ===== SIDEBAR ===== -->
+            <aside class="sidebar" id="sidebar">
+                <!-- Categories -->
+                <div class="card">
+                    <h3><i class="fas fa-folder-open"></i> التصنيفات</h3>
+                    <ul>
+                        <?php foreach ($sidebarCategories as $cat): ?>
+                            <li class="category-item <?php echo $cat['name_ar'] === $book['category_name'] ? 'active' : ''; ?>" 
+                                onclick="location.href='<?= ROOT ?>Browsebooks?category=<?= urlencode($cat['name_ar']) ?>'">
+                                <i class="fas fa-folder"></i> <?= htmlspecialchars($cat['name_ar']) ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <button class="more-btn">المزيد من الأقسام</button>
                 </div>
-                <div class="info-card">
-                    <div class="info-card-icon"><i class="fas fa-calendar-alt"></i></div>
-                    <span class="info-card-label">سنة النشر</span>
-                    <span class="info-card-value"><?php echo $book['publish_year'] ?? '—'; ?></span>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon"><i class="fas fa-building"></i></div>
-                    <span class="info-card-label">دار النشر</span>
-                    <span class="info-card-value"><?php echo $book['publisher_name'] ?? '—'; ?></span>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon"><i class="fas fa-tag"></i></div>
-                    <span class="info-card-label">التصنيف</span>
-                    <span class="info-card-value"><?php echo $book['category_name']; ?></span>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon"><i class="fas fa-globe"></i></div>
-                    <span class="info-card-label">اللغة</span>
-                    <span class="info-card-value"><?php echo $book['language'] ?? 'العربية'; ?></span>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon"><i class="fas fa-map-marker-alt"></i></div>
-                    <span class="info-card-label">الدولة</span>
-                    <span class="info-card-value"><?php echo $book['country'] ?? '—'; ?></span>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- ============================================================
-    CHAPTERS & COMMENTS SECTION
-    ============================================================ -->
-    <section class="book-chapters">
-        <div class="chapters-container">
-            <div class="tabs-header">
-                <button class="tab-btn active" data-tab="chapters">
-                    <i class="fas fa-list-ul"></i> الفصول
-                </button>
-                <button class="tab-btn" data-tab="comments">
-                    <i class="fas fa-comments"></i> التعليقات
-                </button>
-            </div>
-
-            <!-- Chapters Tab -->
-            <div class="tab-content active" id="tab-chapters">
-                <div class="chapters-list">
-                    <?php if (!empty($chapters)): ?>
-                        <?php foreach ($chapters as $chapter): ?>
-                            <div class="chapter-item" onclick="location.href='reading?id=<?php echo $book['id']; ?>&chapter=<?php echo $chapter['chapter_number']; ?>'">
-                                <span class="chapter-number"><?php echo sprintf('%02d', $chapter['chapter_number']); ?></span>
-                                <span class="chapter-name"><?php echo htmlspecialchars($chapter['title']); ?></span>
-                                <?php if ($chapter['word_count'] > 0): ?>
-                                    <span class="chapter-info">(<?php echo number_format($chapter['word_count']); ?> كلمة)</span>
-                                <?php endif; ?>
-                                <button class="chapter-read-btn" aria-label="اقرأ هذا الفصل">
-                                    <i class="fas fa-arrow-left"></i>
-                                </button>
+                <!-- Authors -->
+                <div class="card">
+                    <h3><i class="fas fa-user-edit"></i> المؤلفون</h3>
+                    <div class="author-list">
+                        <?php foreach ($sidebarAuthors as $author): ?>
+                            <div class="author-item" onclick="location.href='<?= ROOT ?>Browsebooks?author=<?= urlencode($author['name']) ?>'">
+                                <img src="<?= ROOT ?>assets/images/authors/<?= $author['photo'] ?? 'default-author.png' ?>" 
+                                     alt="<?= htmlspecialchars($author['name']) ?>" 
+                                     onerror="this.src='<?= ROOT ?>assets/images/avatar-placeholder.png'" />
+                                <?= htmlspecialchars($author['name']) ?>
                             </div>
                         <?php endforeach; ?>
+                    </div>
+                    <button class="more-btn">المزيد من المؤلفين</button>
+                </div>
+            </aside>
+
+            <!-- ===== MAIN CONTENT ===== -->
+            <div class="main-content">
+
+                <!-- ===== BOOK DETAILS CARD ===== -->
+                <div class="book-details">
+                    <div class="book-cover">
+                        <img src="<?php echo htmlspecialchars($coverPath); ?>" 
+                             alt="<?php echo htmlspecialchars($book['title']); ?>" 
+                             onerror="this.src='<?= ROOT ?>assets/images/placeholder.jpg'" />
+                    </div>
+                    <div class="book-info">
+                        <h1><?php echo htmlspecialchars($book['title']); ?></h1>
+                        <div class="meta-row">
+                            <span><i class="fas fa-user"></i> المؤلف: <?php echo htmlspecialchars($book['author_name']); ?></span>
+                            <span><i class="fas fa-book"></i> القسم: <?php echo htmlspecialchars($book['category_name']); ?></span>
+                            <span><i class="fas fa-file-alt"></i> عدد الصفحات: <?php echo $book['pages'] ?? '—'; ?></span>
+                            <span><i class="fas fa-language"></i> اللغة: <?php echo $book['language'] ?? 'العربية'; ?></span>
+                        </div>
+                        <div class="rating-stars">
+                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <?php if ($i <= $fullStars): ?>
+                                    <i class="fas fa-star"></i>
+                                <?php elseif ($i == $fullStars + 1 && $hasHalfStar): ?>
+                                    <i class="fas fa-star-half-alt"></i>
+                                <?php else: ?>
+                                    <i class="far fa-star"></i>
+                                <?php endif; ?>
+                            <?php endfor; ?>
+                            <span class="rating-number"><?php echo number_format($rating, 1); ?></span>
+                            <?php if ($totalRatings > 0): ?>
+                                <span class="rating-readers">(<?php echo number_format($totalRatings); ?> تقييم)</span>
+                            <?php endif; ?>
+                        </div>
+
+<!-- ===== ACTIONS BUTTONS ===== -->
+<div class="actions">
+    <!-- زر القراءة - بنفس طريقة signup -->
+    <a href="<?= ROOT ?>reading.php?book_id=<?php echo $book['id']; ?>" class="btn-primary">
+        <i class="fas fa-book-open"></i> <?php echo $hasStarted ? 'متابعة القراءة' : 'قراءة'; ?>
+    </a>
+    
+    <button class="btn-secondary"><i class="fas fa-download"></i> تحميل</button>
+    <button class="fav-btn" id="favBtn"><i class="far fa-heart"></i></button>
+</div>
+                    </div>
+                </div>
+
+                <!-- ===== STATISTICS ROW ===== -->
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <i class="fas fa-file-alt"></i>
+                        <span>عدد الصفحات</span>
+                        <strong><?php echo $book['pages'] ?? '—'; ?></strong>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-language"></i>
+                        <span>اللغة</span>
+                        <strong><?php echo $book['language'] ?? 'العربية'; ?></strong>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-building"></i>
+                        <span>الناشر</span>
+                        <strong><?php echo $book['publisher_name'] ?? '—'; ?></strong>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>سنة النشر</span>
+                        <strong><?php echo $book['publish_year'] ?? '—'; ?></strong>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-user"></i>
+                        <span>المؤلف</span>
+                        <strong><?php echo htmlspecialchars($book['author_name']); ?></strong>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-tag"></i>
+                        <span>القسم</span>
+                        <strong><?php echo htmlspecialchars($book['category_name']); ?></strong>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-star"></i>
+                        <span>التقييم</span>
+                        <strong><?php echo number_format($rating, 1); ?></strong>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-eye"></i>
+                        <span>المشاهدات</span>
+                        <strong><?php echo number_format($book['views'] ?? 0); ?></strong>
+                    </div>
+                </div>
+
+                <!-- ===== DESCRIPTION ===== -->
+                <div class="card description-card">
+                    <h3><i class="fas fa-align-right"></i> وصف الكتاب</h3>
+                    <p><?php echo nl2br(htmlspecialchars($book['description'] ?? 'لا يوجد وصف متاح')); ?></p>
+                </div>
+
+                <!-- ===== TABLE OF CONTENTS ===== -->
+                <div class="card chapters-card">
+                    <h3><i class="fas fa-list-ul"></i> فهرس الفصول</h3>
+                    <div class="chapters-container" id="chaptersContainer">
+                        <?php if (!empty($chapters)): ?>
+                            <div class="chapters-list" id="chaptersList">
+                                <?php 
+                                $totalChapters = count($chapters);
+                                $showCount = min(5, $totalChapters);
+                                $hiddenCount = $totalChapters - $showCount;
+                                
+                                foreach ($chapters as $index => $chapter): 
+                                    $isHidden = $index >= 5;
+                                ?>
+                                    <div class="chapter-row <?php echo $isHidden ? 'chapter-hidden' : ''; ?>" 
+                                         onclick="location.href='<?= ROOT ?>reading.php?book_id=<?php echo $book['id']; ?>&chapter=<?php echo $chapter['id']; ?>'">
+                                        <div class="chapter-info">
+                                            <span class="chapter-number">الفصل <?php echo sprintf('%02d', $chapter['chapter_number']); ?></span>
+                                            <span class="chapter-title"><?php echo htmlspecialchars($chapter['title']); ?></span>
+                                        </div>
+                                        <div class="chapter-meta">
+                                            <?php if ($chapter['reading_time'] > 0): ?>
+                                                <span class="chapter-time"><i class="far fa-clock"></i> <?php echo $chapter['reading_time']; ?> دقيقة</span>
+                                            <?php endif; ?>
+                                            <i class="fas fa-chevron-left chapter-arrow"></i>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                            
+                            <?php if ($totalChapters > 5): ?>
+                                <div class="chapters-expand-wrapper">
+                                    <button class="chapters-expand-btn" id="chaptersExpandBtn">
+                                        <span id="expandBtnText">عرض جميع الفصول (<?php echo $totalChapters; ?>)</span>
+                                        <i class="fas fa-chevron-down" id="expandBtnIcon"></i>
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <div class="chapters-empty">
+                                <i class="fas fa-book-open"></i>
+                                <p>لا توجد فصول متاحة لهذا الكتاب حالياً.</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- ===== AUTHOR SECTION ===== -->
+                <div class="card author-section">
+                    <h3><i class="fas fa-user-circle"></i> عن المؤلف</h3>
+                    <div class="author-info">
+                        <img src="<?= ROOT ?>assets/images/authors/<?= $book['author_photo'] ?? 'default-author.png' ?>" 
+                             alt="<?= htmlspecialchars($book['author_name']) ?>" 
+                             onerror="this.src='<?= ROOT ?>assets/images/avatar-placeholder.png'" />
+                        <div>
+                            <h4><?php echo htmlspecialchars($book['author_name']); ?></h4>
+                            <p><?php echo htmlspecialchars($book['author_bio'] ?? 'كاتب وروائي، له العديد من الأعمال الأدبية المميزة.'); ?></p>
+                            <div class="author-meta-info">
+                                <span><i class="fas fa-book"></i> <?php echo $authorBookCount; ?> كتاب</span>
+                            </div>
+                            <button class="btn-author" onclick="location.href='<?= ROOT ?>Browsebooks?author=<?= urlencode($book['author_name']) ?>'">
+                                <i class="fas fa-book-open"></i> عرض جميع الكتب
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== RATING CARD ===== -->
+                <div class="card rating-card">
+                    <?php if (!empty($ratingSuccess)): ?>
+                        <div style="background: #e8f5e9; color: #2e7d32; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; border-right: 4px solid #2e7d32; font-weight: 600;">
+                            <i class="fas fa-check-circle"></i> <?php echo $ratingSuccess; ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($ratingError)): ?>
+                        <div style="background: #ffebee; color: #c62828; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; border-right: 4px solid #c62828; font-weight: 600;">
+                            <i class="fas fa-exclamation-circle"></i> <?php echo $ratingError; ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <div class="rating-large">
+                        <span class="big-rating"><?php echo number_format($rating, 2); ?></span>
+                        <span class="rating-label">/ 5</span>
+                        <span class="rating-total" style="font-size: 0.9rem; color: var(--text-secondary); margin-right: 8px;">
+                            (<?php echo $totalRatings; ?> تقييم)
+                        </span>
+                    </div>
+                    
+                    <?php if ($isLoggedIn): ?>
+                        <form method="POST" action="" style="width: 100%;">
+                            <div class="rating-stars" id="ratingStars">
+                                <input type="hidden" name="rating" id="ratingInput" value="<?php echo $userRating; ?>" />
+                                <input type="hidden" name="book_id" value="<?php echo $bookId; ?>" />
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                    <i class="<?php echo ($i <= $userRating) ? 'fas' : 'far'; ?> fa-star" data-value="<?php echo $i; ?>"></i>
+                                <?php endfor; ?>
+                            </div>
+                            <div style="margin-top: 12px;">
+                                <button type="submit" name="submit_rating" class="btn-primary" style="padding: 8px 24px; font-size: 0.9rem;">
+                                    <i class="fas fa-star"></i> <?php echo $userRating > 0 ? 'تحديث التقييم' : 'تقييم'; ?>
+                                </button>
+                            </div>
+                        </form>
                     <?php else: ?>
-                        <div class="chapter-item" style="justify-content: center; opacity: 0.7;">
-                            <span>لم يتم إضافة فصول بعد</span>
+                        <div style="padding: 10px 0; color: var(--text-secondary);">
+                            <a href="<?= ROOT ?>signup" style="color: var(--gold); font-weight: 600;">سجل الدخول</a> لتقييم هذا الكتاب
                         </div>
                     <?php endif; ?>
                 </div>
-            </div>
 
-            <!-- Comments Tab -->
-            <div class="tab-content" id="tab-comments">
-                <div class="comments-list">
-                    <div class="comment-item">
-                        <div class="comment-avatar">ن</div>
-                        <div class="comment-body">
-                            <div class="comment-header">
-                                <span class="comment-author">نورا أحمد</span>
-                                <span class="comment-rating">★★★★★</span>
-                                <span class="comment-date">منذ ٣ أيام</span>
-                            </div>
-                            <p class="comment-text">رواية رائعة جداً! أسلوب الكاتب ممتع والأحداث مشوقة. أنتظر الفصل القادم بفارغ الصبر.</p>
+                <!-- ===== RELATED BOOKS - GALLERY ===== -->
+                <div class="related-section">
+                    <h3><i class="fas fa-book"></i> كتب مشابهة</h3>
+                    <div class="gallery-wrapper">
+                        <button class="gallery-arrow left-arrow" id="prevArrow" aria-label="السابق">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <div class="gallery-container" id="galleryContainer">
+                            <?php foreach ($relatedBooks as $related): ?>
+                                <div class="gallery-item">
+                                    <a href="<?= ROOT ?>BookDetails?id=<?= $related['id'] ?>" class="book-cover-link" data-book-id="<?= $related['id'] ?>">
+                                        <img src="<?= ROOT ?>assets/images/<?= $related['cover_image'] ?? 'placeholder.jpg' ?>" 
+                                             alt="<?= htmlspecialchars($related['title']) ?>" 
+                                             loading="lazy"
+                                             onerror="this.src='<?= ROOT ?>assets/images/placeholder.jpg'" />
+                                    </a>
+                                </div>
+                            <?php endforeach; ?>
+                            <?php if (count($relatedBooks) < 4): ?>
+                                <?php for ($i = count($relatedBooks); $i < 4; $i++): ?>
+                                    <div class="gallery-item gallery-empty" style="visibility:hidden;"></div>
+                                <?php endfor; ?>
+                            <?php endif; ?>
                         </div>
-                    </div>
-                    <div class="comment-item">
-                        <div class="comment-avatar">س</div>
-                        <div class="comment-body">
-                            <div class="comment-header">
-                                <span class="comment-author">سامي رضا</span>
-                                <span class="comment-rating">★★★★☆</span>
-                                <span class="comment-date">منذ أسبوع</span>
-                            </div>
-                            <p class="comment-text">قصة عميقة ومؤثرة. أوصي بها بشدة لكل محبي الأدب التاريخي.</p>
-                        </div>
-                    </div>
-                    <div class="comment-item">
-                        <div class="comment-avatar">ل</div>
-                        <div class="comment-body">
-                            <div class="comment-header">
-                                <span class="comment-author">ليلى سعيد</span>
-                                <span class="comment-rating">★★★★★</span>
-                                <span class="comment-date">منذ أسبوعين</span>
-                            </div>
-                            <p class="comment-text">من أجمل ما قرأت هذا العام. اللغة جميلة والسرد مشوق. أنصح به بشدة.</p>
-                        </div>
+                        <button class="gallery-arrow right-arrow" id="nextArrow" aria-label="التالي">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
                     </div>
                 </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- ============================================================
-    RELATED BOOKS
-    ============================================================ -->
-    <section class="related-books">
-        <div class="related-container">
-            <h2 class="section-title">كتب قد تعجبك</h2>
-            <div class="section-divider"></div>
-            <div class="related-carousel">
-                <?php foreach ($similarBooks as $similar): ?>
-                    <div class="related-book" onclick="location.href='BookDetails.php?id=<?php echo $similar['id']; ?>'">
-                        <img src="<?php echo ROOT . 'assets/images/' . ($similar['cover_image'] ?? 'placeholder.jpg'); ?>" alt="<?php echo htmlspecialchars($similar['title']); ?>" class="related-cover">
-                        <p class="related-title"><?php echo htmlspecialchars($similar['title']); ?></p>
-                        <p class="related-author"><?php echo htmlspecialchars($similar['author_name']); ?></p>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </section>
+            </div><!-- /main-content -->
+        </div><!-- /page-grid -->
 
-    <!-- ============================================================
-    FOOTER CTA
-    ============================================================ -->
-    <section class="footer-cta">
-        <div class="cta-container">
-            <h2 class="cta-title">هل أنت مستعد لبدء القراءة؟</h2>
-            <button class="cta-btn" onclick="location.href='reading?id=<?php echo $book['id']; ?>'">
-                <i class="fas fa-book-open"></i> ابدأ القراءة الآن
-            </button>
-        </div>
-    </section>
+    </main>
 
-    <!-- ============================================================
-    FOOTER
-    ============================================================ -->
+    <!-- ===== FOOTER — Premium (Same as Homepage with Dark Theme) ===== -->
     <footer class="site-footer">
-        <div class="footer-content">
+        <div class="footer-top">
             <div class="footer-brand">
-                <span class="footer-logo">سرد</span>
+                <span class="brand-name">سرد</span>
                 <p>مكتبة عربية رقمية تجمع القرّاء والكتّاب في مكان واحد، احتفاءً بالأدب العربي بكل تنوعه.</p>
             </div>
-            <div class="footer-links">
-                <div class="footer-col">
-                    <h4>روابط سريعة</h4>
-                    <a href="<?= ROOT ?>index">الرئيسية</a>
-                    <a href="<?= ROOT ?>Browsebooks">المكتبة</a>
-                    <a href="#">الكتّاب</a>
-                    <a href="#">من نحن</a>
-                </div>
-                <div class="footer-col">
-                    <h4>حسابك</h4>
-                    <a href="<?= ROOT ?>signup">تسجيل الدخول</a>
-                    <a href="<?= ROOT ?>signup">إنشاء حساب</a>
-                </div>
-                <div class="footer-col">
-                    <h4>تواصل معنا</h4>
-                    <a href="#">الدعم الفني</a>
-                    <a href="#">الأسئلة الشائعة</a>
-                    <a href="#">سياسة الخصوصية</a>
-                </div>
+
+            <div class="footer-col">
+                <h4>روابط سريعة</h4>
+                <ul>
+                    <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
+                    <li><a href="<?= ROOT ?>Browsebooks">تصفح الكتب</a></li>
+                    <li><a href="#">الكتّاب</a></li>
+                    <li><a href="#">من نحن</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>حسابك</h4>
+                <ul>
+                    <li><a href="<?= ROOT ?>signup">تسجيل الدخول</a></li>
+                    <li><a href="<?= ROOT ?>signup">إنشاء حساب</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>تواصل معنا</h4>
+                <ul>
+                    <li><a href="#">الدعم الفني</a></li>
+                    <li><a href="#">الأسئلة الشائعة</a></li>
+                    <li><a href="#">سياسة الخصوصية</a></li>
+                </ul>
             </div>
         </div>
+
         <div class="footer-bottom">
             <span>© 2026 سرد. جميع الحقوق محفوظة.</span>
             <span>صُنع بحب لمحبي القراءة والكتابة العربية</span>
         </div>
     </footer>
 
-    <script src="<?= ROOT ?>assets/js/BookDetails.js"></script>
+    <!-- ===== SCROLL TO TOP ===== -->
+    <button class="scroll-top" id="scrollTop"><i class="fas fa-arrow-up"></i></button>
 
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        // Function to go to reading page
+        function goToReading(bookId) {
+            var url = '<?= ROOT ?>reading.php?book_id=' + bookId;
+            console.log('Going to reading page: ' + url);
+            window.location.href = url;
+        }
+
+        // Also fix the chapter links to use book_id instead of id
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fix chapter links if they exist
+            var chapterRows = document.querySelectorAll('.chapter-row');
+            chapterRows.forEach(function(row) {
+                var onclickAttr = row.getAttribute('onclick');
+                if (onclickAttr && onclickAttr.indexOf('reading.php?id=') !== -1) {
+                    var newOnclick = onclickAttr.replace('reading.php?id=', 'reading.php?book_id=');
+                    row.setAttribute('onclick', newOnclick);
+                }
+            });
+        });
+    </script>
+    <script src="<?= ROOT ?>assets/js/BookDetails.js"></script>
 </body>
 </html>
