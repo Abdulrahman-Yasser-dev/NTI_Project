@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مكتب الكاتب | سرد</title>
+    <!-- Tajawal Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* ============================================
+                   هوية سرد البصرية (SARD DESIGN SYSTEM)
+                   ============================================ */
+        :root {
+            /* الألوان الأساسية */
+            --sard-brown-dark: #2B1A10;    /* البني الغامق للخلفيات والنصوص */
+            --sard-brown-medium: #4A3226;  /* بني متوسط */
+            --sard-beige-light: #F3EFE6;   /* البيج الدافئ (خلفية الصفحة) */
+            --sard-beige-card: #FFFFFF;    /* أبيض دافئ للكروت */
+            --sard-gold: #C89B5A;          /* اللمسات الذهبية الناعمة */
+            --sard-gold-hover: #B58A4A;
+            --sard-text-dark: #2B1A10;
+            --sard-text-muted: #7A6A5E;
+            
+            /* الخط والمسافات */
+            --sard-font: 'Tajawal', sans-serif;
+            --sard-radius: 16px;
+            --sard-shadow: 0 8px 30px rgba(43, 26, 16, 0.08);
+            --sard-shadow-hover: 0 15px 40px rgba(43, 26, 16, 0.18);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--sard-font);
+            background-color: var(--sard-beige-light);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(200, 155, 90, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(200, 155, 90, 0.03) 0%, transparent 50%);
+            color: var(--sard-text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        /* ============================================
+                   NAVBAR (بسيطة وأنيقة)
+                   ============================================ */
+        .sard-nav {
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(43, 26, 16, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .sard-nav .logo { font-size: 1.8rem; font-weight: 800; color: var(--sard-brown-dark); letter-spacing: 1px; }
+        .sard-nav .logo span { color: var(--sard-gold); }
+        .sard-nav .profile { display: flex; align-items: center; gap: 15px; color: var(--sard-text-muted); }
+        .sard-nav .profile i { font-size: 1.2rem; color: var(--sard-brown-dark); }
+
+        /* ============================================
+                   HERO SECTION (مكتب الكاتب)
+                   ============================================ */
+        .writer-studio {
+            max-width: 1200px;
+            margin: 40px auto 0;
+            padding: 0 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .hero-writer {
+            width: 100%;
+            background-color: var(--sard-brown-dark);
+            /* تأثير الجلد/الورق القديم */
+            background-image: 
+                repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 2px, transparent 2px, transparent 4px),
+                linear-gradient(to bottom, #2B1A10, #3D281C);
+            border-radius: var(--sard-radius);
+            padding: 50px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 40px rgba(43, 26, 16, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-writer::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; width: 40%; height: 100%;
+            background: radial-gradient(circle at 80% 50%, rgba(200, 155, 90, 0.1) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .hero-text { position: relative; z-index: 2; }
+        .hero-text h1 { color: #fff; font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; }
+        .hero-text h1 i { color: var(--sard-gold); margin-left: 10px; }
+        .hero-text p { color: rgba(255,255,255,0.7); font-size: 1.1rem; font-weight: 300; margin-bottom: 25px; }
+        .hero-text .quote { color: var(--sard-gold); font-style: italic; font-size: 0.95rem; opacity: 0.8; }
+
+        .hero-feather {
+            font-size: 6rem;
+            color: var(--sard-gold);
+            opacity: 0.4;
+            position: relative;
+            z-index: 2;
+            transform: rotate(-15deg);
+        }
+
+        /* ============================================
+                   CREATE NOVEL CARD (دفتر جديد)
+                   ============================================ */
+        .create-novel-wrapper {
+            width: 100%;
+            margin: 30px auto;
+        }
+        .create-novel-btn {
+            display: block;
+            background: var(--sard-beige-card);
+            border: 2px dashed rgba(43, 26, 16, 0.15);
+            border-radius: var(--sard-radius);
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: var(--sard-shadow);
+            position: relative;
+        }
+        .create-novel-btn:hover {
+            transform: translateY(-5px);
+            border-color: var(--sard-gold);
+            box-shadow: var(--sard-shadow-hover);
+        }
+        .create-novel-btn i {
+            font-size: 2.5rem;
+            color: var(--sard-brown-medium);
+            margin-bottom: 10px;
+        }
+        .create-novel-btn h4 { font-weight: 700; color: var(--sard-brown-dark); margin-bottom: 5px; }
+        .create-novel-btn p { color: var(--sard-text-muted); font-size: 0.9rem; margin-bottom: 15px; }
+        .create-novel-btn .cta {
+            display: inline-block;
+            background: var(--sard-brown-dark);
+            color: #fff;
+            padding: 8px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        .create-novel-btn .cta:hover { background: var(--sard-gold); color: var(--sard-brown-dark); }
+
+        /* ============================================
+                   DASHBOARD CONTENT
+                   ============================================ */
+        .dashboard-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section-header { margin: 50px 0 30px 0; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px; }
+        .section-header h2 { font-size: 1.8rem; font-weight: 700; color: var(--sard-brown-dark); }
+        
+        /* -- Tabs (الخط الذهبي) -- */
+        .sard-tabs {
+            display: flex;
+            gap: 30px;
+            border-bottom: 1px solid rgba(43, 26, 16, 0.08);
+            padding-bottom: 10px;
+        }
+        .sard-tabs .tab-btn {
+            background: transparent;
+            border: none;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--sard-text-muted);
+            padding: 0 0 10px 0;
+            cursor: pointer;
+            position: relative;
+            transition: 0.3s;
+        }
+        .sard-tabs .tab-btn.active { color: var(--sard-brown-dark); font-weight: 700; }
+        .sard-tabs .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -11px;
+            left: 0; right: 0;
+            height: 3px;
+            background: var(--sard-gold);
+            border-radius: 10px;
+        }
+        .sard-tabs .tab-btn:hover { color: var(--sard-brown-dark); }
+
+        /* -- Recent Work Quick Card -- */
+        .recent-work-wrapper {
+            margin-bottom: 40px;
+            background: var(--sard-beige-card);
+            border-radius: var(--sard-radius);
+            padding: 25px;
+            box-shadow: var(--sard-shadow);
+            border-right: 5px solid var(--sard-gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .recent-work-text h4 { font-size: 1.1rem; font-weight: 700; margin-bottom: 5px; }
+        .recent-work-text span { color: var(--sard-text-muted); font-size: 0.9rem; }
+        .recent-work-btn {
+            background: var(--sard-gold);
+            color: var(--sard-brown-dark);
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-weight: 700;
+            transition: 0.3s;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .recent-work-btn:hover { background: var(--sard-gold-hover); transform: scale(1.02); }
+
+        /* -- Novels Grid (Cards like Books) -- */
+        .novels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .book-card {
+            background: var(--sard-beige-card);
+            border-radius: var(--sard-radius);
+            overflow: hidden;
+            box-shadow: var(--sard-shadow);
+            transition: all 0.4s ease;
+            border: 1px solid rgba(255,255,255,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+        .book-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--sard-shadow-hover);
+        }
+
+        .book-cover-wrapper {
+            height: 200px;
+            background: #f0ebe2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(0,0,0,0.02);
+        }
+        .book-cover-wrapper img {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .book-card:hover .book-cover-wrapper img { transform: scale(1.05); }
+
+        .book-details { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .book-details h5 { font-weight: 700; font-size: 1.1rem; margin-bottom: 5px; }
+        .book-meta { display: flex; justify-content: space-between; color: var(--sard-text-muted); font-size: 0.85rem; margin: 5px 0 15px; }
+        
+        .book-status {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #f0ebe2;
+            color: var(--sard-text-muted);
+            align-self: flex-start;
+            margin-bottom: 15px;
+        }
+        .book-status.writing { background: #e8dfd6; color: var(--sard-brown-dark); }
+
+        .book-actions {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border-top: 1px solid #f0ebe2;
+            padding-top: 15px;
+        }
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.9rem;
+        }
+        .action-btn.primary {
+            background: var(--sard-brown-dark);
+            color: #fff;
+        }
+        .action-btn.primary:hover { background: #3D281C; }
+        
+        .action-btn.outline {
+            background: transparent;
+            color: var(--sard-text-muted);
+            border: 1px solid #e0d8ce;
+        }
+        .action-btn.outline:hover { background: #f9f6f0; border-color: var(--sard-brown-dark); color: var(--sard-brown-dark); }
+
+        /* ============================================
+                   STATISTICS (Minimal & Elegant)
+                   ============================================ */
+        .stats-section { margin: 70px 0; padding: 30px 0; border-top: 1px solid rgba(43, 26, 16, 0.05); }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: transparent;
+            border-left: 1px solid rgba(43, 26, 16, 0.05);
+        }
+        .stat-item:last-child { border-left: none; }
+        
+        .stat-item i { font-size: 1.5rem; color: var(--sard-brown-medium); margin-bottom: 5px; opacity: 0.7; }
+        .stat-item .num { display: block; font-size: 1.8rem; font-weight: 800; color: var(--sard-brown-dark); margin-bottom: 2px; }
+        .stat-item .label { color: var(--sard-text-muted); font-size: 0.9rem; }
+
+        /* ============================================
+                   RESPONSIVE
+                   ============================================ */
+        @media (max-width: 768px) {
+            .hero-writer { flex-direction: column; align-items: flex-start; padding: 30px; }
+            .hero-text h1 { font-size: 1.8rem; }
+            .hero-feather { display: none; }
+            .recent-work-wrapper { flex-direction: column; align-items: flex-start; text-align: left; }
+            .recent-work-btn { width: 100%; text-align: center; }
+            .novels-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stat-item { border-left: none; border-bottom: 1px solid rgba(43, 26, 16, 0.05); padding: 15px 0; }
+            .stat-item:last-child { border-bottom: none; }
+            .sard-tabs { gap: 15px; overflow-x: auto; white-space: nowrap; width: 100%; padding-bottom: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================= NAVBAR ================= -->
+    <nav class="sard-nav">
+        <div class="logo">سرد<span>.</span></div>
+        <div class="profile">
+            <span>أحمد</span>
+            <i class="fa-regular fa-circle-user"></i>
+        </div>
+    </nav>
+
+    <!-- ================= HERO SECTION ================= -->
+    <section class="writer-studio">
+        <div class="hero-writer">
+            <div class="hero-text">
+                <h1>أهلاً بعودتك يا أحمد <i class="fa-solid fa-feather-pointed"></i></h1>
+                <p>استكمل كتابة روايتك، واستعد لإلهام القراء.</p>
+                <div class="quote">"كل رواية عظيمة بدأت بجملة."</div>
+            </div>
+            <div class="hero-feather">
+                <i class="fa-solid fa-feather"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= MAIN DASHBOARD ================= -->
+    <div class="dashboard-content">
+
+        <!-- Create New Novel (Book Style) -->
+        <div class="create-novel-wrapper">
+            <div class="create-novel-btn" onclick="window.location.href='create_new_novel.php'">
+                <i class="fa-solid fa-book-open"></i>
+                <h4>ابدأ رواية جديدة</h4>
+                <p>افتح صفحة جديدة... فربما يغير هذا الكتاب حياة أحد.</p>
+                <span class="cta">إنشاء رواية</span>
+            </div>
+        </div>
+
+        <!-- Section Header & Tabs -->
+        <div class="section-header">
+            <h2>رواياتي</h2>
+            <div class="sard-tabs" id="tabsContainer">
+                <button class="tab-btn active" onclick="filterBooks('all')">الكل</button>
+                <button class="tab-btn" onclick="filterBooks('writing')">قيد الكتابة</button>
+                <button class="tab-btn" onclick="filterBooks('published')">منشورة</button>
+                <button class="tab-btn" onclick="filterBooks('draft')">مسودات</button>
+            </div>
+        </div>
+
+        <!-- Recent Work Card -->
+        <div class="recent-work-wrapper">
+            <div class="recent-work-text">
+                <h4><i class="fa-regular fa-clock" style="margin-left: 8px; color: var(--sard-gold);"></i>آخر عمل عليه</h4>
+                <span>أمواج أكما — توقف عند: الفصل السابع</span>
+            </div>
+            <button class="recent-work-btn" onclick="window.location.href='write_new_chapter_existing_novel.php'">متابعة الكتابة</button>
+        </div>
+
+        <!-- Novels Grid -->
+        <div class="novels-grid" id="novelsGrid">
+            
+            <!-- Card 1 (قيد الكتابة) -->
+            <div class="book-card" data-status="writing">
+                <div class="book-cover-wrapper">
+                    <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=400" alt="غلاف">
+                </div>
+                <div class="book-details">
+                    <h5>أمواج أكما</h5>
+                    <div class="book-meta">
+                        <span><i class="fa-regular fa-bookmark"></i> فانتازيا</span>
+                        <span><i class="fa-regular fa-file-lines"></i> 12 فصل</span>
+                    </div>
+                    <span class="book-status writing"><i class="fa-regular fa-pen-to-square"></i> قيد الكتابة</span>
+                    <div class="book-meta" style="margin-top: -10px; margin-bottom: 10px; font-size: 0.8rem;">
+                        <span><i class="fa-regular fa-clock"></i> آخر تعديل: منذ 3 أيام</span>
+                    </div>
+                    
+                    <div class="book-actions">
+                        <button class="action-btn primary" onclick="window.location.href='write_new_chapter_existing_novel.php'"><i class="fa-regular fa-pen-to-square"></i> كتابة فصل جديد</button>
+                        <button class="action-btn outline" onclick="window.location.href='manage_novel_chapters.php'"><i class="fa-regular fa-list"></i> إدارة الفصول</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2 (منشورة) -->
+            <div class="book-card" data-status="published">
+                <div class="book-cover-wrapper">
+                    <img src="https://images.unsplash.com/photo-1519682337058-a94d519337bc?auto=format&fit=crop&q=80&w=400" alt="غلاف">
+                </div>
+                <div class="book-details">
+                    <h5>تلك الأيام</h5>
+                    <div class="book-meta">
+                        <span><i class="fa-regular fa-bookmark"></i> دراما</span>
+                        <span><i class="fa-regular fa-file-lines"></i> 24 فصل</span>
+                    </div>
+                    <span class="book-status" style="background:#e8f5e9; color:#2e7d32;"><i class="fa-regular fa-circle-check"></i> منشورة</span>
+                    <div class="book-meta" style="margin-top: -10px; margin-bottom: 10px; font-size: 0.8rem;">
+                        <span><i class="fa-regular fa-clock"></i> آخر تعديل: منذ أسبوع</span>
+                    </div>
+
+                    <div class="book-actions">
+                        <button class="action-btn primary" onclick="window.location.href='write_new_chapter_existing_novel.php'"><i class="fa-regular fa-pen-to-square"></i> كتابة فصل جديد</button>
+                        <button class="action-btn outline" onclick="window.location.href='manage_novel_chapters.php'"><i class="fa-regular fa-list"></i> إدارة الفصول</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3 (مسودة) -->
+            <div class="book-card" data-status="draft">
+                <div class="book-cover-wrapper">
+                    <img src="https://images.unsplash.com/photo-1621351183012-e2f9972dd9bf?auto=format&fit=crop&q=80&w=400" alt="غلاف">
+                </div>
+                <div class="book-details">
+                    <h5>خلف الجدران</h5>
+                    <div class="book-meta">
+                        <span><i class="fa-regular fa-bookmark"></i> إثارة</span>
+                        <span><i class="fa-regular fa-file-lines"></i> 5 فصول</span>
+                    </div>
+                    <span class="book-status" style="background:#f5f5f5; color:#757575;"><i class="fa-regular fa-note-sticky"></i> مسودة</span>
+                    <div class="book-meta" style="margin-top: -10px; margin-bottom: 10px; font-size: 0.8rem;">
+                        <span><i class="fa-regular fa-clock"></i> آخر تعديل: منذ شهر</span>
+                    </div>
+
+                    <div class="book-actions">
+                        <button class="action-btn primary" onclick="window.location.href='write_new_chapter_existing_novel.php'"><i class="fa-regular fa-pen-to-square"></i> كتابة فصل جديد</button>
+                        <button class="action-btn outline" onclick="window.location.href='manage_novel_chapters.php'"><i class="fa-regular fa-list"></i> إدارة الفصول</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card 4 (قيد الكتابة) -->
+            <div class="book-card" data-status="writing">
+                <div class="book-cover-wrapper">
+                    <img src="https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=400" alt="غلاف">
+                </div>
+                <div class="book-details">
+                    <h5>غروب على النيل</h5>
+                    <div class="book-meta">
+                        <span><i class="fa-regular fa-bookmark"></i> رومانسية</span>
+                        <span><i class="fa-regular fa-file-lines"></i> 8 فصول</span>
+                    </div>
+                    <span class="book-status writing"><i class="fa-regular fa-pen-to-square"></i> قيد الكتابة</span>
+                    <div class="book-meta" style="margin-top: -10px; margin-bottom: 10px; font-size: 0.8rem;">
+                        <span><i class="fa-regular fa-clock"></i> آخر تعديل: اليوم</span>
+                    </div>
+
+                    <div class="book-actions">
+                        <button class="action-btn primary" onclick="window.location.href='write_new_chapter_existing_novel.php'"><i class="fa-regular fa-pen-to-square"></i> كتابة فصل جديد</button>
+                        <button class="action-btn outline" onclick="window.location.href='manage_novel_chapters.php'"><i class="fa-regular fa-list"></i> إدارة الفصول</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= STATISTICS ================= -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <i class="fa-regular fa-book"></i>
+                    <span class="num">4</span>
+                    <span class="label">رواية</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fa-regular fa-pen-to-square"></i>
+                    <span class="num">49</span>
+                    <span class="label">فصل</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fa-regular fa-eye"></i>
+                    <span class="num">12.4k</span>
+                    <span class="label">قراءة</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fa-regular fa-heart"></i>
+                    <span class="num">156</span>
+                    <span class="label">إعجاب</span>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- ================= SIMPLE JS FOR TABS ================= -->
+    <script>
+        function filterBooks(status) {
+            // 1. Update Active Tab
+            document.querySelectorAll('.sard-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // 2. Filter Cards
+            const cards = document.querySelectorAll('.book-card');
+            cards.forEach(card => {
+                if(status === 'all') {
+                    card.style.display = 'flex';
+                } else {
+                    if(card.getAttribute('data-status') === status) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
