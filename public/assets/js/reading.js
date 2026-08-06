@@ -238,8 +238,8 @@
 
   renderSpread();
 
-  /* ============================================================
-     SETTINGS & THEMES 
+    /* ============================================================
+     SETTINGS & THEMES (Fixed)
      ============================================================ */
   var bookContainerEl = document.getElementById('bookContainer');
   var darkModeBtn = document.getElementById('darkModeBtn');
@@ -247,28 +247,62 @@
 
   function applyTheme(theme) {
     if (!bookContainerEl) return;
-    bookContainerEl.classList.remove('mode-dark', 'mode-sepia');
-    if (theme === 'dark') bookContainerEl.classList.add('mode-dark');
-    else if (theme === 'sepia') bookContainerEl.classList.add('mode-sepia');
     
+    // 1. Remove all existing theme classes
+    bookContainerEl.classList.remove('mode-dark', 'mode-sepia', 'mode-light');
+    
+    // 2. Apply the new theme class
+    if (theme === 'dark') {
+        bookContainerEl.classList.add('mode-dark');
+    } else if (theme === 'sepia') {
+        bookContainerEl.classList.add('mode-sepia');
+    } else {
+        bookContainerEl.classList.add('mode-light'); // Default fallback
+    }
+    
+    // 3. Update visual states
     themeButtons.forEach(function(btn) {
       btn.classList.remove('active');
-      if (btn.getAttribute('data-theme') === theme) btn.classList.add('active');
+      if (btn.getAttribute('data-theme') === theme) {
+        btn.classList.add('active');
+      }
     });
-    if (darkModeBtn) darkModeBtn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+    
+    if (darkModeBtn) {
+      darkModeBtn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+    }
+    
+    // 4. Save to localStorage
     localStorage.setItem('sard_reading_theme', theme);
   }
 
-  var savedTheme = localStorage.getItem('sard_reading_theme') || 'light';
+  // ============================================================
+  // LOAD SAVED THEME (With Fallback)
+  // ============================================================
+  var savedTheme = localStorage.getItem('sard_reading_theme');
+  if (!savedTheme) {
+      savedTheme = 'light'; // Default if nothing is saved
+      localStorage.setItem('sard_reading_theme', 'light');
+  }
   applyTheme(savedTheme);
 
+  // ============================================================
+  // THEME BUTTON EVENT LISTENERS
+  // ============================================================
   themeButtons.forEach(function(btn) {
-    btn.addEventListener('click', function() { applyTheme(this.getAttribute('data-theme')); });
+    btn.addEventListener('click', function() { 
+        applyTheme(this.getAttribute('data-theme')); 
+    });
   });
+
+  // ============================================================
+  // DARK MODE BUTTON EVENT LISTENER (The Sun/Moon Icon)
+  // ============================================================
   if (darkModeBtn) {
     darkModeBtn.addEventListener('click', function() {
       var currentTheme = localStorage.getItem('sard_reading_theme') || 'light';
-      applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+      var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(newTheme);
     });
   }
 

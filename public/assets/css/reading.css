@@ -902,17 +902,44 @@ ul { list-style: none; margin: 0; padding: 0; }
   .navbar__back-link span { display: none; }
 }
 
-/* Dark Mode & Sepia Support for the Flip Engine */
-.book-container.mode-dark .page-turn { background-color: #17110c; background-image: none; }
-.book-container.mode-dark .page-turn .page__text { color: #E7D2A4; }
-.book-container.mode-dark .page-turn .page__number { color: #8a7057; }
-.book-container.mode-dark .page-turn--back { background-color: #11100a; }
+/* ============================================================
+   THEME SUPPORT (Fixed)
+   ============================================================ */
 
-.book-container.mode-sepia .page-turn { background-color: #f4e8d1; }
-.book-container.mode-sepia .page-turn .page__text { color: #5a4635; }
-.book-container.mode-sepia .page-turn .page__number { color: #8a7a65; }
-.book-container.mode-sepia .page-turn--back { background-color: #e3d5bb; }
+/* --- LIGHT THEME (Default) --- */
+.book-container.mode-light {
+    /* The root variables are already Light */
+}
 
+/* --- SEPIA THEME --- */
+.book-container.mode-sepia {
+    --paper-color: #f4e8d1;
+    --paper-back-color: #e3d5bb;
+    --paper-dark: #e3d5bb;
+    --text-color: #5a4635;
+    --page-number-color: #8a7a65;
+}
+.book-container.mode-sepia .page__number { color: var(--page-number-color); }
+.book-container.mode-sepia .page__text { color: var(--text-color); }
+.book-container.mode-sepia .page { background-color: var(--paper-color); }
+.book-container.mode-sepia .page--flip { background-color: var(--paper-color); }
+.book-container.mode-sepia .page-turn { background-color: var(--paper-color); }
+.book-container.mode-sepia .page-turn--back { background-color: var(--paper-back-color); }
+
+/* --- DARK THEME --- */
+.book-container.mode-dark {
+    --paper-color: #17110c;
+    --paper-back-color: #11100a;
+    --paper-dark: #11100a;
+    --text-color: #E7D2A4;
+    --page-number-color: #8a7057;
+}
+.book-container.mode-dark .page__number { color: var(--page-number-color); }
+.book-container.mode-dark .page__text { color: var(--text-color); }
+.book-container.mode-dark .page { background-color: var(--paper-color); background-image: none; }
+.book-container.mode-dark .page--flip { background-color: var(--paper-color); background-image: none; }
+.book-container.mode-dark .page-turn { background-color: var(--paper-color); background-image: none; }
+.book-container.mode-dark .page-turn--back { background-color: var(--paper-back-color); }
 /* ============================================================
    NOTES PANEL — "ملاحظاتي"
    Same visual language as the Chapters panel above it: same
