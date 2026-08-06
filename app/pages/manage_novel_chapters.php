@@ -1,256 +1,992 @@
-﻿<?php require_once "../app/core/init.php"; ?>
+﻿<?php
+require_once "../app/core/init.php";
+
+// Get novel_id from URL segment (/manage_novel_chapters/2) or query string
+$url_parts = isset($_GET['url']) ? explode('/', trim($_GET['url'], '/')) : [];
+$novel_id = isset($url_parts[1]) && (int)$url_parts[1] > 0
+    ? (int)$url_parts[1]
+    : (isset($_GET['id']) && (int)$_GET['id'] > 0 ? (int)$_GET['id'] : 1);
+
+// Handle Settings Modal POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_novel') {
+    $new_title = trim($_POST['novel_title'] ?? '');
+    $new_category = (int)($_POST['novel_category'] ?? 0);
+    
+    if ($new_title) {
+        execute($conn, "UPDATE novels SET title = :title, category_id = :category_id WHERE id = :id", [
+            'title'       => $new_title,
+            'category_id' => $new_category,
+            'id'          => $novel_id,
+        ]);
+    }
+    
+    // Handle cover image upload
+    if (!empty($_FILES['cover_image']['name'])) {
+        $upload_dir = '../public/assets/images/';
+        $ext = pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION);
+        $filename = 'cover_' . $novel_id . '_' . time() . '.' . $ext;
+        if (move_uploaded_file($_FILES['cover_image']['tmp_name'], $upload_dir . $filename)) {
+            execute($conn, "UPDATE novels SET cover_image = :cover_image WHERE id = :id", [
+                'cover_image' => $filename,
+                'id'          => $novel_id,
+            ]);
+        }
+    }
+    
+    header("Location: " . ROOT . "manage_novel_chapters/" . $novel_id);
+    die;
+}
+
+// Fetch Novel details (categories column is name_ar)
+$novel_data = query($conn, "
+    SELECT n.*, c.name_ar as category_name 
+    FROM novels n 
+    LEFT JOIN categories c ON n.category_id = c.id 
+    WHERE n.id = :id
+", ['id' => $novel_id]);
+
+$novel = $novel_data ? $novel_data[0] : null;
+
+if (!$novel) {
+    die("الرواية غير موجودة.");
+}
+
+// Fetch all categories for the settings dropdown
+$categories = query($conn, "SELECT id, name_ar FROM categories ORDER BY name_ar ASC", []);
+
+// Fetch Chapters
+$chapters = query($conn, "
+    SELECT * 
+    FROM chapters 
+    WHERE novel_id = :novel_id 
+    ORDER BY chapter_number ASC
+", ['novel_id' => $novel_id]);
+
+// Calculate published count
+$published_count = count(array_filter($chapters, fn($ch) => $ch['isPublished'] == 1));
+
+// Cover image path with fallback
+$cover_image = !empty($novel['cover_image'])
+    ? ROOT . "assets/images/" . $novel['cover_image']
+    : "https://lh3.googleusercontent.com/aida-public/AB6AXuCoYgpJ4ZHMmFIVzlsmUEm6pssKLVOyV9HAzJ8PVnzWS9oogDRHYfMSui41dEUXizaQ41dJlEm9O3yVOkHVTI5PLRFEU6t5ylY2nDFdIWXapLc2cHf5JTylKmo6N4534F7gDIybFhMPRvbZtwmRV2VmAPnzGLq7FBBN5EGHAO5QULTzF6G2PVUNNWbcmuu6AgJw20ssHx1MTHgbPA0_x54Wp7yDHyCbRx6ulpQcFtbgvc9bIJBza08atcz8G_FSSMJWH5IRbMsLmsj0";
+?>
 <!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html lang="ar" dir="rtl">
+
 <head>
-    <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>إدارة الفصول - سرد</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&family=Noto+Serif+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الفصول — سرد</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Amiri:wght@400;700&family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="<?= ROOT ?>assets/css/Browsebooks.css">
     <style>
-      body { font-family: "IBM Plex Sans Arabic", sans-serif; background-color: #f8f9ff; }
-      .font-headline-md, .font-headline-lg, .font-headline-lg-mobile { font-family: "Noto Serif Arabic", serif; }
-      ::-webkit-scrollbar { width: 8px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: #bac6ec; border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: #98a4c9; }
-      .book-cover { aspect-ratio: 2/3; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1), 0 10px 30px -10px rgba(24, 36, 66, 0.3); }
-    </style>
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              primary: "#182442",
-              "primary-container": "#2e3a59",
-              "on-primary-container": "#98a4c9",
-              secondary: "#605e58",
-              tertiary: "#312300",
-              "tertiary-container": "#4a380c",
-              surface: "#f8f9ff",
-              "surface-container": "#e5eeff",
-              "surface-container-low": "#eff4ff",
-              "surface-container-lowest": "#ffffff",
-              "surface-bright": "#ffffff",
-              outline: "#75777e",
-              "outline-variant": "#c6c6ce",
-              error: "#ba1a1a",
-            },
-            animation: {
-              'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-              'fade-in-left': 'fadeInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-            },
-            keyframes: {
-              fadeInUp: {
-                '0%': { opacity: '0', transform: 'translateY(20px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' },
-              },
-              fadeInLeft: {
-                '0%': { opacity: '0', transform: 'translateX(20px)' },
-                '100%': { opacity: '1', transform: 'translateX(0)' },
-              }
+        .chapters-premium-hall {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 120px 2rem 60px;
+            /* offset for fixed navbar */
+            display: flex;
+            gap: 40px;
+            min-height: calc(100vh - 200px);
+        }
+
+        @media (max-width: 900px) {
+            .chapters-premium-hall {
+                flex-direction: column;
+                padding-top: 100px;
             }
-          },
-        },
-      };
-    </script>
+        }
+
+        /* Sidebar */
+        .premium-sidebar {
+            flex: 0 0 320px;
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: var(--shadow-premium);
+            border: 1px solid rgba(44, 26, 14, 0.03);
+            text-align: center;
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .premium-sidebar .cover-container {
+            width: 100%;
+            margin: 0 0 24px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 12px 30px rgba(44, 26, 14, 0.12);
+            aspect-ratio: 2/3;
+        }
+
+        .premium-sidebar .cover-container img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+
+        .premium-sidebar h2 {
+            font-family: 'Aref Ruqaa', serif;
+            font-size: 1.8rem;
+            color: var(--walnut);
+            margin-bottom: 12px;
+        }
+
+        .premium-sidebar .badges {
+            display: inline-flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+
+        .badge-premium {
+            background: var(--cream);
+            color: var(--gold);
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(212, 166, 74, 0.2);
+        }
+
+        .badge-premium-dark {
+            background: var(--walnut);
+            color: #FCF8F2;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .premium-btn-block {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px;
+            border-radius: 40px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-walnut {
+            background: var(--walnut);
+            color: #FCF8F2;
+            box-shadow: 0 4px 15px rgba(59, 36, 23, 0.15);
+        }
+
+        .btn-walnut:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 36, 23, 0.25);
+            background: var(--walnut-light);
+        }
+
+        .btn-outline-gold {
+            background: transparent;
+            border: 1.5px solid rgba(212, 166, 74, 0.3);
+            color: var(--walnut);
+        }
+
+        .btn-outline-gold:hover {
+            background: var(--gold-glow);
+            border-color: var(--gold);
+        }
+
+        /* Chapters List */
+        .premium-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(44, 26, 14, 0.05);
+            margin-bottom: 8px;
+        }
+
+        .list-header h3 {
+            font-family: 'Aref Ruqaa', serif;
+            font-size: 2rem;
+            color: var(--walnut);
+        }
+
+        .add-chapter-premium {
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px dashed rgba(212, 166, 74, 0.4);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 16px;
+        }
+
+        .add-chapter-premium:hover {
+            background: #FFFFFF;
+            border-color: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .add-chapter-premium i {
+            font-size: 1.5rem;
+            color: var(--gold);
+        }
+
+        .add-chapter-premium span {
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+            color: var(--walnut);
+            font-size: 1.1rem;
+        }
+
+        .chapter-premium-item {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(44, 26, 14, 0.02);
+            border: 1px solid rgba(44, 26, 14, 0.03);
+            transition: all 0.3s ease;
+        }
+
+        .chapter-premium-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-soft);
+            border-color: rgba(212, 166, 74, 0.3);
+        }
+
+        .chapter-info-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .drag-handle {
+            width: 36px;
+            height: 36px;
+            background: var(--cream);
+            color: rgba(44, 26, 14, 0.25);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            border: 1px solid rgba(44, 26, 14, 0.06);
+            cursor: grab;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .chapter-premium-item:hover .drag-handle {
+            color: var(--gold);
+            border-color: rgba(212, 166, 74, 0.25);
+        }
+
+        /* Dragging states */
+        .chapter-premium-item.dragging {
+            opacity: 0.4;
+            transform: scale(0.98);
+            border: 2px dashed var(--gold) !important;
+            background: rgba(212, 166, 74, 0.03) !important;
+        }
+
+        .chapter-premium-item.drag-over {
+            border-color: var(--gold) !important;
+            box-shadow: 0 0 0 2px rgba(212, 166, 74, 0.2), var(--shadow-soft) !important;
+            transform: translateY(-3px);
+        }
+
+        .chapter-details h4 {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.1rem;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .chapter-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 0.85rem;
+            color: var(--text-soft);
+        }
+
+        .chapter-meta span i {
+            color: var(--gold);
+            margin-left: 4px;
+        }
+
+        .chapter-actions button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--cream);
+            border: 1px solid rgba(44, 26, 14, 0.05);
+            color: var(--walnut);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chapter-actions button:hover {
+            background: var(--gold);
+            color: #FCF8F2;
+            border-color: var(--gold);
+        }
+
+        /* ---------------------------------------------------
+           Sort Dropdown
+        --------------------------------------------------- */
+        .sort-wrapper {
+            position: relative;
+        }
+
+        .sort-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 8px;
+            box-shadow: 0 12px 40px rgba(44, 26, 14, 0.1);
+            border: 1px solid rgba(44, 26, 14, 0.05);
+            min-width: 210px;
+            z-index: 500;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+        }
+
+        .sort-dropdown.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .sort-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.88rem;
+            color: var(--text-dark);
+            transition: all 0.2s ease;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: right;
+        }
+
+        .sort-option:hover {
+            background: var(--cream);
+            color: var(--walnut);
+        }
+
+        .sort-option.active {
+            background: var(--gold-glow);
+            color: var(--walnut);
+            font-weight: 700;
+        }
+
+        .sort-option i {
+            width: 18px;
+            text-align: center;
+            color: var(--gold);
+            font-size: 0.85rem;
+        }
+
+        .sort-option .sort-dir {
+            margin-right: auto;
+            color: rgba(44, 26, 14, 0.25);
+            font-size: 0.75rem;
+            transition: color 0.2s;
+        }
+
+        .sort-option.active .sort-dir {
+            color: var(--gold);
+        }
+
+        .sort-divider {
+            height: 1px;
+            background: rgba(44, 26, 14, 0.04);
+            margin: 4px 0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(44, 26, 14, 0.4);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: #FCF8F2;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 500px;
+            padding: 40px;
+            box-shadow: 0 25px 60px rgba(44, 26, 14, 0.15);
+            transform: translateY(20px) scale(0.95);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(44, 26, 14, 0.05);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            color: var(--text-soft);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(211, 47, 47, 0.1);
+            color: #D32F2F;
+        }
+
+        .modal-title {
+            font-family: 'Aref Ruqaa', serif;
+            font-size: 1.8rem;
+            color: var(--walnut);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .form-group label {
+            display: block;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            background: #FFFFFF;
+            border: 1px solid rgba(44, 26, 14, 0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-family: 'Tajawal', sans-serif;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 0 4px var(--gold-glow);
+        }
+
+        .file-upload-wrapper {
+            position: relative;
+            background: #FFFFFF;
+            border: 1px dashed rgba(212, 166, 74, 0.5);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-wrapper:hover {
+            background: var(--gold-glow);
+            border-color: var(--gold);
+        }
+
+        .file-upload-wrapper i {
+            font-size: 2rem;
+            color: var(--gold);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .file-upload-wrapper p {
+            font-family: 'Tajawal', sans-serif;
+            color: var(--text-soft);
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .file-upload-wrapper input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+    </style>
 </head>
-<body class="min-h-screen flex flex-col text-[#0b1c30] relative overflow-x-hidden z-0">
-    <!-- Background Decoration -->
-    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div class="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-indigo-100/40 to-blue-50/40 blur-3xl"></div>
-    </div>
 
-    <!-- TopAppBar -->
-    <header class="bg-surface/80 backdrop-blur-lg border-b border-outline-variant/50 shadow-sm w-full sticky top-0 z-50 transition-all">
-      <div class="flex flex-row-reverse justify-between items-center px-4 md:px-10 h-16 w-full max-w-[1200px] mx-auto">
-        <!-- Brand -->
-        <div class="flex items-center gap-2 flex-row-reverse">
-          <img alt="رواياتي" class="h-10 w-auto object-contain drop-shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3n0B3x5jaIgKWss2vxacZ0q1V5clYRXKo1ovC6GSZ9WdR2yByLb17Cy-zBFxoAXj_DP2qrKVKZ9EDEsueFhPxxRF2v81qrRYCxN5-3_VnenoQbIEv0mryprBQGo-9Ot1xe3yYqARv-PRu5Onr7R5rzadtPAsKuqcTm7EqMDjl72bOgHQwXwklJlMZrLLj1ry4j_h_XaJCTlv-bp5kUqhrWfJhe72u9oaicUYO8CTAcfcIMrqfyZ7ZRT0vghUG5KiE5M1iJ6tFTTdx">
-          <span class="font-headline-lg text-2xl hidden md:block text-primary font-bold">سرد</span>
+<body>
+
+    <!-- NAVBAR PREMIUM (Copied from Browsebooks.php) -->
+    <nav class="navbar-premium" id="navbar">
+        <div class="navbar-premium-container">
+            <div class="navbar-premium-brand">
+                <a href="<?= ROOT ?>index" class="brand-premium-link">
+                    <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد logo" class="brand-premium-logo">
+                    <span class="brand-premium-name">سرد</span>
+                </a>
+            </div>
+            <ul class="nav-premium-links">
+                <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
+                <li><a href="<?= ROOT ?>Browsebooks">المكتبة</a></li>
+                <li><a href="#">الكتّاب</a></li>
+                <li><a href="#">من نحن</a></li>
+            </ul>
+            <div class="nav-premium-actions">
+                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
+                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-filled">إنشاء حساب</a>
+            </div>
         </div>
-        <!-- Navigation Links -->
-        <nav class="hidden md:flex flex-row-reverse items-center gap-8">
-          <a class="text-[#45464e] font-semibold text-sm hover:text-primary transition-colors" href="index">الرئيسية</a>
-          <a class="text-[#45464e] font-semibold text-sm hover:text-primary transition-colors" href="Browsebooks">استكشف</a>
-          <a class="text-[#45464e] font-semibold text-sm hover:text-primary transition-colors" href="#">مكتبتي</a>
-          <a class="text-primary font-bold border-b-2 border-primary pb-1 text-sm transition-all" href="#">الكتابة</a>
-        </nav>
-        <!-- Trailing Actions -->
-        <div class="flex flex-row-reverse items-center gap-3">
-          <button class="text-[#45464e] hover:text-primary hover:bg-surface-container transition-all p-2 rounded-full flex items-center justify-center relative">
-            <span class="material-symbols-outlined">notifications</span>
-          </button>
-          <button class="text-[#45464e] hover:text-primary hover:bg-surface-container transition-all p-2 rounded-full flex items-center justify-center">
-            <span class="material-symbols-outlined">search</span>
-          </button>
-          <div class="h-9 w-9 rounded-full overflow-hidden border-2 border-outline-variant/30 hover:border-primary transition-colors cursor-pointer mr-2 shadow-sm">
-            <img alt="صورة المستخدم" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1SH_Drj6XumELea1xO9c6Xu97viLHAuQdJXPZ1yQcq5j0j2C-Nsbl8_2vmRMZI-oRNivqyMgP_w5EPti65ONXLY0OZaORPbCtzJHM0SDGyYKeAFromutlAGxylYG3UMK_qt9HFsYosxIrtWQFJ2U1lY4d3qoxiJDSyROjD12rLZ0mPaMoqsmvaMDDiQLrBP3eWR39UKno3BY2X4HkcbVmRFjrWzvVmAt6t3W7YggrBnqhtphW3JkpDn38RwM26nsdFuiaVd64aVLs">
-          </div>
-          <button class="md:hidden text-primary p-2 flex items-center justify-center hover:bg-surface-container rounded-full">
-            <span class="material-symbols-outlined">menu</span>
-          </button>
-        </div>
-      </div>
-    </header>
+    </nav>
 
-    <main class="flex-grow w-full max-w-[1200px] mx-auto px-4 md:px-10 py-10 flex flex-col items-center">
-        <!-- Page Header -->
-        <div class="w-full max-w-5xl text-right mb-10 opacity-0 animate-fade-in-up" style="animation-delay: 0.1s;">
-            <h1 class="font-headline-lg text-3xl md:text-4xl text-primary mb-2 drop-shadow-sm font-bold">إدارة الفصول</h1>
-            <p class="text-[#45464e] text-base">قم بإضافة فصول جديدة أو تعديل الفصول الحالية لروايتك.</p>
-        </div>
+    <main class="chapters-premium-hall">
+        <!-- Sidebar -->
+        <aside class="premium-sidebar">
+            <div class="cover-container">
+                <img alt="غلاف رواية <?= htmlspecialchars($novel['title'] ?? '') ?>"
+                    src="<?= htmlspecialchars($cover_image) ?>">
+            </div>
+            <h2><?= htmlspecialchars($novel['title'] ?? 'بدون عنوان') ?></h2>
+            <div class="badges">
+                <?php if (!empty($novel['category_name'])): ?>
+                    <span class="badge-premium"><?= htmlspecialchars($novel['category_name']) ?></span>
+                <?php endif; ?>
+                <span class="badge-premium-dark"><?= $published_count ?> فصول منشورة</span>
+            </div>
 
-        <div class="w-full max-w-5xl flex flex-col md:flex-row-reverse gap-8 lg:gap-12">
-            <!-- Left Column: Novel Summary Card -->
-            <aside class="w-full md:w-1/3 flex flex-col opacity-0 animate-fade-in-left" style="animation-delay: 0.2s;">
-                <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-outline-variant/30 flex flex-col items-center text-center sticky top-[100px] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
-                    <!-- Cover Image -->
-                    <div class="w-full max-w-[180px] book-cover rounded-lg overflow-hidden mb-5 relative bg-surface-variant group cursor-pointer">
-                        <img alt="غلاف رواية ظلال الماضي" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoYgpJ4ZHMmFIVzlsmUEm6pssKLVOyV9HAzJ8PVnzWS9oogDRHYfMSui41dEUXizaQ41dJlEm9O3yVOkHVTI5PLRFEU6t5ylY2nDFdIWXapLc2cHf5JTylKmo6N4534F7gDIybFhMPRvbZtwmRV2VmAPnzGLq7FBBN5EGHAO5QULTzF6G2PVUNNWbcmuu6AgJw20ssHx1MTHgbPA0_x54Wp7yDHyCbRx6ulpQcFtbgvc9bIJBza08atcz8G_FSSMJWH5IRbMsLmsj0">
-                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
-                    </div>
-                    <!-- Novel Info -->
-                    <h2 class="font-headline-md text-2xl text-primary mb-1 font-bold">ظلال الماضي</h2>
-                    <p class="text-xs text-[#45464e] mb-5 bg-surface px-3 py-1 rounded-full border border-outline-variant/30">دراما، غموض • 4 فصول منشورة</p>
-                    
-                    <!-- Progress Stats -->
-                    <div class="w-full bg-surface/50 border border-outline-variant/30 rounded-xl p-4 mb-6 text-right">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-xs font-semibold text-[#45464e]">التقدم الإجمالي</span>
-                            <span class="text-sm font-bold text-primary">12,450 كلمة</span>
-                        </div>
-                        <div class="w-full h-1.5 bg-outline-variant/30 rounded-full overflow-hidden">
-                            <div class="h-full bg-gradient-to-l from-primary to-primary-container w-1/3 rounded-full"></div>
-                        </div>
-                    </div>
+            <button class="premium-btn-block btn-outline-gold" id="openSettingsBtn">
+                <i class="fas fa-cog"></i> إعدادات الرواية
+            </button>
+        </aside>
 
-                    <!-- CTA Buttons -->
-                    <button class="w-full bg-gradient-to-r from-[#4a380c] to-[#604911] text-white hover:shadow-lg hover:shadow-[#4a380c]/20 hover:-translate-y-0.5 transition-all duration-300 rounded-lg py-3 px-4 flex items-center justify-center gap-2 font-semibold text-sm active:scale-95">
-                        <span class="material-symbols-outlined text-[20px]">add</span>
-                        إضافة الفصل #5
+        <!-- Main Content -->
+        <section class="premium-main">
+            <div class="list-header">
+                <h3>إدارة الفصول</h3>
+                <div class="sort-wrapper">
+                    <button class="premium-btn-block btn-outline-gold" id="sortToggleBtn"
+                        style="width: auto; padding: 6px 16px; margin: 0;">
+                        <i class="fas fa-sort"></i> <span id="sortLabel">ترتيب</span>
                     </button>
-                    <button class="w-full mt-3 bg-transparent text-[#45464e] border border-outline-variant/60 hover:bg-surface hover:text-primary hover:border-primary/50 transition-all duration-300 rounded-lg py-2.5 px-4 flex items-center justify-center gap-2 font-semibold text-sm">
-                        <span class="material-symbols-outlined text-[18px]">settings</span>
-                        إعدادات الرواية
-                    </button>
-                </div>
-            </aside>
-
-            <!-- Right Column: Chapters List -->
-            <section class="w-full md:w-2/3 flex flex-col gap-4 opacity-0 animate-fade-in-up" style="animation-delay: 0.3s;">
-                <div class="flex justify-between items-center mb-3 border-b border-outline-variant/40 pb-3">
-                    <h3 class="font-headline-md text-2xl text-primary font-bold">الفصول الحالية</h3>
-                    <div class="flex gap-2">
-                        <button class="text-[#45464e] hover:text-primary hover:bg-surface-container p-2 rounded-full transition-all" title="ترتيب">
-                            <span class="material-symbols-outlined">sort</span>
+                    <div class="sort-dropdown" id="sortDropdown">
+                        <button class="sort-option active" data-sort="manual">
+                            <i class="fas fa-grip-vertical"></i>
+                            ترتيب يدوي (Drag)
+                            <span class="sort-dir"></span>
+                        </button>
+                        <div class="sort-divider"></div>
+                        <button class="sort-option" data-sort="title-asc">
+                            <i class="fas fa-sort-alpha-down"></i>
+                            ترتيب أبجدي (أ ← ي)
+                            <span class="sort-dir">أ→ي</span>
+                        </button>
+                        <button class="sort-option" data-sort="title-desc">
+                            <i class="fas fa-sort-alpha-up"></i>
+                            ترتيب أبجدي عكسي
+                            <span class="sort-dir">ي→أ</span>
+                        </button>
+                        <div class="sort-divider"></div>
+                        <button class="sort-option" data-sort="date-desc">
+                            <i class="fas fa-calendar-alt"></i>
+                            الأحدث أولاً
+                            <span class="sort-dir">↓</span>
+                        </button>
+                        <button class="sort-option" data-sort="date-asc">
+                            <i class="fas fa-calendar-alt"></i>
+                            الأقدم أولاً
+                            <span class="sort-dir">↑</span>
+                        </button>
+                        <div class="sort-divider"></div>
+                        <button class="sort-option" data-sort="words-desc">
+                            <i class="fas fa-pen-nib"></i>
+                            أكثر كلمات أولاً
+                            <span class="sort-dir">↓</span>
+                        </button>
+                        <button class="sort-option" data-sort="words-asc">
+                            <i class="fas fa-pen-nib"></i>
+                            أقل كلمات أولاً
+                            <span class="sort-dir">↑</span>
                         </button>
                     </div>
                 </div>
+            </div>
 
-                <!-- Add Chapter Card -->
-                <div class="bg-surface/30 rounded-xl p-5 border-2 border-dashed border-primary/30 flex flex-row-reverse justify-center items-center hover:bg-primary/5 hover:border-primary/50 transition-all duration-300 group cursor-pointer gap-3 hover:-translate-y-0.5">
-                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                        <span class="material-symbols-outlined text-primary">add</span>
-                    </div>
-                    <span class="font-bold text-sm text-primary">إضافة فصل جديد</span>
-                </div>
+            <a href="<?= ROOT ?>write_new_chapter_existing_novel/<?= $novel_id ?>" class="add-chapter-premium"
+                style="text-decoration: none;">
+                <i class="fas fa-plus-circle"></i>
+                <span>كتابة فصل جديد</span>
+            </a>
 
-                <!-- Chapter Items -->
-                <div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/40 flex flex-row-reverse justify-between items-center hover:shadow-md hover:border-primary/30 transition-all duration-300 group cursor-pointer hover:-translate-y-0.5">
-                    <div class="flex flex-row-reverse items-center gap-4">
-                        <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary font-headline-md text-xl shrink-0 group-hover:bg-primary group-hover:text-white transition-colors duration-300">1</div>
-                        <div class="text-right">
-                            <h4 class="font-bold text-sm text-[#0b1c30] mb-1.5 group-hover:text-primary transition-colors">البداية الغامضة</h4>
-                            <div class="flex gap-4 text-[#45464e] text-xs">
-                                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">visibility</span> 1.2k</span>
-                                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">calendar_today</span> 12 أكتوبر</span>
-                                <span class="font-medium bg-surface px-2 py-0.5 rounded text-[10px]">3,200 كلمة</span>
+            <!-- Dynamic Chapters List -->
+            <?php if (!empty($chapters)): ?>
+                <?php foreach ($chapters as $chapter): 
+                    $isDraft = $chapter['isPublished'] == 0;
+                    $updatedDate = date('d F', strtotime($chapter['updated_at']));
+                    $createdDate = date('d F', strtotime($chapter['created_at']));
+                    $wordCount = number_format((int)$chapter['word_count']);
+                    
+                    // Draft styling
+                    $itemStyle = $isDraft ? 'style="border: 2px dashed rgba(212, 166, 74, 0.4); background: rgba(255,255,255,0.5);"' : '';
+                    $handleStyle = $isDraft ? 'style="background: transparent;"' : '';
+                ?>
+                <div class="chapter-premium-item" draggable="true" 
+                     data-title="<?= htmlspecialchars($chapter['title']) ?>" 
+                     data-date="<?= $chapter['created_at'] ?>"
+                     data-words="<?= $chapter['word_count'] ?>"
+                     <?= $itemStyle ?>>
+                    <div class="chapter-info-wrapper">
+                        <div class="drag-handle" <?= $handleStyle ?>><i class="fas fa-grip-vertical"></i></div>
+                        <div class="chapter-details">
+                            <h4>
+                                <?= htmlspecialchars($chapter['title']) ?>
+                                <?php if ($isDraft): ?>
+                                    <span style="background: var(--gold-glow); color: var(--gold); padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; margin-right: 8px;">مسودة</span>
+                                <?php endif; ?>
+                            </h4>
+                            <div class="chapter-meta">
+                                <span><i class="fas fa-history"></i> آخر تعديل: <?= $updatedDate ?></span>
+                                <span><i class="far fa-calendar-alt"></i> <?= $isDraft ? 'جاري الكتابة' : $createdDate ?></span>
+                                <span><i class="fas fa-pen-nib"></i> <?= $wordCount ?> كلمة</span>
                             </div>
                         </div>
                     </div>
-                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-row-reverse translate-x-2 group-hover:translate-x-0 duration-300">
-                        <button class="text-[#45464e] hover:text-primary hover:bg-primary/10 p-2 rounded-full transition-colors" title="تعديل"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+                    <div class="chapter-actions">
+                        <a href="<?= ROOT ?>write_new_chapter_existing_novel/<?= $novel_id ?>/<?= $chapter['id'] ?>" class="btn" title="تعديل الفصل" style="background:none; border:none; color:inherit; cursor:pointer;">
+                            <i class="fas fa-pencil-alt"></i>
+                        </a>
                     </div>
                 </div>
-
-                <div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/40 flex flex-row-reverse justify-between items-center hover:shadow-md hover:border-primary/30 transition-all duration-300 group cursor-pointer hover:-translate-y-0.5">
-                    <div class="flex flex-row-reverse items-center gap-4">
-                        <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary font-headline-md text-xl shrink-0 group-hover:bg-primary group-hover:text-white transition-colors duration-300">2</div>
-                        <div class="text-right">
-                            <h4 class="font-bold text-sm text-[#0b1c30] mb-1.5 group-hover:text-primary transition-colors">الرسالة المفقودة</h4>
-                            <div class="flex gap-4 text-[#45464e] text-xs">
-                                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">visibility</span> 950</span>
-                                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">calendar_today</span> 19 أكتوبر</span>
-                                <span class="font-medium bg-surface px-2 py-0.5 rounded text-[10px]">2,850 كلمة</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-row-reverse translate-x-2 group-hover:translate-x-0 duration-300">
-                        <button class="text-[#45464e] hover:text-primary hover:bg-primary/10 p-2 rounded-full transition-colors" title="تعديل"><span class="material-symbols-outlined text-[20px]">edit</span></button>
-                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div style="text-align: center; color: var(--text-soft); padding: 40px; background: #fff; border-radius: 16px; border: 1px dashed rgba(44,26,14,0.1);">
+                    لا يوجد فصول لهذه الرواية حتى الآن. ابدأ بكتابة الفصل الأول!
                 </div>
-
-                <div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/40 flex flex-row-reverse justify-between items-center hover:shadow-md hover:border-primary/30 transition-all duration-300 group cursor-pointer hover:-translate-y-0.5">
-                    <div class="flex flex-row-reverse items-center gap-4">
-                        <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center text-primary font-headline-md text-xl shrink-0 group-hover:bg-primary group-hover:text-white transition-colors duration-300">3</div>
-                        <div class="text-right">
-                            <h4 class="font-bold text-sm text-[#0b1c30] mb-1.5 group-hover:text-primary transition-colors">لقاء في المقهى القديم</h4>
-                            <div class="flex gap-4 text-[#45464e] text-xs">
-                                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">visibility</span> 820</span>
-                                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">calendar_today</span> 26 أكتوبر</span>
-                                <span class="font-medium bg-surface px-2 py-0.5 rounded text-[10px]">3,100 كلمة</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-row-reverse translate-x-2 group-hover:translate-x-0 duration-300">
-                        <button class="text-[#45464e] hover:text-primary hover:bg-primary/10 p-2 rounded-full transition-colors" title="تعديل"><span class="material-symbols-outlined text-[20px]">edit</span></button>
-                    </div>
-                </div>
-
-                <!-- Draft Item -->
-                <div class="bg-surface/50 rounded-xl p-4 shadow-sm border border-dashed border-outline-variant flex flex-row-reverse justify-between items-center hover:shadow-md hover:bg-surface-container-lowest transition-all duration-300 group cursor-pointer hover:-translate-y-0.5">
-                    <div class="flex flex-row-reverse items-center gap-4">
-                        <div class="w-12 h-12 rounded-lg bg-transparent border-2 border-outline-variant/50 flex items-center justify-center text-outline font-headline-md text-xl shrink-0 group-hover:border-primary/50 group-hover:text-primary transition-colors">4</div>
-                        <div class="text-right">
-                            <div class="flex items-center gap-2 flex-row-reverse mb-1.5">
-                                <h4 class="font-bold text-sm text-[#0b1c30] group-hover:text-primary transition-colors">ذكريات مشوشة</h4>
-                                <span class="bg-orange-100 text-orange-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-200">مسودة</span>
-                            </div>
-                            <div class="flex gap-4 text-[#45464e] text-xs">
-                                <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">edit_note</span> آخر تعديل اليوم</span>
-                                <span class="font-medium bg-surface px-2 py-0.5 rounded text-[10px] border border-outline-variant/20">3,300 كلمة</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2 flex-row-reverse">
-                        <button class="text-primary hover:text-white hover:bg-primary font-semibold text-xs px-4 py-2 rounded-lg border border-primary/30 transition-all duration-300">متابعة الكتابة</button>
-                    </div>
-                </div>
-            </section>
-        </div>
+            <?php endif; ?>
+        </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-surface/50 border-t border-outline-variant/50 mt-auto backdrop-blur-sm">
-        <div class="flex flex-col md:flex-row-reverse justify-between items-center gap-6 py-8 px-4 md:px-10 w-full max-w-[1200px] mx-auto">
-            <div class="flex items-center flex-row-reverse gap-2">
-                <span class="font-headline-md text-xl text-primary font-bold">سرد</span>
+    <!-- FOOTER PREMIUM (Copied from Browsebooks.php) -->
+    <footer class="footer-premium">
+        <div class="footer-premium-curve"></div>
+        <div class="footer-premium-content">
+            <div class="footer-premium-brand">
+                <span class="footer-premium-logo">سرد</span>
+                <p>مكتبة عربية رقمية تجمع القرّاء والكتّاب في مكان واحد، احتفاءً بالأدب العربي بكل تنوعه.</p>
             </div>
-            <nav class="flex flex-wrap justify-center flex-row-reverse gap-6">
-                <a class="text-xs font-semibold text-[#45464e] hover:text-primary transition-all" href="#">التصنيفات</a>
-                <a class="text-xs font-semibold text-[#45464e] hover:text-primary transition-all" href="#">الشروط والأحكام</a>
-                <a class="text-xs font-semibold text-[#45464e] hover:text-primary transition-all" href="#">سياسة الخصوصية</a>
-                <a class="text-xs font-semibold text-[#45464e] hover:text-primary transition-all" href="#">تواصل معنا</a>
-            </nav>
-            <div class="text-xs text-outline text-center md:text-right">
-                © ٢٠٢٤ سرد. جميع الحقوق محفوظة.
+            <div class="footer-premium-links">
+                <div class="footer-premium-col">
+                    <h4>روابط سريعة</h4><a href="<?= ROOT ?>index">الرئيسية</a><a
+                        href="<?= ROOT ?>Browsebooks">المكتبة</a><a href="#">الكتّاب</a><a href="#">من نحن</a>
+                </div>
+                <div class="footer-premium-col">
+                    <h4>حسابك</h4><a href="<?= ROOT ?>signup">تسجيل الدخول</a><a href="<?= ROOT ?>signup">إنشاء حساب</a>
+                </div>
+                <div class="footer-premium-col">
+                    <h4>تواصل معنا</h4><a href="#">الدعم الفني</a><a href="#">الأسئلة الشائعة</a><a href="#">سياسة
+                        الخصوصية</a>
+                </div>
             </div>
         </div>
+        <div class="footer-premium-bottom">
+            <span>© 2026 سرد. جميع الحقوق محفوظة.</span>
+            <span>صُنع بحب لمحبي القراءة والكتابة العربية</span>
+        </div>
     </footer>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeSettingsBtn"><i class="fas fa-times"></i></button>
+            <h2 class="modal-title">إعدادات الرواية</h2>
+
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="update_novel">
+
+                <div class="form-group">
+                    <label>اسم الرواية</label>
+                    <input type="text" name="novel_title" class="form-input"
+                        value="<?= htmlspecialchars($novel['title']) ?>" required>
+                </div>
+
+                <div class="form-group">
+                    <label>التصنيف</label>
+                    <select name="novel_category" class="form-input">
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?= $cat['id'] ?>"
+                                <?= $cat['id'] == $novel['category_id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($cat['name_ar']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>غلاف الرواية</label>
+                    <div class="file-upload-wrapper">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p style="color: var(--text-soft); font-size: 0.9rem;">اسحب وأفلت الصورة هنا أو اضغط لاختيار ملف</p>
+                        <input type="file" name="cover_image" accept="image/*">
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="premium-btn-block btn-walnut" style="margin: 0; padding: 10px;">
+                        <i class="fas fa-save"></i> حفظ التعديلات
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Navbar Scroll
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) navbar.classList.add('scrolled');
+            else navbar.classList.remove('scrolled');
+        });
+
+        // Modal Logic
+        const modal = document.getElementById('settingsModal');
+        const openBtn = document.getElementById('openSettingsBtn');
+        const closeBtn = document.getElementById('closeSettingsBtn');
+        openBtn.addEventListener('click', () => { modal.classList.add('active'); document.body.style.overflow = 'hidden'; });
+        closeBtn.addEventListener('click', () => { modal.classList.remove('active'); document.body.style.overflow = ''; });
+        modal.addEventListener('click', (e) => { if (e.target === modal) { modal.classList.remove('active'); document.body.style.overflow = ''; } });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('active')) { modal.classList.remove('active'); document.body.style.overflow = ''; } });
+
+        // Drag & Drop Reorder
+        const chapterList = document.querySelector('.premium-main');
+        let dragSrc = null;
+
+        function getDraggableItems() {
+            return [...chapterList.querySelectorAll('.chapter-premium-item[draggable="true"]')];
+        }
+
+        chapterList.addEventListener('dragstart', (e) => {
+            const item = e.target.closest('.chapter-premium-item[draggable]');
+            if (!item) return;
+            dragSrc = item;
+            // Small delay so browser snapshot is taken before we add class
+            requestAnimationFrame(() => item.classList.add('dragging'));
+        });
+
+        chapterList.addEventListener('dragend', (e) => {
+            const item = e.target.closest('.chapter-premium-item[draggable]');
+            if (!item) return;
+            item.classList.remove('dragging');
+            getDraggableItems().forEach(el => el.classList.remove('drag-over'));
+            dragSrc = null;
+        });
+
+        chapterList.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const target = e.target.closest('.chapter-premium-item[draggable]');
+            if (!target || target === dragSrc) return;
+            getDraggableItems().forEach(el => el.classList.remove('drag-over'));
+            target.classList.add('drag-over');
+        });
+
+        chapterList.addEventListener('dragleave', (e) => {
+            const target = e.target.closest('.chapter-premium-item[draggable]');
+            if (target) target.classList.remove('drag-over');
+        });
+
+        chapterList.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const target = e.target.closest('.chapter-premium-item[draggable]');
+            if (!target || !dragSrc || target === dragSrc) return;
+
+            const items = getDraggableItems();
+            const srcIdx = items.indexOf(dragSrc);
+            const tgtIdx = items.indexOf(target);
+
+            // Insert before or after based on position
+            if (srcIdx < tgtIdx) {
+                target.after(dragSrc);
+            } else {
+                target.before(dragSrc);
+            }
+
+            target.classList.remove('drag-over');
+
+            // Brief highlight to confirm drop
+            dragSrc.style.transition = 'box-shadow 0.3s ease';
+            dragSrc.style.boxShadow = '0 0 0 3px rgba(212, 166, 74, 0.4)';
+            setTimeout(() => { dragSrc.style.boxShadow = ''; }, 600);
+        });
+
+        // ---------------------------------------------------
+        // Sort Dropdown & Logic
+        // ---------------------------------------------------
+        const sortToggleBtn = document.getElementById('sortToggleBtn');
+        const sortDropdown = document.getElementById('sortDropdown');
+        const sortLabel = document.getElementById('sortLabel');
+        const sortOptions = document.querySelectorAll('.sort-option');
+
+        // Toggle dropdown
+        sortToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sortDropdown.classList.toggle('open');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!sortToggleBtn.contains(e.target) && !sortDropdown.contains(e.target)) {
+                sortDropdown.classList.remove('open');
+            }
+        });
+
+        // Handle sort options
+        sortOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const sortType = option.getAttribute('data-sort');
+
+                // Update UI
+                sortOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                sortDropdown.classList.remove('open');
+
+                // Update label based on selection
+                if (sortType === 'manual') sortLabel.textContent = 'ترتيب يدوي';
+                else if (sortType.startsWith('title')) sortLabel.textContent = 'ترتيب أبجدي';
+                else if (sortType.startsWith('date')) sortLabel.textContent = 'ترتيب بالزمن';
+                else if (sortType.startsWith('words')) sortLabel.textContent = 'ترتيب بالكلمات';
+
+                // Perform sorting
+                sortChapters(sortType);
+            });
+        });
+
+        function sortChapters(sortType) {
+            // Get all items except the "Add New" button and list header
+            const container = document.querySelector('.premium-main');
+            const items = Array.from(container.querySelectorAll('.chapter-premium-item'));
+
+            // Re-enable or disable drag based on mode
+            const isManual = sortType === 'manual';
+            items.forEach(item => {
+                item.setAttribute('draggable', isManual);
+                const handle = item.querySelector('.drag-handle');
+                if (handle) {
+                    handle.style.opacity = isManual ? '1' : '0.3';
+                    handle.style.cursor = isManual ? 'grab' : 'not-allowed';
+                }
+            });
+
+            if (isManual) {
+                // We cannot "restore" manual order easily without saving it, 
+                // but usually switching to manual just leaves them where they are 
+                // and allows dragging again.
+                return;
+            }
+
+            // Perform actual sort
+            items.sort((a, b) => {
+                // Drafts always at the bottom? Optional. For now we sort everything.
+                if (sortType === 'title-asc') {
+                    return a.dataset.title.localeCompare(b.dataset.title, 'ar');
+                } else if (sortType === 'title-desc') {
+                    return b.dataset.title.localeCompare(a.dataset.title, 'ar');
+                } else if (sortType === 'date-asc') {
+                    return new Date(a.dataset.date) - new Date(b.dataset.date);
+                } else if (sortType === 'date-desc') {
+                    return new Date(b.dataset.date) - new Date(a.dataset.date);
+                } else if (sortType === 'words-asc') {
+                    return parseInt(a.dataset.words) - parseInt(b.dataset.words);
+                } else if (sortType === 'words-desc') {
+                    return parseInt(b.dataset.words) - parseInt(a.dataset.words);
+                }
+                return 0;
+            });
+
+            // Re-append in new order (DOM automatically moves them)
+            items.forEach(item => container.appendChild(item));
+        }
+    </script>
 </body>
+
 </html>
-
-
