@@ -1,7 +1,6 @@
 <?php
 /* ============================================================
    سرد — Reading Page (reading.php)
-   Clean, distraction-free reading experience with 3D Realistic Book
    ============================================================ */
 
 require_once __DIR__ . "/../core/init.php";
@@ -73,6 +72,21 @@ try {
 } catch (PDOException $e) {
     $chapters = [];
     error_log("Database Error fetching chapters: " . $e->getMessage());
+}
+
+// ============================================================
+// CURRENT CHAPTER (for associating new notes — does not affect
+// the existing chapter list styling/highlighting above)
+// ============================================================
+$currentChapterId = null;
+if (isset($_GET['chapter'])) {
+    $requestedChapterNumber = (int) $_GET['chapter'];
+    foreach ($chapters as $ch) {
+        if ((int) $ch['chapter_number'] === $requestedChapterNumber) {
+            $currentChapterId = (int) $ch['id'];
+            break;
+        }
+    }
 }
 
 // ============================================================
@@ -188,11 +202,54 @@ $pages = [
             </li>
           <?php endif; ?>
         </ul>
+
+        <!-- ==================================================
+             NOTES PANEL — "ملاحظاتي"
+             (Same visual language as the Chapters panel above.
+             Frontend-only, no backend/storage. Designed so the
+             `text`/`page` fields on a note can later carry a
+             highlight reference without changing this markup.)
+             ================================================== -->
+        <div class="notes-panel" id="notesPanel"
+             data-novel-id="<?= (int) $bookId ?>"
+             data-chapter-id="<?= $currentChapterId !== null ? (int) $currentChapterId : '' ?>"
+             data-notes-endpoint="<?= ROOT ?>notes"
+             data-logged-in="<?= empty($_SESSION['user']['id']) ? '0' : '1' ?>">
+
+          <div class="panel-header notes-panel__header">
+            <h2 class="panel-title">ملاحظاتي</h2>
+            <span class="panel-badge" id="notesBadge">0</span>
+          </div>
+
+          <button type="button" class="notes-add-btn" id="addNoteBtn">
+            <span class="notes-add-btn__icon" aria-hidden="true">➕</span>
+            <span>إضافة ملاحظة</span>
+          </button>
+
+          <!-- Notes Search -->
+          <div class="chapter-search notes-search">
+            <svg viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="21" y1="21" x2="16.6" y2="16.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <input type="search" id="noteSearchInput" placeholder="ابحث في ملاحظاتك...">
+          </div>
+
+          <!-- Notes List (rendered by notes.js) -->
+          <ul class="note-list" id="noteList"></ul>
+
+          <!-- Empty State (toggled by notes.js) -->
+          <div class="notes-empty" id="notesEmptyState">
+            <div class="notes-empty__icon" aria-hidden="true">🗒️</div>
+            <p class="notes-empty__title">لا توجد ملاحظات بعد</p>
+            <p class="notes-empty__hint">وتستطيع إضافة أول ملاحظة باستخدام الزر بالأعلى.</p>
+          </div>
+
+        </div>
+        <!-- ===== End Notes Panel ===== -->
+
       </div>
     </aside>
 
     <!-- ==========================================================
-         CENTER COLUMN — 3D REALISTIC BOOK
+         CENTER COLUMN — 3D FLIP BOOK
          ========================================================== -->
     <section class="panel open-book-wrap" aria-label="عرض الكتاب">
       <div class="book-container" id="bookContainer">
@@ -214,7 +271,7 @@ $pages = [
         </div>
 
         <!-- ======================================================
-             3D REALISTIC BOOK
+             3D REALISTIC BOOK WRAPPER
              ====================================================== -->
         <div class="book" id="book">
           
@@ -224,35 +281,53 @@ $pages = [
             <div class="book__spine-shadow"></div>
           </div>
 
-          <!-- Left Page (previous page) -->
+          <!-- Left Page (Previous Page) -->
           <div class="page page--left" id="pageLeft">
             <div class="page__inner">
               <div class="page__paper-texture"></div>
-              <p class="page__text" id="pageTextLeft" style="font-family:'Amiri', serif; font-size: 19px; line-height: 1.9;"><?= nl2br(htmlspecialchars($pages[1] ?? '')) ?></p>
-              <span class="page__number">1</span>
+              <p class="page__text" id="pageTextLeft"><?= nl2br(htmlspecialchars($pages[1] ?? '')) ?></p>
+              <div class="page__number">1</div>
             </div>
-            <div class="page__thickness"></div>
           </div>
 
-          <!-- Right Page (current page - reader is here) -->
+          <!-- Right Page (Current Page - Reader is here) -->
           <div class="page page--right" id="pageRight">
             <div class="page__inner">
               <div class="page__paper-texture"></div>
-              <p class="page__text" id="pageTextRight" style="font-family:'Amiri', serif; font-size: 19px; line-height: 1.9;"><?= nl2br(htmlspecialchars($pages[0] ?? '')) ?></p>
-              <span class="page__number">2</span>
+              <p class="page__text" id="pageTextRight"><?= nl2br(htmlspecialchars($pages[0] ?? '')) ?></p>
+              <div class="page__number">2</div>
             </div>
-            <div class="page__thickness"></div>
           </div>
 
-          <!-- Flip Page (for 3D curl animation) -->
-          <div class="page page--flip" id="pageFlip">
-            <div class="page__inner">
-              <div class="page__paper-texture"></div>
-              <p class="page__text" id="pageTextFlip" style="font-family:'Amiri', serif; font-size: 19px; line-height: 1.9;"></p>
-              <span class="page__number" id="pageFlipNumber"></span>
+          <!-- ======================================================
+               REAL BOOK PAGE TURN MECHANISM (The Core)
+               ====================================================== -->
+          <div class="page-turn-wrapper" id="pageTurnWrapper">
+              
+            <!-- Front face (The page being lifted) -->
+            <div class="page page-turn page-turn--front" id="pageTurnFront">
+              <div class="page__inner page-turn-inner">
+                <div class="page__paper-texture"></div>
+                <p class="page__text" id="pageTextFront"></p>
+                <div class="page__number" id="pageNumFront"></div>
+              </div>
+              <div class="page__thickness-edge"></div>
             </div>
-            <div class="page__thickness"></div>
+
+            <!-- Back face (The reverse side of the paper) -->
+            <div class="page page-turn page-turn--back" id="pageTurnBack">
+              <div class="page__inner page-turn-inner">
+                <div class="page__paper-texture"></div>
+                <p class="page__text" id="pageTextBack"></p>
+                <div class="page__number" id="pageNumBack"></div>
+              </div>
+              <div class="page__thickness-edge"></div>
+            </div>
+
+            <!-- Dynamic shadow under the flipping paper -->
+            <div class="page-turn-shadow" id="pageTurnShadow"></div>
           </div>
+          <!-- ====================================================== -->
 
           <!-- Book shadow overlay for depth -->
           <div class="book__shadow-overlay"></div>
@@ -377,9 +452,50 @@ $pages = [
 
 </main>
 
+<!-- ============================================================
+     NOTE MODAL — "إضافة / تعديل ملاحظة"
+     Shared by both Add and Edit flows (notes.js swaps the mode).
+     ============================================================ -->
+<div class="note-modal-overlay" id="noteModalOverlay">
+  <div class="note-modal glass-card" role="dialog" aria-modal="true" aria-labelledby="noteModalTitle" tabindex="-1">
+
+    <button type="button" class="note-modal__close" id="noteModalCloseBtn" aria-label="إغلاق">
+      <svg viewBox="0 0 24 24" width="18" height="18"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+
+    <h3 class="note-modal__title" id="noteModalTitle">إضافة ملاحظة</h3>
+    <p class="note-modal__hint">اكتب أي فكرة، اقتباس، أو ملحوظة تريد الرجوع إليها لاحقاً.</p>
+
+    <textarea
+      class="note-modal__textarea"
+      id="noteModalTextarea"
+      placeholder="اكتب ملاحظتك هنا..."
+      rows="6"
+      maxlength="500"
+    ></textarea>
+
+    <div class="note-modal__footer-row">
+      <span class="note-modal__error" id="noteModalError">يرجى كتابة ملاحظة أولاً.</span>
+      <span class="note-modal__counter" id="noteModalCounter">0 / 500</span>
+    </div>
+
+    <div class="note-modal__actions">
+      <button type="button" class="note-modal__btn note-modal__btn--cancel" id="noteModalCancelBtn">إلغاء</button>
+      <button type="button" class="note-modal__btn note-modal__btn--save" id="noteModalSaveBtn">
+        <span class="note-modal__btn-label">حفظ</span>
+        <span class="note-modal__spinner" aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container for success/feedback messages -->
+<div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
 <!-- Page content passed from PHP to JS -->
 <script id="bookPagesData" type="application/json"><?= json_encode($pages, JSON_UNESCAPED_UNICODE) ?></script>
 
 <script src="<?= ROOT ?>assets/js/reading.js"></script>
+<script src="<?= ROOT ?>assets/js/notes.js"></script>
 </body>
 </html>

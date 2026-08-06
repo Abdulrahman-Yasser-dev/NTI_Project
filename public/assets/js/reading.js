@@ -1,6 +1,6 @@
 /* ============================================================
    سرد — reading.js
-   Realistic 3D Arabic Book Page Flip with Full Settings
+   Realistic 3D Page Flip (RTL Book Style)
    ============================================================ */
 (function () {
   "use strict";
@@ -20,7 +20,7 @@
   function $all(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
 
   /* ============================================================
-     SIDE PANEL DRAWER
+     SIDE PANEL & SEARCH
      ============================================================ */
   var sidePanel = $("#sidePanel");
   var drawerToggle = $("#drawerToggle");
@@ -31,9 +31,6 @@
     });
   }
 
-  /* ============================================================
-     CHAPTER SEARCH
-     ============================================================ */
   var chapterSearchInput = $("#chapterSearchInput");
   var chapterRows = $all(".chapter-row");
   if (chapterSearchInput) {
@@ -47,24 +44,30 @@
   }
 
   /* ============================================================
-     3D PAGE FLIP - RTL Arabic Book Style
+     REAL 3D PAGE TURN ENGINE JS DRIVER
      ============================================================ */
+  // DOM Elements for Engine
   var pageTextRight = $("#pageTextRight");
   var pageTextLeft = $("#pageTextLeft");
-  var pageFlip = $("#pageFlip");
-  var pageTextFlip = $("#pageTextFlip");
-  var pageFlipNumber = $("#pageFlipNumber");
+  var pageTurnWrapper = $("#pageTurnWrapper");
+  var pageTextFront = $("#pageTextFront");
+  var pageTextBack = $("#pageTextBack");
+  var pageNumFront = $("#pageNumFront");
+  var pageNumBack = $("#pageNumBack");
   var prevPageBtn = $("#prevPageBtn");
   var nextPageBtn = $("#nextPageBtn");
+  var pageRightEl = document.getElementById("pageRight");
+  var pageLeftEl = document.getElementById("pageLeft");
+
+  // State
   var isFlipping = false;
+  var currentPageNumber = 2;
 
   var toolbarEl = $("#readingToolbar");
   var totalBookPages = toolbarEl ? parseInt(toolbarEl.getAttribute("data-total-pages"), 10) || 0 : 0;
   var startBookPage = toolbarEl ? parseInt(toolbarEl.getAttribute("data-start-page"), 10) || 1 : 1;
   var toolbarPageIndicator = $("#toolbarPageIndicator");
   var toolbarDots = $all(".toolbar__dot");
-
-  var currentPageNumber = 2;
 
   function renderSpread() {
     pageTextRight.textContent = bookPages[spreadIndex * 2] || "صفحة فارغة";
@@ -110,38 +113,66 @@
   function flipPage(direction) {
     if (isFlipping) return;
     
+    // Boundary checks
     var canGoNext = direction === "next" && spreadIndex < totalSpreads - 1;
     var canGoPrev = direction === "prev" && spreadIndex > 0;
     if (!canGoNext && !canGoPrev) return;
 
     isFlipping = true;
 
+    // 1. Prepare the Flip Page Data
     var flipContent = direction === "next" ? pageTextRight.textContent : pageTextLeft.textContent;
     var flipPageNum = direction === "next" ? currentPageNumber : currentPageNumber - 1;
     
-    pageTextFlip.textContent = flipContent;
-    pageFlipNumber.textContent = flipPageNum;
-    pageTextFlip.style.fontFamily = pageTextRight.style.fontFamily || "'Amiri', serif";
-    pageTextFlip.style.fontSize = pageTextRight.style.fontSize || "19px";
-    pageTextFlip.style.lineHeight = pageTextRight.style.lineHeight || "1.9";
+    var currentFontFamily = pageTextRight.style.fontFamily || "'Amiri', serif";
+    var currentFontSize = pageTextRight.style.fontSize || "19px";
+    var currentLineHeight = pageTextRight.style.lineHeight || "1.9";
 
-    pageFlip.classList.remove("is-flipping-next", "is-flipping-prev");
-    void pageFlip.offsetWidth;
+    [pageTextFront, pageTextBack].forEach(function(el) {
+      el.textContent = flipContent;
+      el.style.fontFamily = currentFontFamily;
+      el.style.fontSize = currentFontSize;
+      el.style.lineHeight = currentLineHeight;
+    });
+    pageNumFront.textContent = flipPageNum;
+    pageNumBack.textContent = flipPageNum;
 
-    pageFlip.classList.add(direction === "next" ? "is-flipping-next" : "is-flipping-prev");
+    // 2. Reset the wrapper thoroughly to prevent glitches
+    pageTurnWrapper.classList.remove("flip-forward", "flip-backward", "flip-forward-finalized", "flip-backward-finalized", "is-flipping");
+    void pageTurnWrapper.offsetWidth; // Force reflow
 
-    pageFlip.addEventListener("animationend", function onEnd() {
-      pageFlip.removeEventListener("animationend", onEnd);
-      pageFlip.classList.remove("is-flipping-next", "is-flipping-prev");
-      
+    // 3. Trigger the animation
+    pageTurnWrapper.classList.add("is-flipping");
+    if (direction === "next") {
+      pageTurnWrapper.classList.add("flip-forward");
+    } else {
+      pageTurnWrapper.classList.add("flip-backward");
+    }
+
+    // 4. Wait for the animation to finish (MUST match CSS 0.85s duration)
+    setTimeout(function () {
+      // Update the underlying data logic
       spreadIndex = direction === "next" ? spreadIndex + 1 : spreadIndex - 1;
       renderSpread();
+      
+      // Remove the active animation classes
+      pageTurnWrapper.classList.remove("flip-forward", "flip-backward", "is-flipping");
+      
+      // Add the "Finalized" class to trigger Stack Thickness Shifting (1~3px shift)
+      if (direction === "next") {
+        pageTurnWrapper.classList.add("flip-forward-finalized");
+        pageTurnWrapper.classList.remove("flip-backward-finalized");
+      } else {
+        pageTurnWrapper.classList.add("flip-backward-finalized");
+        pageTurnWrapper.classList.remove("flip-forward-finalized");
+      }
+      
       isFlipping = false;
-    });
+    }, 880); // 850ms animation + 30ms buffer
   }
 
   /* ============================================================
-     EVENT LISTENERS
+     EVENT LISTENERS (Mouse & Keyboard)
      ============================================================ */
   
   if (nextPageBtn) {
@@ -150,9 +181,6 @@
   if (prevPageBtn) {
     prevPageBtn.addEventListener("click", function () { flipPage("prev"); });
   }
-
-  var pageRightEl = document.getElementById("pageRight");
-  var pageLeftEl = document.getElementById("pageLeft");
 
   if (pageRightEl) {
     pageRightEl.addEventListener("click", function(e) {
@@ -178,6 +206,7 @@
     }
   });
 
+  // Touch Events for Mobile
   var touchStartX = 0;
   var touchStartY = 0;
   var bookContainer = document.getElementById("bookContainer");
@@ -197,13 +226,12 @@
       var diffY = Math.abs(touchStartY - touchEnd.clientY);
       
       if (Math.abs(diffX) > 40 && diffY < 80) {
-        if (diffX > 0) {
+        if (diffX > 0) { // Swipe left in RTL means Next
           flipPage("next");
-        } else {
+        } else { // Swipe right in RTL means Prev
           flipPage("prev");
         }
       }
-      
       touchStartX = 0;
     }, { passive: true });
   }
@@ -211,61 +239,40 @@
   renderSpread();
 
   /* ============================================================
-     READING SETTINGS - FULLY FUNCTIONAL
+     SETTINGS & THEMES 
      ============================================================ */
-
-  // ===== Theme Application =====
   var bookContainerEl = document.getElementById('bookContainer');
   var darkModeBtn = document.getElementById('darkModeBtn');
   var themeButtons = document.querySelectorAll('.settings-themes button');
 
   function applyTheme(theme) {
     if (!bookContainerEl) return;
-    
     bookContainerEl.classList.remove('mode-dark', 'mode-sepia');
-    
-    if (theme === 'dark') {
-      bookContainerEl.classList.add('mode-dark');
-    } else if (theme === 'sepia') {
-      bookContainerEl.classList.add('mode-sepia');
-    }
+    if (theme === 'dark') bookContainerEl.classList.add('mode-dark');
+    else if (theme === 'sepia') bookContainerEl.classList.add('mode-sepia');
     
     themeButtons.forEach(function(btn) {
       btn.classList.remove('active');
-      if (btn.getAttribute('data-theme') === theme) {
-        btn.classList.add('active');
-      }
+      if (btn.getAttribute('data-theme') === theme) btn.classList.add('active');
     });
-    
-    if (darkModeBtn) {
-      darkModeBtn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
-    }
-    
+    if (darkModeBtn) darkModeBtn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
     localStorage.setItem('sard_reading_theme', theme);
   }
 
-  // Load saved theme
   var savedTheme = localStorage.getItem('sard_reading_theme') || 'light';
   applyTheme(savedTheme);
 
-  // Theme button clicks
   themeButtons.forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var theme = this.getAttribute('data-theme');
-      applyTheme(theme);
-    });
+    btn.addEventListener('click', function() { applyTheme(this.getAttribute('data-theme')); });
   });
-
-  // Dark mode button
   if (darkModeBtn) {
     darkModeBtn.addEventListener('click', function() {
       var currentTheme = localStorage.getItem('sard_reading_theme') || 'light';
-      var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      applyTheme(newTheme);
+      applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
     });
   }
 
-  // ===== Font Size =====
+  // Font Size
   var fontSizeSlider = document.getElementById('fontSizeSlider');
   var fontSizeDisplay = document.getElementById('fontSizeDisplay');
 
@@ -274,7 +281,7 @@
     fontSizeDisplay.textContent = initialSize;
     
     function applyFontSize(size) {
-      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFlip');
+      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFront, #pageTextBack');
       texts.forEach(function(el) {
         if (el) el.style.fontSize = size + 'px';
       });
@@ -291,7 +298,7 @@
     });
   }
 
-  // ===== Line Height =====
+  // Line Height
   var lineHeightSlider = document.getElementById('lineHeightSlider');
   var lineHeightDisplay = document.getElementById('lineHeightDisplay');
 
@@ -300,7 +307,7 @@
     lineHeightDisplay.textContent = initialLineHeight.toFixed(1);
     
     function applyLineHeight(val) {
-      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFlip');
+      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFront, #pageTextBack');
       texts.forEach(function(el) {
         if (el) el.style.lineHeight = val;
       });
@@ -317,14 +324,14 @@
     });
   }
 
-  // ===== Font Family =====
+  // Font Family
   var fontFamilySelect = document.getElementById('fontFamilySelect');
 
   if (fontFamilySelect) {
     var initialFont = fontFamilySelect.value || "'Amiri', serif";
     
     function applyFontFamily(value) {
-      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFlip');
+      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFront, #pageTextBack');
       texts.forEach(function(el) {
         if (el) el.style.fontFamily = value;
       });
@@ -338,7 +345,7 @@
     });
   }
 
-  // ===== Zoom Button =====
+  // Zoom Button
   var zoomBtn = document.getElementById('zoomBtn');
   var zoomedIn = false;
 
@@ -350,7 +357,7 @@
       if (fontSizeSlider) fontSizeSlider.value = size;
       if (fontSizeDisplay) fontSizeDisplay.textContent = size;
       
-      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFlip');
+      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFront, #pageTextBack');
       texts.forEach(function(el) {
         if (el) el.style.fontSize = size + 'px';
       });
@@ -360,7 +367,7 @@
     });
   }
 
-  // ===== Bookmark Button =====
+  // Bookmark Button
   var toolbarBookmarkBtn = document.getElementById('toolbarBookmarkBtn');
 
   if (toolbarBookmarkBtn) {
@@ -379,14 +386,14 @@
     });
   }
 
-  // ===== Load saved settings =====
+  // Load saved settings
   function loadSavedSettings() {
     var savedFontSize = localStorage.getItem('sard_font_size');
     if (savedFontSize && fontSizeSlider && fontSizeDisplay) {
       var size = parseInt(savedFontSize);
       fontSizeSlider.value = size;
       fontSizeDisplay.textContent = size;
-      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFlip');
+      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFront, #pageTextBack');
       texts.forEach(function(el) {
         if (el) el.style.fontSize = size + 'px';
       });
@@ -398,7 +405,7 @@
       var lh = parseFloat(savedLineHeight);
       lineHeightSlider.value = lh;
       lineHeightDisplay.textContent = lh.toFixed(1);
-      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFlip');
+      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFront, #pageTextBack');
       texts.forEach(function(el) {
         if (el) el.style.lineHeight = lh;
       });
@@ -408,7 +415,7 @@
     var savedFontFamily = localStorage.getItem('sard_font_family');
     if (savedFontFamily && fontFamilySelect) {
       fontFamilySelect.value = savedFontFamily;
-      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFlip');
+      var texts = document.querySelectorAll('.page__text, #pageTextRight, #pageTextLeft, #pageTextFront, #pageTextBack');
       texts.forEach(function(el) {
         if (el) el.style.fontFamily = savedFontFamily;
       });
@@ -417,7 +424,7 @@
 
   loadSavedSettings();
 
-  // ===== SETTINGS POPOVER - Toggle =====
+  // SETTINGS POPOVER - Toggle
   var fontSettingsBtn = document.getElementById('fontSettingsBtn');
   var settingsPopover = document.getElementById('settingsPopover');
 
@@ -448,9 +455,7 @@
     });
   }
 
-  /* ============================================================
-     OPENING ANIMATION
-     ============================================================ */
+  // Opening Animation
   var bookOpeningCover = $("#bookOpeningCover");
   if (bookOpeningCover) {
     setTimeout(function () {
