@@ -12,7 +12,7 @@ html, body { height: 100%; font-family: 'Tajawal', sans-serif; background: #2013
 }
 .navbar.scrolled { background: rgba(20,12,6,0.95); box-shadow: 0 4px 30px rgba(0,0,0,0.4); }
 .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-.nav-brand img { height: 40px; width: auto; }
+.nav-brand img { height: 40px; width: auto; margin-left: 0;}
 .nav-brand span { font-family: 'Aref Ruqaa', serif; font-weight: 700; font-size: 1.8rem; color: #f6eed6; }
 .nav-links { display: flex; gap: 34px; list-style: none; }
 .nav-links a { color: #e9dcc4; text-decoration: none; font-size: 0.95rem; font-weight: 500; position: relative; padding-bottom: 4px; transition: color 0.25s; }
