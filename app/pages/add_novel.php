@@ -1,140 +1,256 @@
-<?php
-require_once "../app/core/init.php";
+  <?php
+  require_once "../app/core/init.php";
 
-if (!isset($_SESSION['user'])) {
+  if (!isset($_SESSION['user'])) {
     header("Location: login");
     exit();
-}
+  }
 
-$categories = query($conn, "SELECT id, name_ar FROM categories", []);
+  $categories = query($conn, "SELECT id, name_ar FROM categories", []);
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+  if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $title = trim($_POST['title']);
     $description = trim($_POST['description']);
     $selectedCategories = $_POST['categories'] ?? [];
     $novelType = $_POST['novel_type'] ?? null;
 
     if (empty($title) || empty($description) || empty($selectedCategories)) {
-        $error = "من فضلك أكملي جميع الحقول واختاري تصنيف واحد على الأقل";
+      $error = "من فضلك أكملي جميع الحقول واختاري تصنيف واحد على الأقل";
     } elseif (empty($_FILES['cover_image']['name'])) {
-        $error = "من فضلك ارفعي صورة الرواية";
+      $error = "من فضلك ارفعي صورة الرواية";
     } else {
-        !is_dir($dir = "../public/assets/images/novels/") && mkdir($dir, 0777, true);
-        $fileName = time() . "_" . basename($_FILES['cover_image']['name']);
-        move_uploaded_file($_FILES['cover_image']['tmp_name'], $dir . $fileName);
-        $coverImagePath = $fileName; 
+      !is_dir($dir = "../public/assets/images/novels/") && mkdir($dir, 0777, true);
+      $fileName = time() . "_" . basename($_FILES['cover_image']['name']);
+      move_uploaded_file($_FILES['cover_image']['tmp_name'], $dir . $fileName);
+      $coverImagePath = $fileName;
+    }
 
-        $slug = trim(preg_replace('/\s+/', '-', $title)) . '-' . time();
+    $slug = trim(preg_replace('/\s+/', '-', $title)) . '-' . time();
 
-        $authorName = $_SESSION['user']['username'];
-        $authorRow = query($conn, "SELECT id FROM authors WHERE name = :name LIMIT 1", ["name" => $authorName]);
-        if (!empty($authorRow)) {
-            $authorId = $authorRow[0]['id'];
-        } else {
-            execute($conn, "INSERT INTO authors (name) VALUES (:name)", ["name" => $authorName]);
-            $authorId = $conn->lastInsertId();
-        }
+    $authorName = $_SESSION['user']['username'];
+    $authorRow = query($conn, "SELECT id FROM authors WHERE name = :name LIMIT 1", ["name" => $authorName]);
+    if (!empty($authorRow)) {
+      $authorId = $authorRow[0]['id'];
+    } else {
+      execute($conn, "INSERT INTO authors (name) VALUES (:name)", ["name" => $authorName]);
+      $authorId = $conn->lastInsertId();
+    }
 
-        $mainCategoryId = $selectedCategories[0];
+    $mainCategoryId = $selectedCategories[0];
 
-        $query = "INSERT INTO novels (author_id, category_id, title, slug, description, cover_image, novel_type, status) 
+    $query = "INSERT INTO novels (author_id, category_id, title, slug, description, cover_image, novel_type, status) 
                   VALUES (:author_id, :category_id, :title, :slug, :description, :cover_image, :novel_type, 'draft')";
 
-        $success = execute($conn, $query, [
-            "author_id"   => $authorId,
-            "category_id" => $mainCategoryId,
-            "title"       => $title,
-            "slug"        => $slug,
-            "description" => $description,
-            "cover_image" => $coverImagePath,
-            "novel_type"  => $novelType
+    $success = execute($conn, $query, [
+      "author_id"   => $authorId,
+      "category_id" => $mainCategoryId,
+      "title"       => $title,
+      "slug"        => $slug,
+      "description" => $description,
+      "cover_image" => $coverImagePath,
+      "novel_type"  => $novelType
+    ]);
+
+    if ($success) {
+      $novelId = $conn->lastInsertId();
+      foreach ($selectedCategories as $catId) {
+        execute($conn, "INSERT INTO novel_categories (novel_id, category_id) VALUES (:novel_id, :category_id)", [
+          "novel_id"    => $novelId,
+          "category_id" => $catId
         ]);
-
-        if ($success) {
-            $novelId = $conn->lastInsertId();
-            foreach ($selectedCategories as $catId) {
-                execute($conn, "INSERT INTO novel_categories (novel_id, category_id) VALUES (:novel_id, :category_id)", [
-                    "novel_id"    => $novelId,
-                    "category_id" => $catId
-                ]);
-            }
-            $message = "تم إرسال الرواية بنجاح، في انتظار موافقة الإدارة";
-        } else {
-            $error = "حدث خطأ أثناء إضافة الرواية، حاولي مرة أخرى";
-        }
+      }
     }
-}
-?>
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
+  }
+  ?>
+  <!DOCTYPE html>
+  <html lang="ar" dir="rtl">
+
+  <head>
     <meta charset="UTF-8">
-    <title>إضافة رواية جديدة</title>
-    <link rel="stylesheet" href="<?= ROOT ?>assets/css/add_novel.css">
-</head>
-<body>
-    <h1 class="page-title">إضافة رواية جديدة</h1>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إضافة رواية جديدة — سرد</title>
+    <link rel="stylesheet" href="<?= ROOT ?>assets/css/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+      body {
+        background-color: var(--dark-bg);
+        color: var(--cream);
+        font-family: 'Tajawal', sans-serif;
+        margin: 0;
+        padding: 0;
+      }
 
-    <div class="page-wrapper">
+      .add-novel-container {
+        max-width: 800px;
+        margin: 80px auto;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 40px;
+        border-radius: 20px;
+        border: 1px solid rgba(212, 175, 55, 0.1);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
 
-        <?php if (isset($error)): ?><p class="error"><?php echo $error; ?></p><?php endif; ?>
-        <?php if (isset($message)): ?><p class="success"><?php echo $message; ?></p><?php endif; ?>
+      .add-novel-container h1 {
+        color: var(--gold-primary);
+        text-align: center;
+        margin-bottom: 30px;
+        font-family: 'Aref Ruqaa', serif;
+        font-size: 2.5rem;
+      }
 
-        <form method="POST" action="add_novel" enctype="multipart/form-data" id="novelForm" novalidate>
+      .form-group {
+        margin-bottom: 25px;
+      }
 
-            <div class="field">
-                <span class="field-label">صورة الرواية</span>
-                <input type="file" name="cover_image" id="cover_image" accept="image/*" required>
-                <span class="required-note" id="err-cover"></span>
-            </div>
+      .form-group label {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--gold-light);
+        font-weight: 500;
+        font-size: 1.1rem;
+      }
 
-            <div class="field">
-                <span class="field-label">اسم الرواية بالعربية</span>
-                <input type="text" name="title" id="title" maxlength="100" required>
-                <span class="counter"><span id="title-count">0</span>/100</span>
-                <span class="required-note" id="err-title"></span>
-            </div>
+      .form-group input[type="text"],
+      .form-group textarea {
+        width: 100%;
+        padding: 15px;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        color: white;
+        font-family: 'Tajawal', sans-serif;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+      }
 
-            <div class="field">
-                <span class="field-label">قصة الرواية</span>
-                <textarea name="description" id="description" maxlength="2000" rows="6" required></textarea>
-                <span class="counter"><span id="desc-count">0</span>/2000</span>
-                <span class="required-note" id="err-desc"></span>
-            </div>
+      .form-group input[type="text"]:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: var(--gold-primary);
+        background: rgba(0, 0, 0, 0.5);
+      }
 
-            <div class="field">
-                <span class="field-label">تصنيفات الرواية</span>
-                <div class="dropdown" id="catDropdown">
-                    <div class="dropdown-toggle" id="catToggle">
-                        <span id="catToggleText">اختر التصنيفات</span>
-                        <span class="arrow">▾</span>
-                    </div>
-                    <div class="dropdown-menu" id="catMenu">
-                        <?php foreach ($categories as $cat): ?>
-                            <label class="dropdown-item">
-                                <?= $cat['name_ar'] ?>
-                                <input type="checkbox" name="categories[]" value="<?= $cat['id'] ?>">
-                            </label>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-                <span class="required-note" id="err-cat"></span>
-            </div>
+      .form-group input[type="file"] {
+        color: white;
+        padding: 10px 0;
+      }
 
-            <div class="field">
-                <span class="field-label">نوع الرواية</span>
-                <select name="novel_type">
-                    <option value="">اختر نوع الرواية</option>
-                    <option value="طويلة">رواية طويلة</option>
-                    <option value="قصيرة">رواية قصيرة</option>
-                    <option value="مجموعة قصصية">مجموعة قصصية</option>
-                </select>
-            </div>
+      .submit-btn {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+        color: var(--dark-bg);
+        border: none;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+      }
 
-            <button type="submit">إضافة</button>
-        </form>
+      .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+      }
+
+      .error-msg {
+        background: rgba(255, 59, 48, 0.1);
+        color: #ff3b30;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        border: 1px solid rgba(255, 59, 48, 0.2);
+        text-align: center;
+        font-weight: 500;
+      }
+
+      .checkbox-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid rgba(212, 175, 55, 0.1);
+      }
+
+      .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--cream);
+        cursor: pointer;
+      }
+
+      .checkbox-item input {
+        accent-color: var(--gold-primary);
+        width: 18px;
+        height: 18px;
+      }
+
+      .back-link {
+        display: inline-block;
+        color: var(--gold-primary);
+        text-decoration: none;
+        margin-bottom: 20px;
+        font-weight: bold;
+      }
+
+      .back-link:hover {
+        color: var(--gold-light);
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <div class="add-novel-container">
+      <a href="<?= ROOT ?>profile" class="back-link"><i class="fa-solid fa-arrow-right"></i> العودة للبروفايل</a>
+
+      <h1>إضافة رواية جديدة</h1>
+
+      <?php if (!empty($error)): ?>
+        <div class="error-msg"><?= $error ?></div>
+      <?php endif; ?>
+
+      <form action="" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+          <label><i class="fa-solid fa-pen-nib"></i> عنوان الرواية</label>
+          <input type="text" name="title" required placeholder="أدخل عنوان روايتك هنا...">
+        </div>
+
+        <div class="form-group">
+          <label><i class="fa-solid fa-align-right"></i> نبذة عن الرواية</label>
+          <textarea name="description" rows="6" required placeholder="اكتب وصفاً مشوقاً يجذب القراء..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label><i class="fa-solid fa-image"></i> صورة الغلاف</label>
+          <input type="file" name="cover_image" accept="image/*" required>
+        </div>
+
+        <div class="form-group">
+          <label><i class="fa-solid fa-tags"></i> التصنيفات (اختر تصنيف أو أكثر)</label>
+          <div class="checkbox-grid">
+            <?php if (!empty($categories)): ?>
+              <?php foreach ($categories as $cat): ?>
+                <label class="checkbox-item">
+                  <input type="checkbox" name="categories[]" value="<?= $cat['id'] ?>">
+                  <?= htmlspecialchars($cat['name_ar']) ?>
+                </label>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <p style="color: #aaa;">لا توجد تصنيفات متاحة.</p>
+            <?php endif; ?>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn"><i class="fa-solid fa-magic"></i> إنشاء الرواية وبدء الكتابة</button>
+      </form>
     </div>
+  </body>
 
-    <script src="<?= ROOT ?>assets/js/add_novel.js"></script>
-</body>
-</html>
+  </html>

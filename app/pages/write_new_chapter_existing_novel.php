@@ -1,8 +1,7 @@
 <?php
 require_once "../app/core/init.php";
 
-// Get novel_id and chapter_id from URL segments or query string
-// URL format: /write_new_chapter_existing_novel/{novel_id}/{chapter_id}
+
 $url_parts = isset($_GET['url']) ? explode('/', trim($_GET['url'], '/')) : [];
 $novel_id   = isset($url_parts[1]) && (int)$url_parts[1] > 0
     ? (int)$url_parts[1]
@@ -12,7 +11,6 @@ $chapter_id = isset($url_parts[2]) && (int)$url_parts[2] > 0
     : (isset($_GET['id']) && (int)$_GET['id'] > 0 ? (int)$_GET['id'] : null);
 $chapter = null;
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = $_POST['title'] ?? 'بدون عنوان';
     $content = $_POST['content'] ?? '';
