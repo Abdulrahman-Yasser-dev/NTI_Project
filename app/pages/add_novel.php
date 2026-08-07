@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once "../app/core/init.php";
 
 if (!isset($_SESSION['user'])) {
@@ -16,17 +16,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if (empty($title) || empty($description) || empty($selectedCategories)) {
         $error = "من فضلك أكملي جميع الحقول واختاري تصنيف واحد على الأقل";
-    } elseif (!isset($_FILES['cover_image']) || $_FILES['cover_image']['error'] !== 0) {
+    } elseif (empty($_FILES['cover_image']['name'])) {
         $error = "من فضلك ارفعي صورة الرواية";
     } else {
-        $uploadDir = "../public/assets/images/novels/";
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
-        $ext = pathinfo($_FILES['cover_image']['name'], PATHINFO_EXTENSION);
-        $fileName = uniqid('novel_') . '.' . $ext;
-        move_uploaded_file($_FILES['cover_image']['tmp_name'], $uploadDir . $fileName);
-        $coverImagePath = "assets/images/novels/" . $fileName;
+        !is_dir($dir = "../public/assets/images/novels/") && mkdir($dir, 0777, true);
+        $fileName = time() . "_" . basename($_FILES['cover_image']['name']);
+        move_uploaded_file($_FILES['cover_image']['tmp_name'], $dir . $fileName);
+        $coverImagePath = $fileName; 
 
         $slug = trim(preg_replace('/\s+/', '-', $title)) . '-' . time();
 

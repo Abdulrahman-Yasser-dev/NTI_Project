@@ -1,0 +1,441 @@
+/* ================================================================
+   profile.css — User Profile
+   سرد (Sard) — Arabic Reading Platform
+   ================================================================ */
+
+body {
+    background: #140b06; /* slightly darker background for profile */
+    color: #f6eed6;
+    padding-top: 80px; /* space for navbar */
+}
+
+/* ─── PROFILE HEADER ─── */
+.profile-header {
+    position: relative;
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.profile-cover {
+    width: 100%;
+    height: 250px;
+    background: linear-gradient(135deg, #3a2212, #20130a);
+    background-image: url('../images/library-bg.jpg'); /* fallback if exists */
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.profile-cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, #140b06 0%, transparent 80%);
+}
+
+.profile-info-container {
+    max-width: 1200px;
+    margin: -80px auto 0;
+    padding: 0 4%;
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: flex-end;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.profile-avatar {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    border: 6px solid #140b06;
+    background: #20130a;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.edit-avatar-btn {
+    position: absolute;
+    bottom: 5px;
+    right: 15px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e7c877;
+    color: #2b1d13;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: transform 0.2s;
+}
+.edit-avatar-btn:hover {
+    transform: scale(1.1);
+}
+
+.profile-details {
+    flex: 1;
+    padding-bottom: 15px;
+}
+
+.profile-name {
+    font-family: 'Aref Ruqaa', serif;
+    font-size: 2.8rem;
+    color: #f6eed6;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.profile-badges {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.role-badge {
+    background: rgba(231,200,119,0.15);
+    color: #e7c877;
+    border: 1px solid rgba(231,200,119,0.3);
+}
+
+.join-badge {
+    background: rgba(255,255,255,0.05);
+    color: #b5a184;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.profile-stats {
+    display: flex;
+    gap: 20px;
+    padding-bottom: 15px;
+}
+
+.stat-box {
+    background: rgba(20,12,6,0.6);
+    border: 1px solid rgba(231,200,119,0.15);
+    border-radius: 12px;
+    padding: 15px 25px;
+    text-align: center;
+    min-width: 110px;
+    backdrop-filter: blur(5px);
+}
+
+.stat-num {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #e7c877;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #b5a184;
+}
+
+/* ─── MAIN LAYOUT & TABS ─── */
+.profile-main {
+    max-width: 1200px;
+    margin: 0 auto 60px;
+    padding: 0 4%;
+}
+
+.profile-layout {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+}
+
+.profile-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 90px;
+}
+
+.profile-tabs {
+    list-style: none;
+    background: #20130a;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 16px;
+    overflow: hidden;
+    padding: 10px 0;
+}
+
+.tab-item {
+    padding: 16px 24px;
+    color: #b5a184;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-right: 3px solid transparent;
+}
+
+.tab-item i {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.tab-item:hover {
+    background: rgba(255,255,255,0.03);
+    color: #e9dcc4;
+}
+
+.tab-item.active {
+    background: linear-gradient(90deg, rgba(231,200,119,0.1) 0%, transparent 100%);
+    color: #e7c877;
+    border-right-color: #e7c877;
+}
+
+/* ─── TAB CONTENT ─── */
+.profile-content-area {
+    flex: 1;
+    background: #20130a;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 40px;
+    min-height: 500px;
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.4s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.section-title {
+    font-family: 'Aref Ruqaa', serif;
+    font-size: 2rem;
+    color: #e7c877;
+    margin-bottom: 30px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding-bottom: 15px;
+}
+
+/* ─── GRID: READING NOW ─── */
+.books-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.book-card-mini {
+    display: flex;
+    gap: 20px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 15px;
+    border-radius: 12px;
+    transition: transform 0.2s;
+}
+
+.book-card-mini:hover {
+    transform: translateY(-3px);
+    border-color: rgba(231,200,119,0.3);
+}
+
+.book-card-mini img {
+    width: 80px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.book-card-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.book-card-info h3 {
+    font-size: 1.1rem;
+    color: #f6eed6;
+    margin-bottom: 6px;
+}
+
+.book-card-info p {
+    font-size: 0.85rem;
+    color: #b5a184;
+    margin-bottom: 15px;
+}
+
+.progress-bar-bg {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #c69a45, #e7c877);
+    border-radius: 3px;
+}
+
+.btn-read-continue {
+    color: #e7c877;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.btn-read-continue:hover {
+    text-decoration: underline;
+}
+
+/* ─── GRID: SIMPLE (Favorites, My List) ─── */
+.books-grid-simple {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 25px 20px;
+}
+
+.simple-book-item {
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.simple-book-item:hover {
+    transform: translateY(-5px);
+}
+
+.simple-book-item img {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+}
+
+.simple-book-item h4 {
+    font-size: 0.95rem;
+    color: #e9dcc4;
+    font-weight: 500;
+}
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #b5a184;
+}
+.empty-state i {
+    font-size: 4rem;
+    color: rgba(255,255,255,0.05);
+    margin-bottom: 20px;
+}
+.empty-state p {
+    font-size: 1.1rem;
+}
+
+/* ─── SETTINGS FORM ─── */
+.settings-form {
+    max-width: 500px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #b5a184;
+    font-size: 0.95rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #f6eed6;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #e7c877;
+    background: rgba(0,0,0,0.4);
+}
+
+.submit-btn {
+    margin-top: 10px;
+    padding: 12px 30px;
+    font-size: 1rem;
+}
+
+.writer-actions {
+    margin-bottom: 30px;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+    .profile-layout {
+        flex-direction: column;
+    }
+    .profile-sidebar {
+        width: 100%;
+        position: static;
+    }
+    .profile-tabs {
+        display: flex;
+        overflow-x: auto;
+    }
+    .tab-item {
+        white-space: nowrap;
+        border-right: none;
+        border-bottom: 3px solid transparent;
+    }
+    .tab-item.active {
+        border-right-color: transparent;
+        border-bottom-color: #e7c877;
+        background: linear-gradient(0deg, rgba(231,200,119,0.1) 0%, transparent 100%);
+    }
+    .profile-info-container {
+        justify-content: center;
+        text-align: center;
+    }
+    .profile-badges, .profile-stats {
+        justify-content: center;
+    }
+}

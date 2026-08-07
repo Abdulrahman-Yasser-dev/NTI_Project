@@ -342,6 +342,27 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', adjustBookSizes);
 
     // ============================================================
+    // PROFILE DROPDOWN
+    // ============================================================
+    window.toggleProfileMenu = function(e) {
+        if(e) e.stopPropagation();
+        var menu = document.getElementById('profileMenu');
+        if(menu) {
+            menu.classList.toggle('show');
+        }
+    };
+
+    window.addEventListener('click', function(e) {
+        var toggle = document.querySelector('.profile-toggle');
+        var menu = document.getElementById('profileMenu');
+        if (toggle && menu) {
+            if (!toggle.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+        }
+    });
+
+    // ============================================================
     // CONSOLE
     // ============================================================
     console.log('%c📖 سرد — Premium Homepage Loaded', 'font-size:20px; font-weight:bold; color:#e7c877;');

@@ -74,11 +74,7 @@ foreach ($books as $book) {
     ];
 }
 
-// ============================================================
-// PASS DATA TO JAVASCRIPT
-// ============================================================
-echo '<script>const ROOT_URL = "' . ROOT . '";</script>';
-echo '<script>const MODAL_DATA = ' . json_encode($modalData) . ';</script>';
+
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -90,9 +86,10 @@ echo '<script>const MODAL_DATA = ' . json_encode($modalData) . ';</script>';
   <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="<?= ROOT ?>assets/css/index.css" />
+  <script>const ROOT_URL = "<?= ROOT ?>";</script>
+  <script>const MODAL_DATA = <?= json_encode($modalData) ?>;</script>
 </head>
 <body>
-  <!-- ─── NAVBAR ─── -->
   <nav class="navbar" id="navbar">
     <a href="<?= ROOT ?>index" class="nav-brand">
       <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد">
@@ -104,8 +101,29 @@ echo '<script>const MODAL_DATA = ' . json_encode($modalData) . ';</script>';
       <li><a href="#">من نحن</a></li>
     </ul>
     <div class="nav-actions">
-      <a href="<?= ROOT ?>signup" class="nav-btn glass">تسجيل الدخول</a>
+      <?php if(!isset($_SESSION["user"])):?>
+      <a href="<?= ROOT ?>login" class="nav-btn glass">تسجيل الدخول</a>
       <a href="<?= ROOT ?>signup" class="nav-btn filled">إنشاء حساب</a>
+      <?php else: ?>
+        <?php if($_SESSION["user"]["role"]== "admin"):?>
+          <a href="<?= ROOT ?>admin" class="nav-btn glass">لوحة التحكم</a>
+        <?php endif; ?>
+        <div class="profile-dropdown">
+          <button class="profile-toggle" onclick="toggleProfileMenu()">
+            <?php if(!empty($_SESSION['user']['image'])): ?>
+                <img src="<?= ROOT ?>assets/images/users/<?= htmlspecialchars($_SESSION['user']['image']) ?>" alt="avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+            <?php else: ?>
+                <i class="fa-solid fa-user-circle"></i>
+            <?php endif; ?>
+            <span><?= htmlspecialchars($_SESSION["user"]["username"]) ?></span>
+            <i class="fa-solid fa-chevron-down text-sm"></i>
+          </button>
+          <div class="profile-menu" id="profileMenu">
+            <a href="<?= ROOT ?>profile"><i class="fa-solid fa-user"></i> حسابي</a>
+            <a href="<?= ROOT ?>logout"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+          </div>
+        </div>
+      <?php endif; ?>
       <button class="nav-toggle" aria-label="القائمة">☰</button>
     </div>
   </nav>

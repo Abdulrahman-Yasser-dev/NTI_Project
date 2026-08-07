@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../app/core/init.php';
 
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] != "admin") {
@@ -73,7 +73,7 @@ if ($tab === 'dashboard') {
                 <a href="admin?tab=novels" class="list-group-item list-group-item-action bg-transparent <?= $tab === 'novels' ? 'active' : 'fw-bold' ?>">
                     <i class="fas fa-book-open ms-2"></i> إدارة الروايات
                 </a>
-                <a href="logout" class="list-group-item list-group-item-action bg-transparent fw-bold text-danger mt-5">
+                <a href="<?= ROOT ?>logout" class="list-group-item list-group-item-action bg-transparent fw-bold text-danger mt-5">
                     <i class="fas fa-sign-out-alt ms-2"></i> تسجيل الخروج
                 </a>
             </div>
@@ -89,15 +89,15 @@ if ($tab === 'dashboard') {
                 <div class="d-flex align-items-center">
                     <div class="dropdown">
                         <a class="text-dark dropdown-toggle d-flex align-items-center text-decoration-none" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <span class="fw-bold me-2">المدير العام</span>
-                            <img src="https://ui-avatars.com/api/?name=Admin&background=8b5a2b&color=fff" alt="Admin" class="rounded-circle" width="35" height="35">
+                            <span class="fw-bold me-2"><?= htmlspecialchars($_SESSION['user']['username']) ?></span>
+                            <img src="<?= !empty($_SESSION['user']['image']) ? ROOT . 'assets/images/users/' . $_SESSION['user']['image'] : 'https://ui-avatars.com/api/?name=' . urlencode($_SESSION['user']['username']) . '&background=8b5a2b&color=fff' ?>" alt="Admin" class="rounded-circle" width="35" height="35" style="object-fit: cover;">
                         </a>
                         <ul class="dropdown-menu dropdown-menu-start text-end" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="admin?tab=profile">الملف الشخصي</a></li>
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            <li><a class="dropdown-item text-danger" href="logout">تسجيل الخروج</a></li>
+                            <li><a class="dropdown-item text-danger" href="<?= ROOT ?>logout">تسجيل الخروج</a></li>
                         </ul>
                     </div>
                 </div>

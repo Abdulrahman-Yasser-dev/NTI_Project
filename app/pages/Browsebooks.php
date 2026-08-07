@@ -135,10 +135,6 @@ foreach ($dbCategories as $cat) {
     <link rel="stylesheet" href="<?= ROOT ?>assets/css/Browsebooks.css">
 </head>
 <body>
-
-    <!-- ============================================================
-    NAVBAR — Premium Floating
-    ============================================================ -->
     <nav class="navbar-premium" id="navbar">
         <div class="navbar-premium-container">
             <div class="navbar-premium-brand">
@@ -153,8 +149,29 @@ foreach ($dbCategories as $cat) {
                 <li><a href="#">من نحن</a></li>
             </ul>
             <div class="nav-premium-actions">
-                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
-                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-filled">إنشاء حساب</a>
+                <?php if(!isset($_SESSION["user"])):?>
+                    <a href="<?= ROOT ?>login" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
+                    <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-filled">إنشاء حساب</a>
+                <?php else: ?>
+                    <?php if($_SESSION["user"]["role"]== "admin"):?>
+                        <a href="<?= ROOT ?>admin" class="nav-premium-btn nav-premium-btn-outline">لوحة التحكم</a>
+                    <?php endif; ?>
+                    <div class="profile-dropdown">
+                        <button class="profile-toggle" onclick="toggleProfileMenu()">
+                            <?php if(!empty($_SESSION['user']['image'])): ?>
+                                <img src="<?= ROOT ?>assets/images/users/<?= htmlspecialchars($_SESSION['user']['image']) ?>" alt="avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                            <?php else: ?>
+                                <i class="fa-solid fa-user-circle"></i>
+                            <?php endif; ?>
+                            <span><?= htmlspecialchars($_SESSION["user"]["username"]) ?></span>
+                            <i class="fa-solid fa-chevron-down text-sm"></i>
+                        </button>
+                        <div class="profile-menu" id="profileMenu">
+                            <a href="<?= ROOT ?>profile"><i class="fa-solid fa-user"></i> حسابي</a>
+                            <a href="<?= ROOT ?>logout"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </nav>

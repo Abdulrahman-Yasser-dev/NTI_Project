@@ -184,7 +184,28 @@ document.addEventListener('DOMContentLoaded', function() {
     filterCategory('الكل');
     filterBooks();
 
-    console.log('%c📖 سرد — Premium Luxury Bookstore', 'font-size:20px; font-weight:bold; color:#D4A64A;');
+    // ============================================================
+    // PROFILE DROPDOWN
+    // ============================================================
+    window.toggleProfileMenu = function(e) {
+        if(e) e.stopPropagation();
+        var menu = document.getElementById('profileMenu');
+        if(menu) {
+            menu.classList.toggle('show');
+        }
+    };
+
+    window.addEventListener('click', function(e) {
+        var toggle = document.querySelector('.profile-toggle');
+        var menu = document.getElementById('profileMenu');
+        if (toggle && menu) {
+            if (!toggle.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+        }
+    });
+
+    console.log('%c📚 سرد — BrowseBooks Loaded', 'font-size:16px; font-weight:bold; color:#D4A64A;');
     console.log('%cAll books loaded — 3 categories', 'color:#E8C86A;');
 
 });

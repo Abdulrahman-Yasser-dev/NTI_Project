@@ -1,10 +1,10 @@
-﻿<?php
+<?php
 require_once "../app/core/init.php";
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $query = "SELECT id, username, password, role FROM users WHERE email = :email";
+    $query = "SELECT id, username, password, role, image FROM users WHERE email = :email";
     $result = query($conn, $query, ["email" => $email]);
 
     if ($result) {
@@ -13,7 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['user'] = [
                 "id"       => $row['id'],
                 "username" => $row['username'],
-                "role"     => $row['role']
+                "role"     => $row['role'],
+                "image"    => $row['image']
             ];
             header("Location: index");
             exit();
