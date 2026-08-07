@@ -63,10 +63,29 @@ unset($_SESSION['error'], $_SESSION['success']);
 
 
 
-$joinDate = "2024";
-$booksRead = 12;
-$favoritesCount = 24;
-$reviewsCount = 8;
+$joinDate = date("Y", strtotime($user_data['created_at']));
+$booksRead = query($conn, "SELECT COUNT(*) as count FROM user_library WHERE user_id = :user_id AND status = 'completed'", ["user_id" => $user['id']])[0]['count'] ?? 0;
+$favoritesCount = query($conn, "SELECT COUNT(*) as count FROM user_library WHERE user_id = :user_id AND is_favorite = 1", ["user_id" => $user['id']])[0]['count'] ?? 0;
+$reviewsCount = query($conn, "SELECT COUNT(*) as count FROM book_ratings WHERE user_id = :user_id", ["user_id" => $user['id']])[0]['count'] ?? 0;
+
+$readingNowBooks = query($conn, "SELECT n.* FROM novels n JOIN user_library ul ON n.id = ul.novel_id WHERE ul.user_id = :user_id AND ul.status = 'reading_now'", ["user_id" => $user['id']]);
+if (!$readingNowBooks) $readingNowBooks = [];
+
+$favoritesBooks = query($conn, "SELECT n.* FROM novels n JOIN user_library ul ON n.id = ul.novel_id WHERE ul.user_id = :user_id AND ul.is_favorite = 1", ["user_id" => $user['id']]);
+if (!$favoritesBooks) $favoritesBooks = [];
+
+$myListBooks = query($conn, "SELECT n.* FROM novels n JOIN user_library ul ON n.id = ul.novel_id WHERE ul.user_id = :user_id AND ul.status = 'my_list'", ["user_id" => $user['id']]);
+if (!$myListBooks) $myListBooks = [];
+
+$myWorksBooks = [];
+if ($user['role'] == 'writer') {
+    $authorRow = query($conn, "SELECT id FROM authors WHERE name = :name LIMIT 1", ["name" => $user['username']]);
+    if ($authorRow) {
+        $myWorksBooks = query($conn, "SELECT * FROM novels WHERE author_id = :author_id", ["author_id" => $authorRow[0]['id']]);
+        if (!$myWorksBooks) $myWorksBooks = [];
+    }
+}
+
 
 ?>
 <!DOCTYPE html>
@@ -183,54 +202,94 @@ $reviewsCount = 8;
             <section class="profile-content-area">
                 <div class="tab-content active" id="tab-reading-now">
                     <h2 class="section-title">أقرأ حالياً</h2>
-                    <div class="books-grid">
-                        <div class="book-card-mini">
-                            <img src="<?= ROOT ?>assets/images/placeholder.jpg" alt="غلاف الكتاب">
-                            <div class="book-card-info">
-                                <h3>اسم الرواية الوهمية</h3>
-                                <p>الفصل 12 من 30</p>
-                                <div class="progress-bar-bg">
-                                    <div class="progress-bar-fill" style="width: 40%;"></div>
+                    <?php if (!empty($readingNowBooks)): ?>
+                        <div class="books-grid">
+                            <?php foreach ($readingNowBooks as $book): ?>
+                                <div class="book-card-mini">
+                                    <img src="<?= ROOT ?>assets/images/novels/<?= htmlspecialchars($book['cover_image']) ?>" alt="غلاف الكتاب">
+                                    <div class="book-card-info">
+                                        <h3><?= htmlspecialchars($book['title']) ?></h3>
+                                        <p>قيد القراءة</p>
+                                        <a href="<?= ROOT ?>novel/<?= $book['id'] ?>" class="btn-read-continue">متابعة القراءة</a>
+                                    </div>
                                 </div>
-                                <a href="#" class="btn-read-continue">متابعة القراءة</a>
-                            </div>
+                            <?php endforeach; ?>
                         </div>
-                    </div>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <i class="fa-solid fa-book-open"></i>
+                            <p>لست تقرأ أي رواية حالياً.</p>
+                            <a href="<?= ROOT ?>Browsebooks" class="nav-btn filled" style="margin-top:15px">تصفح الكتب</a>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="tab-content" id="tab-favorites">
                     <h2 class="section-title">المفضلة</h2>
-                    <div class="books-grid-simple">
-                        <!-- [BACKEND PLACEHOLDER] حلقة foreach للكتب المفضلة -->
-                        <div class="simple-book-item">
-                            <img src="<?= ROOT ?>assets/images/placeholder.jpg" alt="غلاف">
-                            <h4>اسم الكتاب</h4>
+                    <?php if (!empty($favoritesBooks)): ?>
+                        <div class="books-grid-simple">
+                            <?php foreach ($favoritesBooks as $book): ?>
+                                <div class="simple-book-item">
+                                    <a href="<?= ROOT ?>novel/<?= $book['id'] ?>">
+                                        <img src="<?= ROOT ?>assets/images/novels/<?= htmlspecialchars($book['cover_image']) ?>" alt="غلاف">
+                                    </a>
+                                    <h4><?= htmlspecialchars($book['title']) ?></h4>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
-                        <div class="simple-book-item">
-                            <img src="<?= ROOT ?>assets/images/placeholder.jpg" alt="غلاف">
-                            <h4>اسم الكتاب 2</h4>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <i class="fa-regular fa-heart"></i>
+                            <p>لا يوجد روايات في المفضلة.</p>
                         </div>
-                    </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="tab-content" id="tab-my-list">
                     <h2 class="section-title">قائمتي (للقراءة لاحقاً)</h2>
-                    <div class="empty-state">
-                        <i class="fa-regular fa-bookmark"></i>
-                        <p>القائمة فارغة حالياً. تصفح الكتب وأضفها إلى قائمتك!</p>
-                        <a href="<?= ROOT ?>Browsebooks" class="nav-btn filled" style="margin-top:15px">تصفح الكتب</a>
-                    </div>
+                    <?php if (!empty($myListBooks)): ?>
+                        <div class="books-grid-simple">
+                            <?php foreach ($myListBooks as $book): ?>
+                                <div class="simple-book-item">
+                                    <a href="<?= ROOT ?>novel/<?= $book['id'] ?>">
+                                        <img src="<?= ROOT ?>assets/images/novels/<?= htmlspecialchars($book['cover_image']) ?>" alt="غلاف">
+                                    </a>
+                                    <h4><?= htmlspecialchars($book['title']) ?></h4>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <i class="fa-regular fa-bookmark"></i>
+                            <p>القائمة فارغة حالياً. تصفح الكتب وأضفها إلى قائمتك!</p>
+                            <a href="<?= ROOT ?>Browsebooks" class="nav-btn filled" style="margin-top:15px">تصفح الكتب</a>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <?php if ($user['role'] == 'writer'): ?>
                     <div class="tab-content" id="tab-my-works">
                         <h2 class="section-title">أعمالي المنشورة</h2>
                         <div class="writer-actions">
-                            <button class="nav-btn filled"><i class="fa-solid fa-plus"></i> نشر رواية جديدة</button>
+                            <a href="<?= ROOT ?>add_novel" class="nav-btn filled" style="display:inline-block;"><i class="fa-solid fa-plus"></i> نشر رواية جديدة</a>
                         </div>
-                        <div class="books-grid-simple">
-                            <!-- [BACKEND PLACEHOLDER] روايات الكاتب -->
-                        </div>
+                        <?php if (!empty($myWorksBooks)): ?>
+                            <div class="books-grid-simple">
+                                <?php foreach ($myWorksBooks as $book): ?>
+                                    <div class="simple-book-item">
+                                        <a href="<?= ROOT ?>manage_novel_chapters/<?= $book['id'] ?>">
+                                            <img src="<?= ROOT ?>assets/images/novels/<?= htmlspecialchars($book['cover_image']) ?>" alt="غلاف">
+                                        </a>
+                                        <h4><?= htmlspecialchars($book['title']) ?></h4>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="empty-state">
+                                <i class="fa-solid fa-pen-nib"></i>
+                                <p>لم تنشر أي روايات بعد.</p>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
 
