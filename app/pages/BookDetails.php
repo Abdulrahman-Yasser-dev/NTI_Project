@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_rating'])) {
                 $updateStmt->execute([':rating' => $rating, ':id' => $existing['id']]);
             } else {
                 // Insert new rating
-                $insertQuery = "INSERT INTO book_ratings (book_id, user_id) VALUES (:book_id, :user_id)";
+                $insertQuery = "INSERT INTO book_ratings (book_id, user_id, rating) VALUES (:book_id, :user_id, :rating)";
                 $insertStmt = $conn->prepare($insertQuery);
                 $insertStmt->execute([
                     ':book_id' => $bookId,
@@ -286,13 +286,11 @@ try {
             c.id,
             c.comment,
             c.created_at,
-            c.rating,
-            u.name AS user_name,
-            u.photo AS user_photo
+            u.username AS user_name,
+            u.image AS user_photo
         FROM comments c
         JOIN users u ON c.user_id = u.id
         WHERE c.book_id = :book_id
-        AND c.status = 'approved'
         ORDER BY c.created_at DESC
         LIMIT 10
     ";
@@ -521,7 +519,7 @@ $readingUrl = ROOT . 'reading?book_id=' . $book['id'];
                             <div class="author-item" onclick="location.href='<?= ROOT ?>Browsebooks?author=<?= urlencode($author['name']) ?>'">
                                 <img src="<?= ROOT ?>assets/images/authors/<?= $author['photo'] ?? 'default-author.png' ?>" 
                                      alt="<?= htmlspecialchars($author['name']) ?>" 
-                                     onerror="this.src='<?= ROOT ?>assets/images/avatar-placeholder.png'" />
+                                     onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Author&background=8b5a2b&color=fff'" />
                                 <?= htmlspecialchars($author['name']) ?>
                             </div>
                         <?php endforeach; ?>
@@ -692,7 +690,7 @@ $readingUrl = ROOT . 'reading?book_id=' . $book['id'];
                     <div class="author-info">
                         <img src="<?= ROOT ?>assets/images/authors/<?= $book['author_photo'] ?? 'default-author.png' ?>" 
                              alt="<?= htmlspecialchars($book['author_name']) ?>" 
-                             onerror="this.src='<?= ROOT ?>assets/images/avatar-placeholder.png'" />
+                             onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Author&background=8b5a2b&color=fff'" />
                         <div>
                             <h4><?php echo htmlspecialchars($book['author_name']); ?></h4>
                             <p><?php echo htmlspecialchars($book['author_bio'] ?? 'كاتب وروائي، له العديد من الأعمال الأدبية المميزة.'); ?></p>
@@ -794,7 +792,7 @@ $readingUrl = ROOT . 'reading?book_id=' . $book['id'];
                                         <div class="comment-user">
                                             <img src="<?= ROOT ?>assets/images/users/<?= $comment['user_photo'] ?? 'avatar-placeholder.png' ?>" 
                                                  alt="<?= htmlspecialchars($comment['user_name']) ?>"
-                                                 onerror="this.src='<?= ROOT ?>assets/images/avatar-placeholder.png'" />
+                                                 onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=Author&background=8b5a2b&color=fff'" />
                                             <span class="comment-username"><?= htmlspecialchars($comment['user_name']) ?></span>
                                         </div>
                                         <div class="comment-meta">
@@ -917,27 +915,7 @@ $readingUrl = ROOT . 'reading?book_id=' . $book['id'];
             });
 
             // ===== COMMENT STARS INTERACTION =====
-            
-
-                    star.addEventListener('mouseenter', function() {
-                        updateCommentStars(value);
-                    });
-
-                    star.addEventListener('mouseleave', function() {
-                        updateCommentStars(currentCommentRating);
-                    });
-                });
-
-                function updateCommentStars(value) {
-                    commentStars.forEach((s, i) => {
-                        if (i < value) {
-                            s.className = 'fas fa-star active';
-                        } else {
-                            s.className = 'far fa-star';
-                        }
-                    });
-                }
-            }
+            // Removed because comments do not have ratings
         });
     </script>
     <script>

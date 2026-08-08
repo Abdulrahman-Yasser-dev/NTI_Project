@@ -132,8 +132,7 @@ $currentPage = '';
 foreach ($parts as $part) {
     $currentPage .= $part;
     if (strtolower(trim($part)) === '</p>') {
-        // Push page when it has enough text (>400 chars)
-        if (mb_strlen(strip_tags($currentPage), 'UTF-8') > 400) {
+        if (mb_strlen(strip_tags($currentPage), 'UTF-8') > 700) {
             $pages[] = $currentPage;
             $currentPage = '';
         }

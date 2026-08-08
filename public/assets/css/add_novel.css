@@ -118,3 +118,24 @@ button[type="submit"]:hover { background: #5a3620; }
 
 .error { color:#c0392b; background:rgba(192,57,43,.08); padding:10px 14px; border-radius:8px; margin-bottom:15px; font-size:14px; text-align:right; }
 .success { color:#2e7d32; background:rgba(46,125,50,.08); padding:10px 14px; border-radius:8px; margin-bottom:15px; font-size:14px; text-align:right; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .page-wrapper {
+        padding: 0 15px;
+    }
+    .add-novel-card {
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    .form-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    .form-group {
+        width: 100%;
+    }
+    .submit-btn {
+        width: 100%;
+    }
+}

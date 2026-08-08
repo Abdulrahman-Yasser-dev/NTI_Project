@@ -150,9 +150,9 @@
     // 3. Trigger the animation
     pageTurnWrapper.classList.add("is-flipping");
     if (direction === "next") {
-      pageTurnWrapper.classList.add("flip-forward");
-    } else {
       pageTurnWrapper.classList.add("flip-backward");
+    } else {
+      pageTurnWrapper.classList.add("flip-forward");
     }
 
     // 4. Wait for the animation to finish (MUST match CSS 0.85s duration)
@@ -166,11 +166,11 @@
       
       // Add the "Finalized" class to trigger Stack Thickness Shifting (1~3px shift)
       if (direction === "next") {
-        pageTurnWrapper.classList.add("flip-forward-finalized");
-        pageTurnWrapper.classList.remove("flip-backward-finalized");
-      } else {
         pageTurnWrapper.classList.add("flip-backward-finalized");
         pageTurnWrapper.classList.remove("flip-forward-finalized");
+      } else {
+        pageTurnWrapper.classList.add("flip-forward-finalized");
+        pageTurnWrapper.classList.remove("flip-backward-finalized");
       }
       
       isFlipping = false;

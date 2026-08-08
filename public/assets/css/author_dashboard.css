@@ -1,0 +1,152 @@
+.dashboard-container {
+  max-width: 1000px;
+  margin: 100px auto 50px;
+  padding: 40px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 20px;
+}
+
+.dashboard-header h1 {
+  color: #d4af37;
+  margin: 0;
+}
+
+.add-novel-btn {
+  background: #d4af37;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+.add-novel-btn:hover {
+  background: #b8962c;
+  color: #fff;
+}
+
+.novel-card {
+  display: flex;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  gap: 20px;
+  align-items: center;
+}
+
+.novel-cover {
+  width: 80px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.novel-info {
+  flex-grow: 1;
+}
+
+.novel-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.novel-meta {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.status-archived {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.status-published {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-draft {
+  background: #eeeeee;
+  color: #616161;
+}
+
+.novel-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  padding: 8px 15px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  background: #f5f5f5;
+  color: #333;
+  transition: 0.3s;
+}
+
+.action-btn:hover {
+  background: #e0e0e0;
+}
+
+.action-btn.primary {
+  background: #d4af37;
+  color: #fff;
+}
+
+.action-btn.primary:hover {
+  background: #b8962c;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 20px;
+    margin: 20px;
+  }
+  .dashboard-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+  .novel-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+  }
+  .novel-actions {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .novel-cover {
+    margin: 0 auto;
+  }
+}

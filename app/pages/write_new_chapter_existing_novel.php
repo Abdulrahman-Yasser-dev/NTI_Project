@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Auto increment chapter_number
         $max = query($conn, "SELECT MAX(chapter_number) as max_num FROM chapters WHERE novel_id = :novel_id", ['novel_id' => $novel_id]);
         $next_num = ($max && $max[0]['max_num']) ? (int)$max[0]['max_num'] + 1 : 1;
-        
+
         $query = "INSERT INTO chapters (novel_id, chapter_number, title, content, word_count, isPublished) VALUES (:novel_id, :chapter_number, :title, :content, :word_count, :isPublished)";
         execute($conn, $query, [
             'novel_id' => $novel_id,
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         $chapter_id = $conn->lastInsertId();
     }
-    
+
     // Redirect to manage page
     header("Location: " . ROOT . "manage_novel_chapters/" . $novel_id);
     die;
@@ -78,6 +78,7 @@ if ($chapter_id) {
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -87,264 +88,9 @@ if ($chapter_id) {
     <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Amiri:wght@400;700&family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?= ROOT ?>assets/css/Browsebooks.css">
-    <style>
-        .editor-premium-hall {
-            max-width: 1300px;
-            margin: 0 auto;
-            padding: 100px 2rem 40px;
-            display: flex;
-            gap: 30px;
-            min-height: calc(100vh - 200px);
-        }
-        
-        @media (max-width: 900px) {
-            .editor-premium-hall {
-                flex-direction: column;
-            }
-        }
-
-        /* Sidebar Meta */
-        .editor-premium-sidebar {
-            flex: 0 0 300px;
-            background: #FFFFFF;
-            border-radius: 20px;
-            padding: 28px;
-            box-shadow: var(--shadow-premium);
-            border: 1px solid rgba(44, 26, 14, 0.03);
-            display: flex;
-            flex-direction: column;
-            height: fit-content;
-            position: sticky;
-            top: 100px;
-        }
-        .editor-premium-sidebar h3 {
-            font-family: 'Aref Ruqaa', serif;
-            font-size: 1.6rem;
-            color: var(--walnut);
-            margin-bottom: 24px;
-            border-bottom: 1px solid rgba(44, 26, 14, 0.05);
-            padding-bottom: 12px;
-        }
-
-        .form-premium-group {
-            margin-bottom: 24px;
-        }
-        .form-premium-group label {
-            display: block;
-            font-family: 'Cairo', sans-serif;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-        .form-premium-input {
-            width: 100%;
-            background: var(--cream);
-            border: 1px solid rgba(44, 26, 14, 0.08);
-            border-radius: 12px;
-            padding: 12px 16px;
-            font-family: 'Tajawal', sans-serif;
-            color: var(--text-dark);
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-        }
-        .form-premium-input:focus {
-            outline: none;
-            border-color: var(--gold);
-            background: #FFFFFF;
-            box-shadow: 0 0 0 4px var(--gold-glow);
-        }
-        textarea.form-premium-input {
-            resize: vertical;
-            min-height: 120px;
-        }
-
-        .meta-stats {
-            margin-top: auto;
-            background: var(--cream-warm);
-            border-radius: 12px;
-            padding: 16px;
-        }
-        .meta-stats .stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.85rem;
-            font-family: 'Tajawal', sans-serif;
-        }
-        .meta-stats .stat-row:last-child { margin-bottom: 0; }
-        .meta-stats .stat-row span:first-child { color: var(--text-soft); font-family: 'Cairo', sans-serif; font-size: 0.8rem; }
-        .meta-stats .stat-row span:last-child { color: var(--walnut); font-weight: 700; }
-        .status-saved {
-            color: #388E3C !important;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        /* Editor Area */
-        .editor-premium-core {
-            flex: 1;
-            background: #FFFFFF;
-            border-radius: 20px;
-            box-shadow: var(--shadow-premium);
-            border: 1px solid rgba(44, 26, 14, 0.03);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .toolbar-premium {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(44, 26, 14, 0.06);
-            padding: 14px 24px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        .toolbar-group {
-            display: flex;
-            background: var(--cream);
-            border-radius: 8px;
-            padding: 4px;
-            border: 1px solid rgba(44, 26, 14, 0.04);
-        }
-        .toolbar-btn {
-            background: transparent;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 6px;
-            color: var(--text-soft);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .toolbar-btn:hover, .toolbar-btn.active {
-            background: #FFFFFF;
-            color: var(--gold);
-            box-shadow: var(--shadow-soft);
-        }
-        .back-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--cream);
-            border: 1px solid rgba(44, 26, 14, 0.08);
-            color: var(--walnut);
-            border-radius: 10px;
-            padding: 8px 16px;
-            font-family: 'Cairo', sans-serif;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-left: auto;
-        }
-        .back-btn:hover {
-            background: var(--gold-glow);
-            border-color: rgba(212, 166, 74, 0.4);
-            transform: translateX(3px);
-        }
-        .back-btn i { font-size: 0.8rem; }
-        .toolbar-divider {
-            width: 1px;
-            height: 24px;
-            background: rgba(44, 26, 14, 0.08);
-        }
-
-        .canvas-premium {
-            flex: 1;
-            padding: 40px 60px 80px;
-            background: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.015"/></svg>'), #FFFFFF;
-            overflow-y: auto;
-        }
-        .canvas-premium:focus { outline: none; }
-        
-        .editor-title {
-            font-family: 'Aref Ruqaa', serif;
-            font-size: 2.4rem;
-            color: var(--walnut);
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px dashed rgba(212, 166, 74, 0.3);
-            outline: none;
-        }
-        .editor-content {
-            font-family: 'Amiri', serif;
-            font-size: 1.3rem;
-            line-height: 2.2;
-            color: var(--text-dark);
-            text-align: justify;
-            outline: none;
-            min-height: 400px;
-        }
-        .editor-content p {
-            margin-bottom: 24px;
-        }
-
-        /* Action Bar */
-        .editor-action-bar {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(15px);
-            border-radius: 40px;
-            padding: 12px 24px;
-            box-shadow: 0 10px 40px rgba(44, 26, 14, 0.15);
-            border: 1px solid rgba(44, 26, 14, 0.05);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            z-index: 100;
-        }
-        .action-btn {
-            font-family: 'Cairo', sans-serif;
-            font-weight: 600;
-            font-size: 0.9rem;
-            padding: 10px 24px;
-            border-radius: 30px;
-            cursor: pointer;
-            border: none;
-            transition: all 0.3s ease;
-        }
-        .btn-ghost {
-            background: transparent;
-            color: var(--text-soft);
-        }
-        .btn-ghost:hover { color: #D32F2F; background: rgba(211, 47, 47, 0.05); }
-        .btn-draft {
-            background: transparent;
-            border: 1.5px solid var(--gold);
-            color: var(--walnut);
-        }
-        .btn-draft:hover {
-            background: var(--gold-glow);
-        }
-        .btn-publish {
-            background: linear-gradient(145deg, var(--gold-light), var(--gold));
-            color: var(--walnut);
-            box-shadow: 0 4px 15px rgba(212, 166, 74, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-publish:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(212, 166, 74, 0.3);
-        }
-    </style>
+    <link rel="stylesheet" href="<?= ROOT ?>assets/css/write_new_chapter.css">
 </head>
+
 <body>
 
     <!-- NAVBAR PREMIUM (Copied from Browsebooks.php) -->
@@ -359,22 +105,42 @@ if ($chapter_id) {
             <ul class="nav-premium-links">
                 <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
                 <li><a href="<?= ROOT ?>Browsebooks">المكتبة</a></li>
-                <li><a href="#">الكتّاب</a></li>
-                <?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
+                <?php if (isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
             </ul>
             <div class="nav-premium-actions">
-                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
-                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-filled">إنشاء حساب</a>
+                <?php if (!isset($_SESSION["user"])): ?>
+                    <a href="<?= ROOT ?>login" class="nav-btn glass">تسجيل الدخول</a>
+                    <a href="<?= ROOT ?>signup" class="nav-btn filled">إنشاء حساب</a>
+                <?php else: ?>
+                    <?php if ($_SESSION["user"]["role"] == "admin"): ?>
+                        <a href="<?= ROOT ?>admin" class="nav-btn glass">لوحة التحكم</a>
+                    <?php endif; ?>
+                    <div class="profile-dropdown">
+                        <button class="profile-toggle" onclick="toggleProfileMenu()">
+                            <?php if (!empty($_SESSION['user']['image'])): ?>
+                                <img src="<?= ROOT ?>assets/images/users/<?= htmlspecialchars($_SESSION['user']['image']) ?>" alt="avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                            <?php else: ?>
+                                <i class="fa-solid fa-user-circle"></i>
+                            <?php endif; ?>
+                            <span><?= htmlspecialchars($_SESSION["user"]["username"]) ?></span>
+                            <i class="fa-solid fa-chevron-down text-sm"></i>
+                        </button>
+                        <div class="profile-menu" id="profileMenu">
+                            <a href="<?= ROOT ?>profile"><i class="fa-solid fa-user"></i> حسابي</a>
+                            <a href="<?= ROOT ?>logout"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
 
     <main class="editor-premium-hall">
-        
+
         <!-- Sidebar Metadata -->
         <aside class="editor-premium-sidebar">
             <h3>تفاصيل الفصل</h3>
-            
+
             <div class="form-premium-group">
                 <label>عنوان الفصل</label>
                 <input type="text" class="form-premium-input" id="titleInput" value="<?= htmlspecialchars($chapter['title'] ?? '') ?>">
@@ -403,15 +169,15 @@ if ($chapter_id) {
                 </a>
                 <div class="toolbar-divider"></div>
                 <div class="toolbar-group">
-                    <button class="toolbar-btn" id="btn-bold"    title="غامق (Ctrl+B)"><i class="fas fa-bold"></i></button>
-                    <button class="toolbar-btn" id="btn-italic"  title="مائل (Ctrl+I)"><i class="fas fa-italic"></i></button>
+                    <button class="toolbar-btn" id="btn-bold" title="غامق (Ctrl+B)"><i class="fas fa-bold"></i></button>
+                    <button class="toolbar-btn" id="btn-italic" title="مائل (Ctrl+I)"><i class="fas fa-italic"></i></button>
                     <button class="toolbar-btn" id="btn-underline" title="تسطير (Ctrl+U)"><i class="fas fa-underline"></i></button>
                 </div>
                 <div class="toolbar-divider"></div>
                 <div class="toolbar-group">
-                    <button class="toolbar-btn active" id="btn-justifyRight"  title="محاذاة لليمين"><i class="fas fa-align-right"></i></button>
-                    <button class="toolbar-btn"        id="btn-justifyCenter" title="توسيط"><i class="fas fa-align-center"></i></button>
-                    <button class="toolbar-btn"        id="btn-justifyLeft"   title="محاذاة لليسار"><i class="fas fa-align-left"></i></button>
+                    <button class="toolbar-btn active" id="btn-justifyRight" title="محاذاة لليمين"><i class="fas fa-align-right"></i></button>
+                    <button class="toolbar-btn" id="btn-justifyCenter" title="توسيط"><i class="fas fa-align-center"></i></button>
+                    <button class="toolbar-btn" id="btn-justifyLeft" title="محاذاة لليسار"><i class="fas fa-align-left"></i></button>
                 </div>
             </div>
 
@@ -452,9 +218,15 @@ if ($chapter_id) {
                 <p>مكتبة عربية رقمية تجمع القرّاء والكتّاب في مكان واحد، احتفاءً بالأدب العربي بكل تنوعه.</p>
             </div>
             <div class="footer-premium-links">
-                <div class="footer-premium-col"><h4>روابط سريعة</h4><a href="<?= ROOT ?>index">الرئيسية</a><a href="<?= ROOT ?>Browsebooks">المكتبة</a><a href="#">الكتّاب</a><?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a><?php else: ?><a href="<?= ROOT ?>writer_application">كن كاتبا</a><?php endif; ?></div>
-                <div class="footer-premium-col"><h4>حسابك</h4><a href="<?= ROOT ?>signup">تسجيل الدخول</a><a href="<?= ROOT ?>signup">إنشاء حساب</a></div>
-                <div class="footer-premium-col"><h4>تواصل معنا</h4><a href="#">الدعم الفني</a><a href="#">الأسئلة الشائعة</a><a href="#">سياسة الخصوصية</a></div>
+                <div class="footer-premium-col">
+                    <h4>روابط سريعة</h4><a href="<?= ROOT ?>index">الرئيسية</a><a href="<?= ROOT ?>Browsebooks">المكتبة</a><a href="#">الكتّاب</a><?php if (isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a><?php else: ?><a href="<?= ROOT ?>writer_application">كن كاتبا</a><?php endif; ?>
+                </div>
+                <div class="footer-premium-col">
+                    <h4>حسابك</h4><a href="<?= ROOT ?>signup">تسجيل الدخول</a><a href="<?= ROOT ?>signup">إنشاء حساب</a>
+                </div>
+                <div class="footer-premium-col">
+                    <h4>تواصل معنا</h4><a href="#">الدعم الفني</a><a href="#">الأسئلة الشائعة</a><a href="#">سياسة الخصوصية</a>
+                </div>
             </div>
         </div>
         <div class="footer-premium-bottom">
@@ -472,9 +244,9 @@ if ($chapter_id) {
 
         // ─── Element refs ─────────────────────────────────────────────────────────
         const editorContent = document.getElementById('editorContent');
-        const editorTitle   = document.getElementById('editorTitle');
-        const titleInput    = document.getElementById('titleInput');
-        const wordCountEl   = document.getElementById('wordCount');
+        const editorTitle = document.getElementById('editorTitle');
+        const titleInput = document.getElementById('titleInput');
+        const wordCountEl = document.getElementById('wordCount');
 
         // ─── Toolbar formatting ───────────────────────────────────────────────────
         // Using execCommand — well-supported for contenteditable rich text.
@@ -482,12 +254,12 @@ if ($chapter_id) {
         // from losing focus (and thus losing the user's selection) when the
         // toolbar button is clicked.
         const formatCmds = {
-            'btn-bold':      'bold',
-            'btn-italic':    'italic',
+            'btn-bold': 'bold',
+            'btn-italic': 'italic',
             'btn-underline': 'underline',
-            'btn-justifyRight':  'justifyRight',
+            'btn-justifyRight': 'justifyRight',
             'btn-justifyCenter': 'justifyCenter',
-            'btn-justifyLeft':   'justifyLeft',
+            'btn-justifyLeft': 'justifyLeft',
         };
 
         Object.entries(formatCmds).forEach(([id, cmd]) => {
@@ -500,8 +272,8 @@ if ($chapter_id) {
             btn.addEventListener('click', () => {
                 // Make sure the editor is the active contenteditable
                 const sel = window.getSelection();
-                const inEditor = editorContent.contains(sel.anchorNode)
-                              || editorTitle.contains(sel.anchorNode);
+                const inEditor = editorContent.contains(sel.anchorNode) ||
+                    editorTitle.contains(sel.anchorNode);
 
                 if (!inEditor) editorContent.focus();
 
@@ -516,16 +288,16 @@ if ($chapter_id) {
         // formatting is applied at the cursor/selection at all times.
         const formattingBtns = ['bold', 'italic', 'underline'];
         const alignBtns = {
-            'justifyRight':  'btn-justifyRight',
+            'justifyRight': 'btn-justifyRight',
             'justifyCenter': 'btn-justifyCenter',
-            'justifyLeft':   'btn-justifyLeft',
+            'justifyLeft': 'btn-justifyLeft',
         };
 
         function updateToolbarState() {
             const sel = window.getSelection();
             if (!sel || sel.rangeCount === 0) return;
-            const inEditor = editorContent.contains(sel.anchorNode)
-                          || editorTitle.contains(sel.anchorNode);
+            const inEditor = editorContent.contains(sel.anchorNode) ||
+                editorTitle.contains(sel.anchorNode);
             if (!inEditor) return;
 
             // Formatting buttons
@@ -577,7 +349,7 @@ if ($chapter_id) {
         // The browser already handles Ctrl+B/I/U for execCommand natively inside
         // contenteditable, but we update the toolbar active state after each one.
         editorContent.addEventListener('keyup', updateToolbarState);
-        editorTitle.addEventListener('keyup',   updateToolbarState);
+        editorTitle.addEventListener('keyup', updateToolbarState);
 
         // ─── Ensure new lines create <p> tags cleanly ─────────────────────────────
         editorContent.addEventListener('keydown', (e) => {
@@ -593,24 +365,24 @@ if ($chapter_id) {
         const saveDraftBtn = document.getElementById('saveDraftBtn');
         const publishBtn = document.getElementById('publishBtn');
         const saveForm = document.getElementById('saveForm');
-        
+
         function submitForm(isPublished) {
             document.getElementById('formTitle').value = titleInput.value.trim();
             document.getElementById('formContent').value = editorContent.innerHTML;
-            
+
             // Calculate word count
             const text = editorContent.innerText.trim();
             const count = text === '' ? 0 : text.split(/\s+/).length;
             document.getElementById('formWordCount').value = count;
-            
+
             document.getElementById('formIsPublished').value = isPublished;
-            
+
             saveForm.submit();
         }
 
         saveDraftBtn.addEventListener('click', () => submitForm(0));
         publishBtn.addEventListener('click', () => submitForm(1));
-
     </script>
 </body>
+
 </html>

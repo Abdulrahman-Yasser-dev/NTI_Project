@@ -180,6 +180,73 @@ body {
     box-shadow: 0 8px 30px rgba(212, 166, 74, 0.25);
 }
 
+/* ─── MOBILE NAV TOGGLE ─── */
+.nav-mobile-toggle {
+    display: none;
+    background: none;
+    border: 1px solid rgba(212, 166, 74, 0.3);
+    color: #FCF8F2;
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+    line-height: 1;
+    transition: background 0.2s;
+}
+.nav-mobile-toggle:hover {
+    background: rgba(212, 166, 74, 0.1);
+}
+
+/* ─── RESPONSIVE NAVBAR ─── */
+@media (max-width: 900px) {
+    .navbar-premium {
+        top: 10px;
+        width: calc(100% - 20px);
+        padding: 0 1rem;
+        border-radius: 14px;
+    }
+    .navbar-premium-container {
+        flex-wrap: wrap;
+        min-height: 58px;
+        padding: 10px 0;
+        position: relative;
+    }
+    .nav-mobile-toggle {
+        display: block;
+    }
+    .nav-premium-links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        gap: 0;
+        padding: 12px 0;
+        border-top: 1px solid rgba(212, 166, 74, 0.1);
+        margin-top: 8px;
+    }
+    .nav-premium-links.is-open {
+        display: flex;
+    }
+    .nav-premium-links li a {
+        display: block;
+        padding: 10px 6px;
+        font-size: 1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .nav-premium-actions {
+        gap: 8px;
+    }
+    .nav-premium-btn {
+        padding: 6px 14px;
+        font-size: 0.8rem;
+    }
+    .profile-toggle span {
+        display: none;
+    }
+    .profile-toggle .text-sm {
+        display: none;
+    }
+}
+
 /* ================================================================
    SEARCH SECTION
    ================================================================ */

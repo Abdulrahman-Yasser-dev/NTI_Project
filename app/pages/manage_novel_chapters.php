@@ -11,7 +11,7 @@ $novel_id = isset($url_parts[1]) && (int)$url_parts[1] > 0
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_novel') {
     $new_title = trim($_POST['novel_title'] ?? '');
     $new_category = (int)($_POST['novel_category'] ?? 0);
-    
+
     if ($new_title) {
         execute($conn, "UPDATE novels SET title = :title, category_id = :category_id WHERE id = :id", [
             'title'       => $new_title,
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             'id'          => $novel_id,
         ]);
     }
-    
+
     // Handle cover image upload
     if (!empty($_FILES['cover_image']['name'])) {
         $upload_dir = '../public/assets/images/';
@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             ]);
         }
     }
-    
+
     header("Location: " . ROOT . "manage_novel_chapters/" . $novel_id);
     die;
 }
@@ -84,517 +84,7 @@ $cover_image = !empty($novel['cover_image'])
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?= ROOT ?>assets/css/Browsebooks.css">
-    <style>
-        .chapters-premium-hall {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 120px 2rem 60px;
-            /* offset for fixed navbar */
-            display: flex;
-            gap: 40px;
-            min-height: calc(100vh - 200px);
-        }
-
-        @media (max-width: 900px) {
-            .chapters-premium-hall {
-                flex-direction: column;
-                padding-top: 100px;
-            }
-        }
-
-        /* Sidebar */
-        .premium-sidebar {
-            flex: 0 0 320px;
-            background: #FFFFFF;
-            border-radius: 24px;
-            padding: 32px;
-            box-shadow: var(--shadow-premium);
-            border: 1px solid rgba(44, 26, 14, 0.03);
-            text-align: center;
-            height: fit-content;
-            position: sticky;
-            top: 100px;
-        }
-
-        .premium-sidebar .cover-container {
-            width: 100%;
-            margin: 0 0 24px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 12px 30px rgba(44, 26, 14, 0.12);
-            aspect-ratio: 2/3;
-        }
-
-        .premium-sidebar .cover-container img {
-            width: 100%;
-            height: 100%;
-            display: block;
-            object-fit: cover;
-        }
-
-        .premium-sidebar h2 {
-            font-family: 'Aref Ruqaa', serif;
-            font-size: 1.8rem;
-            color: var(--walnut);
-            margin-bottom: 12px;
-        }
-
-        .premium-sidebar .badges {
-            display: inline-flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 30px;
-        }
-
-        .badge-premium {
-            background: var(--cream);
-            color: var(--gold);
-            font-family: 'Cairo', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            border: 1px solid rgba(212, 166, 74, 0.2);
-        }
-
-        .badge-premium-dark {
-            background: var(--walnut);
-            color: #FCF8F2;
-            font-family: 'Cairo', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-        }
-
-        .premium-btn-block {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            padding: 12px;
-            border-radius: 40px;
-            font-family: 'Cairo', sans-serif;
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            margin-bottom: 12px;
-            cursor: pointer;
-            border: none;
-        }
-
-        .btn-walnut {
-            background: var(--walnut);
-            color: #FCF8F2;
-            box-shadow: 0 4px 15px rgba(59, 36, 23, 0.15);
-        }
-
-        .btn-walnut:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(59, 36, 23, 0.25);
-            background: var(--walnut-light);
-        }
-
-        .btn-outline-gold {
-            background: transparent;
-            border: 1.5px solid rgba(212, 166, 74, 0.3);
-            color: var(--walnut);
-        }
-
-        .btn-outline-gold:hover {
-            background: var(--gold-glow);
-            border-color: var(--gold);
-        }
-
-        /* Chapters List */
-        .premium-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .list-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(44, 26, 14, 0.05);
-            margin-bottom: 8px;
-        }
-
-        .list-header h3 {
-            font-family: 'Aref Ruqaa', serif;
-            font-size: 2rem;
-            color: var(--walnut);
-        }
-
-        .add-chapter-premium {
-            background: rgba(255, 255, 255, 0.6);
-            border: 2px dashed rgba(212, 166, 74, 0.4);
-            border-radius: 16px;
-            padding: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 16px;
-        }
-
-        .add-chapter-premium:hover {
-            background: #FFFFFF;
-            border-color: var(--gold);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-soft);
-        }
-
-        .add-chapter-premium i {
-            font-size: 1.5rem;
-            color: var(--gold);
-        }
-
-        .add-chapter-premium span {
-            font-family: 'Cairo', sans-serif;
-            font-weight: 700;
-            color: var(--walnut);
-            font-size: 1.1rem;
-        }
-
-        .chapter-premium-item {
-            background: #FFFFFF;
-            border-radius: 16px;
-            padding: 20px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(44, 26, 14, 0.02);
-            border: 1px solid rgba(44, 26, 14, 0.03);
-            transition: all 0.3s ease;
-        }
-
-        .chapter-premium-item:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-soft);
-            border-color: rgba(212, 166, 74, 0.3);
-        }
-
-        .chapter-info-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .drag-handle {
-            width: 36px;
-            height: 36px;
-            background: var(--cream);
-            color: rgba(44, 26, 14, 0.25);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            border: 1px solid rgba(44, 26, 14, 0.06);
-            cursor: grab;
-            flex-shrink: 0;
-            transition: all 0.2s ease;
-        }
-
-        .drag-handle:active {
-            cursor: grabbing;
-        }
-
-        .chapter-premium-item:hover .drag-handle {
-            color: var(--gold);
-            border-color: rgba(212, 166, 74, 0.25);
-        }
-
-        /* Dragging states */
-        .chapter-premium-item.dragging {
-            opacity: 0.4;
-            transform: scale(0.98);
-            border: 2px dashed var(--gold) !important;
-            background: rgba(212, 166, 74, 0.03) !important;
-        }
-
-        .chapter-premium-item.drag-over {
-            border-color: var(--gold) !important;
-            box-shadow: 0 0 0 2px rgba(212, 166, 74, 0.2), var(--shadow-soft) !important;
-            transform: translateY(-3px);
-        }
-
-        .chapter-details h4 {
-            font-family: 'Cairo', sans-serif;
-            font-size: 1.1rem;
-            color: var(--text-dark);
-            margin-bottom: 8px;
-        }
-
-        .chapter-meta {
-            display: flex;
-            gap: 16px;
-            font-size: 0.85rem;
-            color: var(--text-soft);
-        }
-
-        .chapter-meta span i {
-            color: var(--gold);
-            margin-left: 4px;
-        }
-
-        .chapter-actions button {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--cream);
-            border: 1px solid rgba(44, 26, 14, 0.05);
-            color: var(--walnut);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .chapter-actions button:hover {
-            background: var(--gold);
-            color: #FCF8F2;
-            border-color: var(--gold);
-        }
-
-        /* ---------------------------------------------------
-           Sort Dropdown
-        --------------------------------------------------- */
-        .sort-wrapper {
-            position: relative;
-        }
-
-        .sort-dropdown {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            background: #FFFFFF;
-            border-radius: 16px;
-            padding: 8px;
-            box-shadow: 0 12px 40px rgba(44, 26, 14, 0.1);
-            border: 1px solid rgba(44, 26, 14, 0.05);
-            min-width: 210px;
-            z-index: 500;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-8px);
-            transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
-        }
-
-        .sort-dropdown.open {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .sort-option {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-family: 'Cairo', sans-serif;
-            font-size: 0.88rem;
-            color: var(--text-dark);
-            transition: all 0.2s ease;
-            border: none;
-            background: transparent;
-            width: 100%;
-            text-align: right;
-        }
-
-        .sort-option:hover {
-            background: var(--cream);
-            color: var(--walnut);
-        }
-
-        .sort-option.active {
-            background: var(--gold-glow);
-            color: var(--walnut);
-            font-weight: 700;
-        }
-
-        .sort-option i {
-            width: 18px;
-            text-align: center;
-            color: var(--gold);
-            font-size: 0.85rem;
-        }
-
-        .sort-option .sort-dir {
-            margin-right: auto;
-            color: rgba(44, 26, 14, 0.25);
-            font-size: 0.75rem;
-            transition: color 0.2s;
-        }
-
-        .sort-option.active .sort-dir {
-            color: var(--gold);
-        }
-
-        .sort-divider {
-            height: 1px;
-            background: rgba(44, 26, 14, 0.04);
-            margin: 4px 0;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(44, 26, 14, 0.4);
-            backdrop-filter: blur(5px);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-content {
-            background: #FCF8F2;
-            border-radius: 24px;
-            width: 90%;
-            max-width: 500px;
-            padding: 40px;
-            box-shadow: 0 25px 60px rgba(44, 26, 14, 0.15);
-            transform: translateY(20px) scale(0.95);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-        }
-
-        .modal-overlay.active .modal-content {
-            transform: translateY(0) scale(1);
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(44, 26, 14, 0.05);
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            color: var(--text-soft);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .modal-close:hover {
-            background: rgba(211, 47, 47, 0.1);
-            color: #D32F2F;
-        }
-
-        .modal-title {
-            font-family: 'Aref Ruqaa', serif;
-            font-size: 1.8rem;
-            color: var(--walnut);
-            margin-bottom: 24px;
-            text-align: center;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            text-align: right;
-        }
-
-        .form-group label {
-            display: block;
-            font-family: 'Cairo', sans-serif;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-
-        .form-input {
-            width: 100%;
-            background: #FFFFFF;
-            border: 1px solid rgba(44, 26, 14, 0.1);
-            border-radius: 12px;
-            padding: 12px 16px;
-            font-family: 'Tajawal', sans-serif;
-            color: var(--text-dark);
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--gold);
-            box-shadow: 0 0 0 4px var(--gold-glow);
-        }
-
-        .file-upload-wrapper {
-            position: relative;
-            background: #FFFFFF;
-            border: 1px dashed rgba(212, 166, 74, 0.5);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .file-upload-wrapper:hover {
-            background: var(--gold-glow);
-            border-color: var(--gold);
-        }
-
-        .file-upload-wrapper i {
-            font-size: 2rem;
-            color: var(--gold);
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        .file-upload-wrapper p {
-            font-family: 'Tajawal', sans-serif;
-            color: var(--text-soft);
-            font-size: 0.85rem;
-            margin: 0;
-        }
-
-        .file-upload-wrapper input[type="file"] {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 32px;
-        }
-    </style>
+    <link rel="stylesheet" href="<?= ROOT ?>assets/css/manage_novel_chapters.css">
 </head>
 
 <body>
@@ -611,12 +101,32 @@ $cover_image = !empty($novel['cover_image'])
             <ul class="nav-premium-links">
                 <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
                 <li><a href="<?= ROOT ?>Browsebooks">المكتبة</a></li>
-                <li><a href="#">الكتّاب</a></li>
-                <?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
+                <?php if (isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
             </ul>
             <div class="nav-premium-actions">
-                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
-                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-filled">إنشاء حساب</a>
+                <?php if (!isset($_SESSION["user"])): ?>
+                    <a href="<?= ROOT ?>login" class="nav-btn glass">تسجيل الدخول</a>
+                    <a href="<?= ROOT ?>signup" class="nav-btn filled">إنشاء حساب</a>
+                <?php else: ?>
+                    <?php if ($_SESSION["user"]["role"] == "admin"): ?>
+                        <a href="<?= ROOT ?>admin" class="nav-btn glass">لوحة التحكم</a>
+                    <?php endif; ?>
+                    <div class="profile-dropdown">
+                        <button class="profile-toggle" onclick="toggleProfileMenu()">
+                            <?php if (!empty($_SESSION['user']['image'])): ?>
+                                <img src="<?= ROOT ?>assets/images/users/<?= htmlspecialchars($_SESSION['user']['image']) ?>" alt="avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                            <?php else: ?>
+                                <i class="fa-solid fa-user-circle"></i>
+                            <?php endif; ?>
+                            <span><?= htmlspecialchars($_SESSION["user"]["username"]) ?></span>
+                            <i class="fa-solid fa-chevron-down text-sm"></i>
+                        </button>
+                        <div class="profile-menu" id="profileMenu">
+                            <a href="<?= ROOT ?>profile"><i class="fa-solid fa-user"></i> حسابي</a>
+                            <a href="<?= ROOT ?>logout"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
@@ -709,43 +219,43 @@ $cover_image = !empty($novel['cover_image'])
 
             <!-- Dynamic Chapters List -->
             <?php if (!empty($chapters)): ?>
-                <?php foreach ($chapters as $chapter): 
+                <?php foreach ($chapters as $chapter):
                     $isDraft = $chapter['isPublished'] == 0;
                     $updatedDate = date('d F', strtotime($chapter['updated_at']));
                     $createdDate = date('d F', strtotime($chapter['created_at']));
                     $wordCount = number_format((int)$chapter['word_count']);
-                    
+
                     // Draft styling
                     $itemStyle = $isDraft ? 'style="border: 2px dashed rgba(212, 166, 74, 0.4); background: rgba(255,255,255,0.5);"' : '';
                     $handleStyle = $isDraft ? 'style="background: transparent;"' : '';
                 ?>
-                <div class="chapter-premium-item" draggable="true" 
-                     data-title="<?= htmlspecialchars($chapter['title']) ?>" 
-                     data-date="<?= $chapter['created_at'] ?>"
-                     data-words="<?= $chapter['word_count'] ?>"
-                     <?= $itemStyle ?>>
-                    <div class="chapter-info-wrapper">
-                        <div class="drag-handle" <?= $handleStyle ?>><i class="fas fa-grip-vertical"></i></div>
-                        <div class="chapter-details">
-                            <h4>
-                                <?= htmlspecialchars($chapter['title']) ?>
-                                <?php if ($isDraft): ?>
-                                    <span style="background: var(--gold-glow); color: var(--gold); padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; margin-right: 8px;">مسودة</span>
-                                <?php endif; ?>
-                            </h4>
-                            <div class="chapter-meta">
-                                <span><i class="fas fa-history"></i> آخر تعديل: <?= $updatedDate ?></span>
-                                <span><i class="far fa-calendar-alt"></i> <?= $isDraft ? 'جاري الكتابة' : $createdDate ?></span>
-                                <span><i class="fas fa-pen-nib"></i> <?= $wordCount ?> كلمة</span>
+                    <div class="chapter-premium-item" draggable="true"
+                        data-title="<?= htmlspecialchars($chapter['title']) ?>"
+                        data-date="<?= $chapter['created_at'] ?>"
+                        data-words="<?= $chapter['word_count'] ?>"
+                        <?= $itemStyle ?>>
+                        <div class="chapter-info-wrapper">
+                            <div class="drag-handle" <?= $handleStyle ?>><i class="fas fa-grip-vertical"></i></div>
+                            <div class="chapter-details">
+                                <h4>
+                                    <?= htmlspecialchars($chapter['title']) ?>
+                                    <?php if ($isDraft): ?>
+                                        <span style="background: var(--gold-glow); color: var(--gold); padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; margin-right: 8px;">مسودة</span>
+                                    <?php endif; ?>
+                                </h4>
+                                <div class="chapter-meta">
+                                    <span><i class="fas fa-history"></i> آخر تعديل: <?= $updatedDate ?></span>
+                                    <span><i class="far fa-calendar-alt"></i> <?= $isDraft ? 'جاري الكتابة' : $createdDate ?></span>
+                                    <span><i class="fas fa-pen-nib"></i> <?= $wordCount ?> كلمة</span>
+                                </div>
                             </div>
                         </div>
+                        <div class="chapter-actions">
+                            <a href="<?= ROOT ?>write_new_chapter_existing_novel/<?= $novel_id ?>/<?= $chapter['id'] ?>" class="btn" title="تعديل الفصل" style="background:none; border:none; color:inherit; cursor:pointer;">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                        </div>
                     </div>
-                    <div class="chapter-actions">
-                        <a href="<?= ROOT ?>write_new_chapter_existing_novel/<?= $novel_id ?>/<?= $chapter['id'] ?>" class="btn" title="تعديل الفصل" style="background:none; border:none; color:inherit; cursor:pointer;">
-                            <i class="fas fa-pencil-alt"></i>
-                        </a>
-                    </div>
-                </div>
                 <?php endforeach; ?>
             <?php else: ?>
                 <div style="text-align: center; color: var(--text-soft); padding: 40px; background: #fff; border-radius: 16px; border: 1px dashed rgba(44,26,14,0.1);">
@@ -766,7 +276,7 @@ $cover_image = !empty($novel['cover_image'])
             <div class="footer-premium-links">
                 <div class="footer-premium-col">
                     <h4>روابط سريعة</h4><a href="<?= ROOT ?>index">الرئيسية</a><a
-                        href="<?= ROOT ?>Browsebooks">المكتبة</a><a href="#">الكتّاب</a><?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a><?php else: ?><a href="<?= ROOT ?>writer_application">كن كاتبا</a><?php endif; ?>
+                        href="<?= ROOT ?>Browsebooks">المكتبة</a><a href="#">الكتّاب</a><?php if (isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a><?php else: ?><a href="<?= ROOT ?>writer_application">كن كاتبا</a><?php endif; ?>
                 </div>
                 <div class="footer-premium-col">
                     <h4>حسابك</h4><a href="<?= ROOT ?>signup">تسجيل الدخول</a><a href="<?= ROOT ?>signup">إنشاء حساب</a>
@@ -840,10 +350,26 @@ $cover_image = !empty($novel['cover_image'])
         const modal = document.getElementById('settingsModal');
         const openBtn = document.getElementById('openSettingsBtn');
         const closeBtn = document.getElementById('closeSettingsBtn');
-        openBtn.addEventListener('click', () => { modal.classList.add('active'); document.body.style.overflow = 'hidden'; });
-        closeBtn.addEventListener('click', () => { modal.classList.remove('active'); document.body.style.overflow = ''; });
-        modal.addEventListener('click', (e) => { if (e.target === modal) { modal.classList.remove('active'); document.body.style.overflow = ''; } });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('active')) { modal.classList.remove('active'); document.body.style.overflow = ''; } });
+        openBtn.addEventListener('click', () => {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
 
         // Drag & Drop Reorder
         const chapterList = document.querySelector('.premium-main');
@@ -903,7 +429,9 @@ $cover_image = !empty($novel['cover_image'])
             // Brief highlight to confirm drop
             dragSrc.style.transition = 'box-shadow 0.3s ease';
             dragSrc.style.boxShadow = '0 0 0 3px rgba(212, 166, 74, 0.4)';
-            setTimeout(() => { dragSrc.style.boxShadow = ''; }, 600);
+            setTimeout(() => {
+                dragSrc.style.boxShadow = '';
+            }, 600);
         });
 
         // ---------------------------------------------------

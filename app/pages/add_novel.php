@@ -80,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -87,43 +88,57 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+
     <link rel="stylesheet" href="<?= ROOT ?>assets/css/add_novel.css">
+    <link rel="stylesheet" href="<?= ROOT ?>assets/css/Browsebooks.css">
+
 </head>
+
 <body>
-    <nav class="navbar" id="navbar" style="background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 15px 5%;">
-        <a href="<?= ROOT ?>index" class="nav-brand" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
-            <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد" style="height: 40px;">
-            <span style="font-family: 'Aref Ruqaa', serif; font-size: 1.5rem; color: #8b5a2b; font-weight: bold;">سرد</span>
-        </a>
-        <ul class="nav-links" style="display: flex; gap: 20px; list-style: none; margin: 0; padding: 0;">
-            <li><a href="<?= ROOT ?>index" style="text-decoration: none; color: #333; font-weight: 500;">الرئيسية</a></li>
-            <li><a href="<?= ROOT ?>Browsebooks" style="text-decoration: none; color: #333; font-weight: 500;">تصفح الكتب</a></li>
-            <li><a href="<?= ROOT ?>author_dashboard" style="text-decoration: none; color: #8b5a2b; font-weight: 600;">لوحة الكاتب</a></li>
-        </ul>
-        <div class="nav-actions" style="display: flex; gap: 15px; align-items: center;">
-            <?php if($_SESSION["user"]["role"] == "admin"):?>
-                <a href="<?= ROOT ?>admin" class="nav-btn glass" style="text-decoration: none; padding: 8px 20px; border-radius: 20px; border: 1px solid #8b5a2b; color: #8b5a2b;">لوحة التحكم</a>
-            <?php endif; ?>
-            <div style="position: relative;">
-                <button onclick="this.nextElementSibling.classList.toggle('show')" style="background: none; border: none; display: flex; align-items: center; gap: 8px; cursor: pointer; font-family: inherit;">
-                    <?php if(!empty($_SESSION['user']['image'])): ?>
-                        <img src="<?= ROOT ?>assets/images/users/<?= htmlspecialchars($_SESSION['user']['image']) ?>" alt="avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
-                    <?php else: ?>
-                        <i class="fa-solid fa-user-circle" style="font-size: 1.5rem; color: #8b5a2b;"></i>
-                    <?php endif; ?>
-                    <span style="font-weight: 600; color: #333;"><?= htmlspecialchars($_SESSION["user"]["username"]) ?></span>
-                    <i class="fa-solid fa-chevron-down" style="font-size: 0.8rem; color: #666;"></i>
-                </button>
-                <div class="profile-menu" style="display: none; position: absolute; top: 100%; left: 0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; padding: 10px 0; min-width: 150px; flex-direction: column; z-index: 1001;">
-                    <a href="<?= ROOT ?>profile" style="padding: 10px 20px; text-decoration: none; color: #333; display: block;"><i class="fa-solid fa-user" style="width: 20px;"></i> حسابي</a>
-                    <a href="<?= ROOT ?>logout" style="padding: 10px 20px; text-decoration: none; color: #d32f2f; display: block;"><i class="fa-solid fa-right-from-bracket" style="width: 20px;"></i> تسجيل الخروج</a>
-                </div>
+    <nav class="navbar-premium" id="navbar">
+        <div class="navbar-premium-container">
+            <div class="navbar-premium-brand">
+                <a href="<?= ROOT ?>index" class="brand-premium-link">
+                    <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد logo" class="brand-premium-logo">
+                    <span class="brand-premium-name">سرد</span>
+                </a>
             </div>
-            <style>.profile-menu.show { display: flex !important; } .profile-menu a:hover { background: #f5f5f5; }</style>
+            <ul class="nav-premium-links">
+                <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
+                <li><a href="<?= ROOT ?>Browsebooks">المكتبة</a></li>
+                <?php if (isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard" class="active">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
+            </ul>
+            <button class="nav-mobile-toggle" id="navMobileToggle" aria-label="القائمة">☰</button>
+            <div class="nav-premium-actions">
+                <?php if (!isset($_SESSION["user"])): ?>
+                    <a href="<?= ROOT ?>login" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
+                    <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-filled">إنشاء حساب</a>
+                <?php else: ?>
+                    <?php if ($_SESSION["user"]["role"] == "admin"): ?>
+                        <a href="<?= ROOT ?>admin" class="nav-premium-btn nav-premium-btn-outline">لوحة التحكم</a>
+                    <?php endif; ?>
+                    <div class="profile-dropdown">
+                        <button class="profile-toggle" onclick="toggleProfileMenu()">
+                            <?php if (!empty($_SESSION['user']['image'])): ?>
+                                <img src="<?= ROOT ?>assets/images/users/<?= htmlspecialchars($_SESSION['user']['image']) ?>" alt="avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                            <?php else: ?>
+                                <i class="fa-solid fa-user-circle"></i>
+                            <?php endif; ?>
+                            <span><?= htmlspecialchars($_SESSION["user"]["username"]) ?></span>
+                            <i class="fa-solid fa-chevron-down text-sm"></i>
+                        </button>
+                        <div class="profile-menu" id="profileMenu">
+                            <a href="<?= ROOT ?>profile"><i class="fa-solid fa-user"></i> حسابي</a>
+                            <a href="<?= ROOT ?>logout"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     </nav>
 
-    <h1 class="page-title">إضافة رواية جديدة</h1>
+    <h1 class="page-title" style="margin-top: 110px;">إضافة رواية جديدة</h1>
 
     <div class="page-wrapper">
 
@@ -176,5 +191,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 
     <script src="<?= ROOT ?>assets/js/add_novel.js"></script>
+    <script>
+    var navToggle = document.getElementById('navMobileToggle');
+    var navLinks = document.querySelector('.nav-premium-links');
+    if (navToggle && navLinks) {
+        navToggle.addEventListener('click', function() {
+            navLinks.classList.toggle('is-open');
+            navToggle.textContent = navLinks.classList.contains('is-open') ? '✕' : '☰';
+        });
+    }
+    function toggleProfileMenu(e) {
+        if (e) e.stopPropagation();
+        var menu = document.getElementById('profileMenu');
+        if (menu) menu.classList.toggle('show');
+    }
+    document.addEventListener('click', function(e) {
+        var toggle = document.querySelector('.profile-toggle');
+        var menu = document.getElementById('profileMenu');
+        if (toggle && menu && !toggle.contains(e.target) && !menu.contains(e.target)) {
+            menu.classList.remove('show');
+        }
+    });
+    </script>
 </body>
+
 </html>

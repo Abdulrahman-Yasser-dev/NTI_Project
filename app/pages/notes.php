@@ -1,26 +1,4 @@
 <?php
-/* ============================================================
-   سرد — Notes CRUD Endpoint (app/pages/notes.php)
-   ------------------------------------------------------------
-   Loaded by the front controller through: ROOT . "notes"
-   (same routing convention as every other page in app/pages/).
-
-   This page is AJAX-only: it never renders HTML. It always
-   responds with JSON and exits, so it must be requested
-   directly (fetch/XHR) rather than navigated to as a normal page.
-
-   Uses the project's existing helpers from app/core/function.php:
-     - query($conn, $sql, $data)   → SELECT, returns rows
-     - execute($conn, $sql, $data) → INSERT/UPDATE/DELETE
-
-   Auth: uses the same session shape already used across the
-   project — $_SESSION['user']['id'] — set at login/signup.
-
-   Highlighting is intentionally NOT implemented here. The
-   `selected_text` and `highlight_color` columns exist in the
-   `notes` table for a future feature and are simply left NULL
-   by every query in this file.
-   ============================================================ */
 
 require_once __DIR__ . "/../core/init.php";
 

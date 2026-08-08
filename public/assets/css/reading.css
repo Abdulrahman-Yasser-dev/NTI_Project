@@ -1328,3 +1328,29 @@ ul { list-style: none; margin: 0; padding: 0; }
 }
 .toast.is-visible { opacity: 1; transform: translateY(0) scale(1); }
 .toast__icon { color: var(--gold); font-size: 14px; }
+
+/* Mobile fixes for reading grid and book */
+@media (max-width: 992px) {
+    .reading-grid {
+        grid-template-columns: 1fr;
+    }
+    .side-panel {
+        display: none; /* Hide side panel on mobile or make it a drawer */
+    }
+    .book {
+        aspect-ratio: auto;
+        height: auto;
+        min-height: 500px;
+    }
+    /* We can't do true 2-page on mobile without it being tiny, but we can make it fit horizontally */
+    .book-wrapper {
+        margin: 0 -10px;
+        padding: 0;
+    }
+    .page__inner {
+        padding: 20px 15px;
+    }
+    .page__text {
+        font-size: 16px;
+    }
+}

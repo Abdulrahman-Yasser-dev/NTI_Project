@@ -234,5 +234,25 @@ foreach ($books as $book) {
   </div>
 
   <script src="<?= ROOT ?>assets/js/index.js"></script>
+  <script>
+    // Mobile nav toggle
+    var navToggleBtn = document.querySelector('.nav-toggle');
+    var navLinksList = document.querySelector('.nav-links');
+    if (navToggleBtn && navLinksList) {
+        navToggleBtn.addEventListener('click', function() {
+            var isOpen = navLinksList.style.display === 'flex';
+            navLinksList.style.display = isOpen ? '' : 'flex';
+            navLinksList.style.flexDirection = 'column';
+            navLinksList.style.position = 'absolute';
+            navLinksList.style.top = '100%';
+            navLinksList.style.right = '0';
+            navLinksList.style.left = '0';
+            navLinksList.style.background = 'rgba(20,12,6,0.97)';
+            navLinksList.style.padding = '12px 6%';
+            navLinksList.style.gap = '6px';
+            navToggleBtn.textContent = isOpen ? '☰' : '✕';
+        });
+    }
+  </script>
 </body>
 </html>

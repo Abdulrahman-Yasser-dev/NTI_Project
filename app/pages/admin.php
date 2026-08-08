@@ -24,7 +24,6 @@ if ($tab === 'dashboard') {
             $reqId = $_POST['request_id'] ?? 0;
             execute($conn, "UPDATE `users` SET `role`= 'writer', `writer_request_status` = 'approved' WHERE id = :id", ["id" => $userId]);
             if ($reqId) execute($conn, "UPDATE `writer_requests` SET `status`= 'approved' WHERE id = :req_id", ["req_id" => $reqId]);
-            // Create author record if doesn't exist
             $uRow = query($conn, "SELECT username FROM users WHERE id = :id", ["id" => $userId]);
             if (!empty($uRow)) {
                 $uname = $uRow[0]['username'];
@@ -87,14 +86,13 @@ if ($tab === 'dashboard') {
                 if (move_uploaded_file($_FILES['image']['tmp_name'], $dest)) {
                     $updates[] = "`image` = :image";
                     $params['image'] = $newName;
-                    $_SESSION['user']['image'] = $newName; // Update session
+                    $_SESSION['user']['image'] = $newName;
                 }
             } else {
                 $error = "صيغة الصورة غير مسموحة.";
             }
         }
 
-        // Handle Password Change
         $newPassword = $_POST["new_password"] ?? '';
         $confirmPassword = $_POST["confirm_password"] ?? '';
         
@@ -113,7 +111,6 @@ if ($tab === 'dashboard') {
             execute($conn, $sql, $params);
             $message = "تم حفظ التعديلات بنجاح.";
             
-            // Refresh admin profile data
             $adminProfile = query($conn, $query, ["id" => $_SESSION['user']['id']])[0] ?? null;
         } elseif (!$error) {
             $message = "لم يتم إجراء أي تغييرات.";
@@ -160,6 +157,28 @@ if ($tab === 'dashboard') {
         </div>
 
         <div id="page-content-wrapper">
+            <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 border-bottom shadow-sm d-flex justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-bars primary-text fs-4 ms-3" id="menu-toggle"></i>
+                    <h2 class="fs-4 m-0 header-title ms-3">لوحة الإدارة</h2>
+                </div>
+
+                <div class="d-flex align-items-center">
+                    <div class="dropdown">
+                        <a class="text-dark dropdown-toggle d-flex align-items-center text-decoration-none" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="fw-bold me-2"><?= htmlspecialchars($_SESSION['user']['username']) ?></span>
+                            <img src="<?= !empty($_SESSION['user']['image']) ? ROOT . 'assets/images/users/' . $_SESSION['user']['image'] : 'https://ui-avatars.com/api/?name=' . urlencode($_SESSION['user']['username']) . '&background=8b5a2b&color=fff' ?>" alt="Admin" class="rounded-circle" width="35" height="35" style="object-fit: cover;">
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-start text-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="admin?tab=profile">الملف الشخصي</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item text-danger" href="<?= ROOT ?>logout">تسجيل الخروج</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
 
             <div class="container-fluid px-4 pt-4 pb-5">
                 <?php if ($tab === 'dashboard'): ?>
@@ -390,9 +409,6 @@ if ($tab === 'dashboard') {
                                                                         </form>
                                                                     </td>
                                                                 </tr>
-
-                                                                
-                                                                </div>
                                                             <?php endforeach; ?>
                                                         <?php endif; ?>
                                                     </tbody>
@@ -510,7 +526,7 @@ if ($tab === 'dashboard') {
                                                                     <td class="py-3 text-muted"><?= htmlspecialchars($n['author_name']) ?></td>
                                                                     <td class="py-3 text-muted small" style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                                                                         <?= htmlspecialchars(mb_substr($n['description'] ?? '', 0, 60)) ?>...
-                                                                        <button type="button" class="btn btn-sm btn-link p-0 d-block" data-bs-toggle="modal" data-bs-target="#novelDetailModal<?= $n['id'] ?>">عرض الكامل</button>
+                                                                        <button type="button" class="btn btn-sm btn-link p-0 d-block" data-bs-toggle="modal" data-bs-target="#novelModal<?= $n['id'] ?>">عرض الكامل</button>
                                                                     </td>
                                                                     <td class="py-3 text-muted small" dir="ltr" style="text-align:right;">
                                                                         <?= date('Y-m-d', strtotime($n['created_at'])) ?>
@@ -525,41 +541,6 @@ if ($tab === 'dashboard') {
                                                                     </td>
                                                                 </tr>
 
-                                                                <!-- Novel Details Modal -->
-                                                                <div class="modal fade" id="novelDetailModal<?= $n['id'] ?>" tabindex="-1" aria-hidden="true">
-                                                                  <div class="modal-dialog modal-dialog-centered modal-lg">
-                                                                    <div class="modal-content">
-                                                                      <div class="modal-header">
-                                                                        <h5 class="modal-title"><i class="fas fa-book me-2 text-success"></i> بيانات طلب النشر — <?= htmlspecialchars($n['title']) ?></h5>
-                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                                      </div>
-                                                                      <div class="modal-body">
-                                                                        <div class="row">
-                                                                            <div class="col-md-4 text-center">
-                                                                                <img src="<?= !empty($n['cover_image']) ? ROOT . 'assets/images/' . htmlspecialchars($n['cover_image']) : 'https://placehold.co/160x230/8b5a2b/ffffff?text=Novel' ?>" style="max-width:100%; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); max-height:230px; object-fit:cover;">
-                                                                            </div>
-                                                                            <div class="col-md-8">
-                                                                                <table class="table table-borderless">
-                                                                                    <tr><th>عنوان الرواية</th><td class="fw-bold"><?= htmlspecialchars($n['title']) ?></td></tr>
-                                                                                    <tr><th>اسم المؤلف</th><td><?= htmlspecialchars($n['author_name']) ?></td></tr>
-                                                                                    <tr><th>تاريخ الإرسال</th><td><?= date('Y-m-d H:i', strtotime($n['created_at'])) ?></td></tr>
-                                                                                </table>
-                                                                                <hr>
-                                                                                <h6 class="fw-bold mb-2">قصة الرواية (Description):</h6>
-                                                                                <div style="background:#f9f7f4; padding:14px; border-radius:8px; white-space:pre-wrap; font-size:0.95rem; max-height:180px; overflow-y:auto;"><?= htmlspecialchars($n['description'] ?? 'لا يوجد وصف.') ?></div>
-                                                                            </div>
-                                                                        </div>
-                                                                      </div>
-                                                                      <div class="modal-footer">
-                                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
-                                                                        <form method="post" class="d-inline">
-                                                                            <input type="hidden" name="novel_id" value="<?= $n['id'] ?>">
-                                                                            <button type="submit" name="approve_novel" class="btn btn-success">نشر الرواية</button>
-                                                                        </form>
-                                                                      </div>
-                                                                    </div>
-                                                                  </div>
-                                                                </div>
                                                             <?php endforeach; ?>
                                                         <?php endif; ?>
                                                     </tbody>
