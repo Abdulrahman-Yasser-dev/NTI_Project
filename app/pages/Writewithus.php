@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // WriteWithUs.php
 // Static-content page explaining submission policy + evaluation
 // criteria for writers. No DB needed — this is policy text.
@@ -25,8 +25,12 @@ require_once "../app/core/init.php";
             <span class="logo-text">ريشة</span>
         </div>
         <div class="header-actions">
-            <button class="btn btn-outline" onclick="location.href='Login'">دخول</button>
-            <button class="btn btn-filled" onclick="location.href='Signup?role=writer'">حساب جديد</button>
+            <?php if (!isset($_SESSION['user'])): ?>
+                <button class="btn btn-outline" onclick="location.href='login'">دخول</button>
+                <button class="btn btn-filled" onclick="location.href='signup?role=writer'">حساب جديد</button>
+            <?php else: ?>
+                <button class="btn btn-filled" onclick="location.href='profile'">حسابي (<?= htmlspecialchars($_SESSION['user']['username']) ?>)</button>
+            <?php endif; ?>
         </div>
     </header>
 

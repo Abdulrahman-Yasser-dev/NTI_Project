@@ -11,6 +11,13 @@ $user = $_SESSION['user'];
 $user_data = query($conn, "SELECT * FROM `users` WHERE id = :id", ["id" => $user['id']])[0];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['request_writer'])) {
+        execute($conn, "UPDATE `users` SET `writer_request_status` = 'pending' WHERE id = :id", ["id" => $user['id']]);
+        $_SESSION['success'] = "تم إرسال طلب الانضمام ككاتب بنجاح. يرجى الانتظار حتى مراجعته من الإدارة.";
+        header("Location: " . ROOT . "profile?tab=writer-request");
+        exit();
+    }
+    
     $username = trim($_POST['username']);
     $email = trim($_POST['email']);
     $oldPassword = $_POST['old_password'];
@@ -32,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         "id" => $user['id']
     ];
 
-    if (!empty($oldPassword) || !empty($newPassword)) {
+        if (!empty($oldPassword) || !empty($newPassword)) {
         if (password_verify($oldPassword, $user_data['password'])) {
             $query .= ", `password`=:password";
             $params["password"] = password_hash($newPassword, PASSWORD_DEFAULT);
@@ -46,8 +53,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $query .= " WHERE id = :id";
     execute($conn, $query, $params);
 
+    if ($user['role'] == 'writer' && isset($_POST['bio'])) {
+        $authorRow = query($conn, "SELECT id FROM authors WHERE name = :name LIMIT 1", ["name" => $user_data['username']]);
+        if ($authorRow) {
+            execute($conn, "UPDATE authors SET bio = :bio WHERE id = :id", ["bio" => $_POST['bio'], "id" => $authorRow[0]['id']]);
+        }
+    }
+
     $user['username'] = $username;
     $user['image'] = $imageName;
+    $_SESSION['user'] = $user;
     $_SESSION['success'] = "تم تحديث البيانات بنجاح!";
 
     header("Location: " . ROOT . "profile?tab=settings");
@@ -78,13 +93,16 @@ $myListBooks = query($conn, "SELECT n.* FROM novels n JOIN user_library ul ON n.
 if (!$myListBooks) $myListBooks = [];
 
 $myWorksBooks = [];
+$authorBio = "";
 if ($user['role'] == 'writer') {
-    $authorRow = query($conn, "SELECT id FROM authors WHERE name = :name LIMIT 1", ["name" => $user['username']]);
+    $authorRow = query($conn, "SELECT id, bio FROM authors WHERE name = :name LIMIT 1", ["name" => $user['username']]);
     if ($authorRow) {
+        $authorBio = $authorRow[0]['bio'] ?? '';
         $myWorksBooks = query($conn, "SELECT * FROM novels WHERE author_id = :author_id", ["author_id" => $authorRow[0]['id']]);
         if (!$myWorksBooks) $myWorksBooks = [];
     }
 }
+
 
 
 ?>
@@ -117,7 +135,7 @@ if ($user['role'] == 'writer') {
         <ul class="nav-links">
             <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
             <li><a href="<?= ROOT ?>Browsebooks">تصفح الكتب</a></li>
-            <li><a href="#">من نحن</a></li>
+            <?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
         </ul>
         <div class="nav-actions">
             <?php if ($_SESSION["user"]["role"] == "admin"): ?>
@@ -193,6 +211,12 @@ if ($user['role'] == 'writer') {
                         </li>
                     <?php endif; ?>
 
+                    <?php if ($user['role'] == 'user'): ?>
+                        <li class="tab-item" data-tab="writer-request">
+                            <i class="fa-solid fa-feather"></i> كن كاتباً
+                        </li>
+                    <?php endif; ?>
+
                     <li class="tab-item" data-tab="settings">
                         <i class="fa-solid fa-gear"></i> إعدادات الحساب
                     </li>
@@ -204,13 +228,15 @@ if ($user['role'] == 'writer') {
                     <h2 class="section-title">أقرأ حالياً</h2>
                     <?php if (!empty($readingNowBooks)): ?>
                         <div class="books-grid">
-                            <?php foreach ($readingNowBooks as $book): ?>
-                                <div class="book-card-mini">
-                                    <img src="<?= ROOT ?>assets/images/novels/<?= htmlspecialchars($book['cover_image']) ?>" alt="غلاف الكتاب">
+                            <?php foreach ($readingNowBooks as $book):
+                                $coverSrc = !empty($book['cover_image']) ? ROOT . 'assets/images/' . $book['cover_image'] : ROOT . 'assets/images/sarrdd Logo.png';
+                            ?>
+                                <div class="book-card-mini" onclick="location.href='<?= ROOT ?>reading?book_id=<?= $book['id'] ?>'" style="cursor:pointer">
+                                    <img src="<?= htmlspecialchars($coverSrc) ?>" alt="غلاف الكتاب" onerror="this.onerror=null;this.src='<?= ROOT ?>assets/images/sarrdd Logo.png'">
                                     <div class="book-card-info">
                                         <h3><?= htmlspecialchars($book['title']) ?></h3>
                                         <p>قيد القراءة</p>
-                                        <a href="<?= ROOT ?>novel/<?= $book['id'] ?>" class="btn-read-continue">متابعة القراءة</a>
+                                        <a href="<?= ROOT ?>reading?book_id=<?= $book['id'] ?>" class="btn-read-continue">متابعة القراءة</a>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -228,10 +254,12 @@ if ($user['role'] == 'writer') {
                     <h2 class="section-title">المفضلة</h2>
                     <?php if (!empty($favoritesBooks)): ?>
                         <div class="books-grid-simple">
-                            <?php foreach ($favoritesBooks as $book): ?>
+                            <?php foreach ($favoritesBooks as $book):
+                                $coverSrc = !empty($book['cover_image']) ? ROOT . 'assets/images/' . $book['cover_image'] : ROOT . 'assets/images/sarrdd Logo.png';
+                            ?>
                                 <div class="simple-book-item">
-                                    <a href="<?= ROOT ?>novel/<?= $book['id'] ?>">
-                                        <img src="<?= ROOT ?>assets/images/novels/<?= htmlspecialchars($book['cover_image']) ?>" alt="غلاف">
+                                    <a href="<?= ROOT ?>BookDetails?id=<?= $book['id'] ?>">
+                                        <img src="<?= htmlspecialchars($coverSrc) ?>" alt="غلاف" onerror="this.onerror=null;this.src='<?= ROOT ?>assets/images/sarrdd Logo.png'">
                                     </a>
                                     <h4><?= htmlspecialchars($book['title']) ?></h4>
                                 </div>
@@ -249,10 +277,12 @@ if ($user['role'] == 'writer') {
                     <h2 class="section-title">قائمتي (للقراءة لاحقاً)</h2>
                     <?php if (!empty($myListBooks)): ?>
                         <div class="books-grid-simple">
-                            <?php foreach ($myListBooks as $book): ?>
+                            <?php foreach ($myListBooks as $book):
+                                $coverSrc = !empty($book['cover_image']) ? ROOT . 'assets/images/' . $book['cover_image'] : ROOT . 'assets/images/sarrdd Logo.png';
+                            ?>
                                 <div class="simple-book-item">
-                                    <a href="<?= ROOT ?>novel/<?= $book['id'] ?>">
-                                        <img src="<?= ROOT ?>assets/images/novels/<?= htmlspecialchars($book['cover_image']) ?>" alt="غلاف">
+                                    <a href="<?= ROOT ?>BookDetails?id=<?= $book['id'] ?>">
+                                        <img src="<?= htmlspecialchars($coverSrc) ?>" alt="غلاف" onerror="this.onerror=null;this.src='<?= ROOT ?>assets/images/sarrdd Logo.png'">
                                     </a>
                                     <h4><?= htmlspecialchars($book['title']) ?></h4>
                                 </div>
@@ -275,10 +305,12 @@ if ($user['role'] == 'writer') {
                         </div>
                         <?php if (!empty($myWorksBooks)): ?>
                             <div class="books-grid-simple">
-                                <?php foreach ($myWorksBooks as $book): ?>
+                                <?php foreach ($myWorksBooks as $book):
+                                    $coverSrc = !empty($book['cover_image']) ? ROOT . 'assets/images/' . $book['cover_image'] : ROOT . 'assets/images/sarrdd Logo.png';
+                                ?>
                                     <div class="simple-book-item">
                                         <a href="<?= ROOT ?>manage_novel_chapters/<?= $book['id'] ?>">
-                                            <img src="<?= ROOT ?>assets/images/novels/<?= htmlspecialchars($book['cover_image']) ?>" alt="غلاف">
+                                            <img src="<?= htmlspecialchars($coverSrc) ?>" alt="غلاف" onerror="this.onerror=null;this.src='<?= ROOT ?>assets/images/sarrdd Logo.png'">
                                         </a>
                                         <h4><?= htmlspecialchars($book['title']) ?></h4>
                                     </div>
@@ -290,6 +322,33 @@ if ($user['role'] == 'writer') {
                                 <p>لم تنشر أي روايات بعد.</p>
                             </div>
                         <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($user['role'] == 'user'): ?>
+                    <div class="tab-content" id="tab-writer-request">
+                        <h2 class="section-title">كن كاتباً</h2>
+                        <div class="settings-form" style="text-align: center; padding: 40px 20px;">
+                            <?php if ($user_data['writer_request_status'] === 'pending'): ?>
+                                <i class="fa-solid fa-clock-rotate-left" style="font-size: 4rem; color: #e7c877; margin-bottom: 20px;"></i>
+                                <h3 style="color: #f6eed6; margin-bottom: 15px;">طلبك قيد المراجعة</h3>
+                                <p style="color: #b5a184; font-size: 1.1rem;">لقد قمنا باستلام طلبك للإنضمام ككاتب في المنصة. يرجى الانتظار حتى تقوم الإدارة بمراجعة الطلب والموافقة عليه.</p>
+                            <?php elseif ($user_data['writer_request_status'] === 'rejected'): ?>
+                                <i class="fa-solid fa-circle-xmark" style="font-size: 4rem; color: #ff6b6b; margin-bottom: 20px;"></i>
+                                <h3 style="color: #f6eed6; margin-bottom: 15px;">تم رفض الطلب</h3>
+                                <p style="color: #b5a184; font-size: 1.1rem; margin-bottom: 25px;">عذراً، لم تتم الموافقة على طلبك للإنضمام ككاتب هذه المرة. يمكنك المحاولة وتقديم الطلب مرة أخرى.</p>
+                                <form method="post">
+                                    <button type="submit" name="request_writer" class="nav-btn filled submit-btn">تقديم الطلب مجدداً</button>
+                                </form>
+                            <?php else: ?>
+                                <i class="fa-solid fa-feather-pointed" style="font-size: 4rem; color: #e7c877; margin-bottom: 20px;"></i>
+                                <h3 style="color: #f6eed6; margin-bottom: 15px;">هل لديك موهبة الكتابة؟</h3>
+                                <p style="color: #b5a184; font-size: 1.1rem; margin-bottom: 25px;">انضم إلى مجتمعنا وشارك إبداعاتك ورواياتك مع آلاف القراء على المنصة. قدم طلبك الآن ليتم مراجعته من قبل الإدارة، وابدأ رحلتك ككاتب مبدع!</p>
+                                <form method="post">
+                                    <button type="submit" name="request_writer" class="nav-btn filled submit-btn">تقديم طلب انضمام</button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 <?php endif; ?>
 
@@ -342,7 +401,11 @@ if ($user['role'] == 'writer') {
         // فتح تبويب الإعدادات إذا كان هناك رسالة أو تم التوجيه إليه
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('tab') === 'settings') {
-            document.querySelector('.tab-item[data-tab="settings"]').click();
+            const settingsTab = document.querySelector('.tab-item[data-tab="settings"]');
+            if (settingsTab) settingsTab.click();
+        } else if (urlParams.get('tab') === 'writer-request') {
+            const writerTab = document.querySelector('.tab-item[data-tab="writer-request"]');
+            if (writerTab) writerTab.click();
         }
 
         document.querySelector('.edit-avatar-btn').addEventListener('click', function() {

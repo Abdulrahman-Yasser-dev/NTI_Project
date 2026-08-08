@@ -118,6 +118,18 @@ body {
   vertical-align: middle;
 }
 
+#wrapper.toggled #sidebar-wrapper {
+  margin-right: 0;
+}
+
+@media (max-width: 767.98px) {
+  #sidebar-wrapper {
+    position: fixed;
+    z-index: 1050;
+    height: 100%;
+  }
+}
+
 @media (min-width: 768px) {
   #sidebar-wrapper {
     margin-right: 0;
@@ -133,6 +145,12 @@ body {
   }
 }
 
+.dropdown-toggle img {
+  object-fit: cover;
+  border: 2px solid var(--accent-color);
+  background-color: #fff;
+}
+
 /* Dashboard Utilities */
 .bg-light-primary {
   background-color: rgba(139, 90, 43, 0.1) !important;
@@ -142,4 +160,50 @@ body {
 }
 .bg-light-info {
   background-color: rgba(13, 202, 240, 0.1) !important;
+}
+
+.role-badge-select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  border-radius: 50rem;
+  padding: 0.35em 0.9em;
+  font-size: 0.8em;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  transition:
+    filter 0.15s ease,
+    transform 0.1s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  min-width: 80px;
+}
+.role-badge-select:hover {
+  filter: brightness(0.92);
+  transform: scale(1.04);
+}
+.role-badge-select:focus {
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.12);
+}
+/* Color variants — matching Bootstrap badge colors */
+.role-badge-select.role-admin {
+  background-color: #dc3545;
+  color: #fff;
+}
+.role-badge-select.role-writer {
+  background-color: #ffc107;
+  color: #212529;
+}
+.role-badge-select.role-user {
+  background-color: #6c757d;
+  color: #fff;
+}
+/* Option text color reset */
+.role-badge-select option {
+  color: #212529;
+  background-color: #fff;
+  font-size: 0.9rem;
 }

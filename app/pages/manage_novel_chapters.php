@@ -612,7 +612,7 @@ $cover_image = !empty($novel['cover_image'])
                 <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
                 <li><a href="<?= ROOT ?>Browsebooks">المكتبة</a></li>
                 <li><a href="#">الكتّاب</a></li>
-                <li><a href="#">من نحن</a></li>
+                <?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
             </ul>
             <div class="nav-premium-actions">
                 <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
@@ -693,11 +693,19 @@ $cover_image = !empty($novel['cover_image'])
                 </div>
             </div>
 
-            <a href="<?= ROOT ?>write_new_chapter_existing_novel/<?= $novel_id ?>" class="add-chapter-premium"
-                style="text-decoration: none;">
-                <i class="fas fa-plus-circle"></i>
-                <span>كتابة فصل جديد</span>
-            </a>
+            <?php if ($novel['status'] === 'published'): ?>
+                <a href="<?= ROOT ?>write_new_chapter_existing_novel/<?= $novel_id ?>" class="add-chapter-premium"
+                    style="text-decoration: none;">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>كتابة فصل جديد</span>
+                </a>
+            <?php else: ?>
+                <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
+                    <i class="fas fa-clock text-warning" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                    <h4 style="color: #664d03; font-family: 'Aref Ruqaa', serif; margin-bottom: 5px;">قيد المراجعة</h4>
+                    <p style="color: #664d03; margin: 0; font-size: 0.95rem;">هذه الرواية قيد المراجعة من قبل الإدارة. لا يمكنك إضافة فصول جديدة حتى يتم الموافقة عليها ونشرها.</p>
+                </div>
+            <?php endif; ?>
 
             <!-- Dynamic Chapters List -->
             <?php if (!empty($chapters)): ?>
@@ -758,7 +766,7 @@ $cover_image = !empty($novel['cover_image'])
             <div class="footer-premium-links">
                 <div class="footer-premium-col">
                     <h4>روابط سريعة</h4><a href="<?= ROOT ?>index">الرئيسية</a><a
-                        href="<?= ROOT ?>Browsebooks">المكتبة</a><a href="#">الكتّاب</a><a href="#">من نحن</a>
+                        href="<?= ROOT ?>Browsebooks">المكتبة</a><a href="#">الكتّاب</a><?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a><?php else: ?><a href="<?= ROOT ?>writer_application">كن كاتبا</a><?php endif; ?>
                 </div>
                 <div class="footer-premium-col">
                     <h4>حسابك</h4><a href="<?= ROOT ?>signup">تسجيل الدخول</a><a href="<?= ROOT ?>signup">إنشاء حساب</a>

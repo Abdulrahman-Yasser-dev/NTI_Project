@@ -98,7 +98,7 @@ foreach ($books as $book) {
     <ul class="nav-links">
       <li><a href="<?= ROOT ?>index" class="active">الرئيسية</a></li>
       <li><a href="<?= ROOT ?>Browsebooks">تصفح الكتب</a></li>
-      <li><a href="#">من نحن</a></li>
+      <?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
     </ul>
     <div class="nav-actions">
       <?php if(!isset($_SESSION["user"])):?>
@@ -139,7 +139,7 @@ foreach ($books as $book) {
         <?php foreach ($row1Books as $book): 
           $coverPath = !empty($book['cover_image']) 
               ? ROOT . 'assets/images/' . $book['cover_image'] 
-              : ROOT . 'assets/images/placeholder.jpg';
+              : ROOT . 'assets/images/sarrdd Logo.png';
         ?>
           <div class="book-wrapper">
             <button class="book-btn" data-book="<?= $book['id'] ?>">
@@ -154,7 +154,7 @@ foreach ($books as $book) {
         <?php foreach ($row2Books as $book): 
           $coverPath = !empty($book['cover_image']) 
               ? ROOT . 'assets/images/' . $book['cover_image'] 
-              : ROOT . 'assets/images/placeholder.jpg';
+              : ROOT . 'assets/images/sarrdd Logo.png';
         ?>
           <div class="book-wrapper">
             <button class="book-btn" data-book="<?= $book['id'] ?>">
@@ -201,7 +201,7 @@ foreach ($books as $book) {
   <footer class="site-footer">
     <div class="footer-top">
       <div class="footer-brand"><span class="brand-name">سرد</span><p>مكتبة عربية رقمية تجمع القرّاء والكتّاب في مكان واحد، احتفاءً بالأدب العربي بكل تنوعه.</p></div>
-      <div class="footer-col"><h4>روابط سريعة</h4><ul><li><a href="<?= ROOT ?>index">الرئيسية</a></li><li><a href="<?= ROOT ?>Browsebooks">تصفح الكتب</a></li><li><a href="#">الكتّاب</a></li><li><a href="#">من نحن</a></li></ul></div>
+      <div class="footer-col"><h4>روابط سريعة</h4><ul><li><a href="<?= ROOT ?>index">الرئيسية</a></li><li><a href="<?= ROOT ?>Browsebooks">تصفح الكتب</a></li><li><a href="#">الكتّاب</a></li><?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?></ul></div>
       <div class="footer-col"><h4>حسابك</h4><ul><li><a href="<?= ROOT ?>signup">تسجيل الدخول</a></li><li><a href="<?= ROOT ?>signup">إنشاء حساب</a></li></ul></div>
       <div class="footer-col"><h4>تواصل معنا</h4><ul><li><a href="#">الدعم الفني</a></li><li><a href="#">الأسئلة الشائعة</a></li><li><a href="#">سياسة الخصوصية</a></li></ul></div>
     </div>

@@ -8,6 +8,46 @@ require_once __DIR__ . "/../core/init.php";
 $bookId = isset($_GET['id']) ? (int)$_GET['id'] : 1;
 
 // ============================================================
+// HANDLE LIBRARY ACTION (Add to favorites / reading now / my list)
+// ============================================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['library_action'])) {
+    if (!isset($_SESSION['user'])) {
+        header('Location: ' . ROOT . 'login');
+        exit;
+    }
+    $libUserId = (int)$_SESSION['user']['id'];
+    $libBookId = (int)($_POST['book_id'] ?? 0);
+    $action = $_POST['library_action'];
+
+    if ($libBookId > 0) {
+        // Check if entry exists
+        $existing = query($conn, "SELECT id, status, is_favorite FROM user_library WHERE user_id = :u AND novel_id = :n", ['u' => $libUserId, 'n' => $libBookId]);
+        
+        if ($action === 'favorite') {
+            if ($existing) {
+                $newFav = $existing[0]['is_favorite'] ? 0 : 1;
+                execute($conn, "UPDATE user_library SET is_favorite = :f WHERE user_id = :u AND novel_id = :n", ['f' => $newFav, 'u' => $libUserId, 'n' => $libBookId]);
+            } else {
+                execute($conn, "INSERT INTO user_library (user_id, novel_id, is_favorite) VALUES (:u, :n, 1)", ['u' => $libUserId, 'n' => $libBookId]);
+            }
+        } elseif (in_array($action, ['reading_now', 'my_list', 'completed'])) {
+            if ($existing) {
+                execute($conn, "UPDATE user_library SET status = :s WHERE user_id = :u AND novel_id = :n", ['s' => $action, 'u' => $libUserId, 'n' => $libBookId]);
+            } else {
+                execute($conn, "INSERT INTO user_library (user_id, novel_id, status) VALUES (:u, :n, :s)", ['u' => $libUserId, 'n' => $libBookId, 's' => $action]);
+            }
+        }
+    }
+    
+    if ($action === 'reading_now') {
+        header('Location: ' . ROOT . 'reading?book_id=' . $libBookId);
+    } else {
+        header('Location: ' . ROOT . 'BookDetails?id=' . $libBookId . '&lib=ok');
+    }
+    exit;
+}
+
+// ============================================================
 // HANDLE RATING SUBMISSION
 // ============================================================
 $ratingSuccess = '';
@@ -16,7 +56,7 @@ $ratingError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_rating'])) {
     $bookId = (int)($_POST['book_id'] ?? 0);
     $rating = (int)($_POST['rating'] ?? 0);
-    $userId = $_SESSION['user_id'] ?? 0;
+    $userId = $_SESSION['user']['id'] ?? 0;
     
     if ($userId <= 0) {
         $ratingError = 'يجب تسجيل الدخول أولاً.';
@@ -39,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_rating'])) {
                 $updateStmt->execute([':rating' => $rating, ':id' => $existing['id']]);
             } else {
                 // Insert new rating
-                $insertQuery = "INSERT INTO book_ratings (book_id, user_id, rating) VALUES (:book_id, :user_id, :rating)";
+                $insertQuery = "INSERT INTO book_ratings (book_id, user_id) VALUES (:book_id, :user_id)";
                 $insertStmt = $conn->prepare($insertQuery);
                 $insertStmt->execute([
                     ':book_id' => $bookId,
@@ -87,7 +127,7 @@ $commentError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_comment'])) {
     $commentText = trim($_POST['comment_text'] ?? '');
     $commentRating = (int)($_POST['comment_rating'] ?? 0);
-    $userId = $_SESSION['user_id'] ?? 0;
+    $userId = $_SESSION['user']['id'] ?? 0;
     $bookId = (int)($_POST['book_id'] ?? $bookId);
     
     if ($userId <= 0) {
@@ -99,15 +139,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_comment'])) {
     } else {
         try {
             $insertCommentQuery = "
-                INSERT INTO comments (book_id, user_id, comment, rating, created_at) 
-                VALUES (:book_id, :user_id, :comment, :rating, NOW())
+                INSERT INTO comments (book_id, user_id, comment, created_at) 
+                VALUES (:book_id, :user_id, :comment, NOW())
             ";
             $insertCommentStmt = $conn->prepare($insertCommentQuery);
             $insertCommentStmt->execute([
                 ':book_id' => $bookId,
                 ':user_id' => $userId,
                 ':comment' => $commentText,
-                ':rating' => $commentRating
+                
             ]);
             
             // Redirect to refresh the page and show the new comment
@@ -152,6 +192,7 @@ try {
             a.name AS author_name,
             a.bio AS author_bio,
             a.photo AS author_photo,
+            a.bio AS author_bio,
             c.id AS category_id,
             c.name_ar AS category_name,
             c.name_en AS category_name_en,
@@ -184,8 +225,8 @@ if (!$book) {
 // GET USER'S EXISTING RATING
 // ============================================================
 $userRating = 0;
-$isLoggedIn = isset($_SESSION['user_id']);
-$currentUserId = $_SESSION['user_id'] ?? 0;
+$isLoggedIn = isset($_SESSION['user']);
+$currentUserId = $_SESSION['user']['id'] ?? 0;
 
 if ($isLoggedIn) {
     try {
@@ -332,7 +373,7 @@ try {
 // ============================================================
 $coverPath = !empty($book['cover_image']) 
     ? ROOT . 'assets/images/' . $book['cover_image'] 
-    : ROOT . 'assets/images/placeholder.jpg';
+    : ROOT . 'assets/images/sarrdd Logo.png';
 
 // ============================================================
 // CALCULATE RATING
@@ -367,9 +408,21 @@ echo '<script>const USER_RATING = ' . $userRating . ';</script>';
 echo '<script>const IS_LOGGED_IN = ' . ($isLoggedIn ? 'true' : 'false') . ';</script>';
 
 // ============================================================
+// CHECK USER LIBRARY STATUS FOR THIS BOOK
+// ============================================================
+$userLibEntry = null;
+if ($isLoggedIn) {
+    $libData = query($conn, "SELECT status, is_favorite FROM user_library WHERE user_id = :u AND novel_id = :n", ['u' => $currentUserId, 'n' => $bookId]);
+    if ($libData) $userLibEntry = $libData[0];
+}
+$isFavorite = $userLibEntry && $userLibEntry['is_favorite'];
+$isReadingNow = $userLibEntry && $userLibEntry['status'] === 'reading_now';
+$isInMyList = $userLibEntry && $userLibEntry['status'] === 'my_list';
+
+// ============================================================
 // BUILD READING URL
 // ============================================================
-$readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
+$readingUrl = ROOT . 'reading?book_id=' . $book['id'];
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -400,11 +453,32 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
             <ul class="nav-premium-links">
                 <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
                 <li><a href="<?= ROOT ?>Browsebooks" class="active">المكتبة</a></li>
-                <li><a href="#">من نحن</a></li>
+                <?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
             </ul>
             <div class="nav-premium-actions">
-                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
-                <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-filled">إنشاء حساب</a>
+                <?php if(!isset($_SESSION['user'])): ?>
+                    <a href="<?= ROOT ?>login" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
+                    <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-filled">إنشاء حساب</a>
+                <?php else: ?>
+                    <?php if($_SESSION['user']['role'] === 'admin'): ?>
+                        <a href="<?= ROOT ?>admin" class="nav-premium-btn nav-premium-btn-outline">لوحة التحكم</a>
+                    <?php endif; ?>
+                    <div class="profile-dropdown">
+                        <button class="profile-toggle" onclick="toggleProfileMenu()">
+                            <?php if(!empty($_SESSION['user']['image'])): ?>
+                                <img src="<?= ROOT ?>assets/images/users/<?= htmlspecialchars($_SESSION['user']['image']) ?>" alt="avatar" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='<i class=\'fa-solid fa-user-circle\'></i>'">
+                            <?php else: ?>
+                                <i class="fa-solid fa-user-circle"></i>
+                            <?php endif; ?>
+                            <span><?= htmlspecialchars($_SESSION['user']['username']) ?></span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="profile-menu" id="profileMenu">
+                            <a href="<?= ROOT ?>profile"><i class="fa-solid fa-user"></i> حسابي</a>
+                            <a href="<?= ROOT ?>logout"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
@@ -464,14 +538,14 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
                     <div class="book-cover">
                         <img src="<?php echo htmlspecialchars($coverPath); ?>" 
                              alt="<?php echo htmlspecialchars($book['title']); ?>" 
-                             onerror="this.src='<?= ROOT ?>assets/images/placeholder.jpg'" />
+                             onerror="this.onerror=null; this.src='<?= ROOT ?>assets/images/sarrdd Logo.png';" />
                     </div>
                     <div class="book-info">
                         <h1><?php echo htmlspecialchars($book['title']); ?></h1>
                         <div class="meta-row">
                             <span><i class="fas fa-user"></i> المؤلف: <?php echo htmlspecialchars($book['author_name']); ?></span>
                             <span><i class="fas fa-book"></i> القسم: <?php echo htmlspecialchars($book['category_name']); ?></span>
-                            <span><i class="fas fa-file-alt"></i> عدد الصفحات: <?php echo $book['pages'] ?? '—'; ?></span>
+                            <span><i class="fas fa-file-alt"></i> عدد الفصول: <?php echo count($chapters ?? []); ?></span>
                             <span><i class="fas fa-language"></i> اللغة: <?php echo $book['language'] ?? 'العربية'; ?></span>
                         </div>
                         <div class="rating-stars">
@@ -491,13 +565,26 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
                         </div>
 
                         <!-- ===== ACTIONS BUTTONS ===== -->
-                        <div class="actions">
-                            <a href="<?= ROOT ?>reading?book_id=<?php echo $book['id']; ?>" class="btn-primary">
-                                <i class="fas fa-book-open"></i> <?php echo $hasStarted ? 'متابعة القراءة' : 'قراءة'; ?>
-                            </a>
+                        <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap; align-items: center;">
+                            <!-- Read Button Form Removed per request -->
                             
-                            <button class="btn-secondary"><i class="fas fa-download"></i> تحميل</button>
-                            <button class="fav-btn" id="favBtn"><i class="far fa-heart"></i></button>
+                            <!-- Add to List Button Form -->
+                            <form method="POST" action="" style="margin:0;">
+                                <input type="hidden" name="book_id" value="<?php echo $book['id']; ?>">
+                                <input type="hidden" name="library_action" value="my_list">
+                                <button type="submit" class="btn-secondary" style="border:none; cursor:pointer;">
+                                    <i class="fas fa-bookmark"></i> <?php echo $isInMyList ? 'محفوظ في القائمة' : 'أضف لقائمتي'; ?>
+                                </button>
+                            </form>
+                            
+                            <!-- Favorite Button Form -->
+                            <form method="POST" action="" style="margin:0;">
+                                <input type="hidden" name="book_id" value="<?php echo $book['id']; ?>">
+                                <input type="hidden" name="library_action" value="favorite">
+                                <button type="submit" class="fav-btn" id="favBtn" style="border:none; cursor:pointer; <?php echo $isFavorite ? 'color:red;' : ''; ?>">
+                                    <i class="<?php echo $isFavorite ? 'fas' : 'far'; ?> fa-heart"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -506,8 +593,8 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
                 <div class="stats-grid">
                     <div class="stat-item">
                         <i class="fas fa-file-alt"></i>
-                        <span>عدد الصفحات</span>
-                        <strong><?php echo $book['pages'] ?? '—'; ?></strong>
+                        <span>عدد الفصول</span>
+                        <strong><?php echo count($chapters ?? []); ?></strong>
                     </div>
                     <div class="stat-item">
                         <i class="fas fa-language"></i>
@@ -567,7 +654,7 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
                                     $isHidden = $index >= 5;
                                 ?>
                                     <div class="chapter-row <?php echo $isHidden ? 'chapter-hidden' : ''; ?>" 
-                                        onclick="location.href='<?= ROOT ?>reading?book_id=<?php echo $book['id']; ?>&chapter=<?php echo $chapter['id']; ?>'"
+                                        onclick="location.href='<?= ROOT ?>reading?book_id=<?php echo $book['id']; ?>&chapter=<?php echo $chapter['chapter_number']; ?>'">
                                         <div class="chapter-info">
                                             <span class="chapter-number">الفصل <?php echo sprintf('%02d', $chapter['chapter_number']); ?></span>
                                             <span class="chapter-title"><?php echo htmlspecialchars($chapter['title']); ?></span>
@@ -684,15 +771,6 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
                     <div class="add-comment">
                         <form method="POST" action="" class="comment-form">
                             <input type="hidden" name="book_id" value="<?php echo $bookId; ?>" />
-                            <div class="comment-rating">
-                                <label>تقييمك للكتاب:</label>
-                                <div class="comment-stars" id="commentStars">
-                                    <input type="hidden" name="comment_rating" id="commentRatingInput" value="0" />
-                                    <?php for ($i = 1; $i <= 5; $i++): ?>
-                                        <i class="far fa-star" data-value="<?php echo $i; ?>"></i>
-                                    <?php endfor; ?>
-                                </div>
-                            </div>
                             <div class="comment-input-group">
                                 <textarea name="comment_text" placeholder="شارك رأيك في الكتاب..." required></textarea>
                                 <button type="submit" name="submit_comment" class="btn-primary">
@@ -720,13 +798,7 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
                                             <span class="comment-username"><?= htmlspecialchars($comment['user_name']) ?></span>
                                         </div>
                                         <div class="comment-meta">
-                                            <?php if ($comment['rating'] > 0): ?>
-                                                <span class="comment-rating-display">
-                                                    <?php for ($i = 1; $i <= 5; $i++): ?>
-                                                        <i class="fas fa-star <?php echo $i <= $comment['rating'] ? 'active' : ''; ?>"></i>
-                                                    <?php endfor; ?>
-                                                </span>
-                                            <?php endif; ?>
+                                            
                                             <span class="comment-date"><?= date('d/m/Y', strtotime($comment['created_at'])) ?></span>
                                         </div>
                                     </div>
@@ -792,7 +864,7 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
                     <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
                     <li><a href="<?= ROOT ?>Browsebooks">تصفح الكتب</a></li>
                     <li><a href="#">الكتّاب</a></li>
-                    <li><a href="#">من نحن</a></li>
+                    <?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
                 </ul>
             </div>
 
@@ -845,20 +917,7 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
             });
 
             // ===== COMMENT STARS INTERACTION =====
-            const commentStars = document.querySelectorAll('#commentStars i');
-            const commentRatingInput = document.getElementById('commentRatingInput');
-
-            if (commentStars.length > 0 && commentRatingInput) {
-                let currentCommentRating = 0;
-
-                commentStars.forEach((star, index) => {
-                    const value = index + 1;
-                    
-                    star.addEventListener('click', function() {
-                        currentCommentRating = value;
-                        updateCommentStars(value);
-                        commentRatingInput.value = value;
-                    });
+            
 
                     star.addEventListener('mouseenter', function() {
                         updateCommentStars(value);
@@ -878,6 +937,21 @@ $readingUrl = ROOT . 'reading.php?book_id=' . $book['id'];
                         }
                     });
                 }
+            }
+        });
+    </script>
+    <script>
+        // Profile dropdown toggle
+        function toggleProfileMenu(e) {
+            if (e) e.stopPropagation();
+            var menu = document.getElementById('profileMenu');
+            if (menu) menu.classList.toggle('show');
+        }
+        document.addEventListener('click', function(e) {
+            var toggle = document.querySelector('.profile-toggle');
+            var menu = document.getElementById('profileMenu');
+            if (toggle && menu && !toggle.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.remove('show');
             }
         });
     </script>

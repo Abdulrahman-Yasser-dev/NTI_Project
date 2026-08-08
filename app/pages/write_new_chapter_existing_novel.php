@@ -12,6 +12,12 @@ $chapter_id = isset($url_parts[2]) && (int)$url_parts[2] > 0
 $chapter = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Fetch novel status
+    $novelCheck = query($conn, "SELECT status FROM novels WHERE id = :id", ['id' => $novel_id]);
+    if (!$novelCheck || $novelCheck[0]['status'] !== 'published') {
+        die("لا يمكن إضافة أو تعديل فصول لرواية غير منشورة.");
+    }
+
     $title = $_POST['title'] ?? 'بدون عنوان';
     $content = $_POST['content'] ?? '';
     $word_count = (int)($_POST['word_count'] ?? 0);
@@ -51,6 +57,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Redirect to manage page
     header("Location: " . ROOT . "manage_novel_chapters/" . $novel_id);
     die;
+}
+
+// Fetch novel status for page load
+$novelCheckLoad = query($conn, "SELECT status FROM novels WHERE id = :id", ['id' => $novel_id]);
+if (!$novelCheckLoad || $novelCheckLoad[0]['status'] !== 'published') {
+    die("لا يمكن إضافة أو تعديل فصول لرواية غير منشورة.");
 }
 
 // Fetch existing chapter if editing
@@ -348,7 +360,7 @@ if ($chapter_id) {
                 <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
                 <li><a href="<?= ROOT ?>Browsebooks">المكتبة</a></li>
                 <li><a href="#">الكتّاب</a></li>
-                <li><a href="#">من نحن</a></li>
+                <?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
             </ul>
             <div class="nav-premium-actions">
                 <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
@@ -440,7 +452,7 @@ if ($chapter_id) {
                 <p>مكتبة عربية رقمية تجمع القرّاء والكتّاب في مكان واحد، احتفاءً بالأدب العربي بكل تنوعه.</p>
             </div>
             <div class="footer-premium-links">
-                <div class="footer-premium-col"><h4>روابط سريعة</h4><a href="<?= ROOT ?>index">الرئيسية</a><a href="<?= ROOT ?>Browsebooks">المكتبة</a><a href="#">الكتّاب</a><a href="#">من نحن</a></div>
+                <div class="footer-premium-col"><h4>روابط سريعة</h4><a href="<?= ROOT ?>index">الرئيسية</a><a href="<?= ROOT ?>Browsebooks">المكتبة</a><a href="#">الكتّاب</a><?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a><?php else: ?><a href="<?= ROOT ?>writer_application">كن كاتبا</a><?php endif; ?></div>
                 <div class="footer-premium-col"><h4>حسابك</h4><a href="<?= ROOT ?>signup">تسجيل الدخول</a><a href="<?= ROOT ?>signup">إنشاء حساب</a></div>
                 <div class="footer-premium-col"><h4>تواصل معنا</h4><a href="#">الدعم الفني</a><a href="#">الأسئلة الشائعة</a><a href="#">سياسة الخصوصية</a></div>
             </div>

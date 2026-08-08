@@ -70,18 +70,23 @@
   var toolbarDots = $all(".toolbar__dot");
 
   function renderSpread() {
-    pageTextRight.textContent = bookPages[spreadIndex * 2] || "صفحة فارغة";
-    pageTextLeft.textContent = bookPages[spreadIndex * 2 + 1] || "صفحة فارغة";
-    
+    pageTextLeft.innerHTML = bookPages[spreadIndex * 2] || "";       // Physical Right
+    pageTextRight.innerHTML = bookPages[spreadIndex * 2 + 1] || "";  // Physical Left
+
     var rightPageNum = startBookPage + (spreadIndex * 2);
-    var leftPageNum = rightPageNum - 1;
+    var leftPageNum = rightPageNum + 1;
     currentPageNumber = rightPageNum;
-    
-    var rightPageEl = document.querySelector(".page--right .page__number");
-    var leftPageEl = document.querySelector(".page--left .page__number");
+
+    var rightPageEl = document.querySelector(".page--left .page__number"); // Physical Right
+    var leftPageEl = document.querySelector(".page--right .page__number"); // Physical Left
     if (rightPageEl) rightPageEl.textContent = rightPageNum;
     if (leftPageEl) leftPageEl.textContent = leftPageNum;
-    
+
+    // Update toolbar indicator
+    if (toolbarPageIndicator) {
+      toolbarPageIndicator.textContent = rightPageNum + " / " + totalBookPages;
+    }
+
     updateBookProgress();
   }
 
@@ -121,15 +126,16 @@
     isFlipping = true;
 
     // 1. Prepare the Flip Page Data
-    var flipContent = direction === "next" ? pageTextRight.textContent : pageTextLeft.textContent;
-    var flipPageNum = direction === "next" ? currentPageNumber : currentPageNumber - 1;
+    // In RTL, "next" means flipping the physical right page (.page--left / pageTextLeft)
+    var flipContent = direction === "next" ? pageTextLeft.innerHTML : pageTextRight.innerHTML;
+    var flipPageNum = direction === "next" ? currentPageNumber : currentPageNumber + 1;
     
-    var currentFontFamily = pageTextRight.style.fontFamily || "'Amiri', serif";
-    var currentFontSize = pageTextRight.style.fontSize || "19px";
-    var currentLineHeight = pageTextRight.style.lineHeight || "1.9";
+    var currentFontFamily = pageTextLeft.style.fontFamily || "'Amiri', serif";
+    var currentFontSize = pageTextLeft.style.fontSize || "19px";
+    var currentLineHeight = pageTextLeft.style.lineHeight || "1.9";
 
     [pageTextFront, pageTextBack].forEach(function(el) {
-      el.textContent = flipContent;
+      el.innerHTML = flipContent;
       el.style.fontFamily = currentFontFamily;
       el.style.fontSize = currentFontSize;
       el.style.lineHeight = currentLineHeight;

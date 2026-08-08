@@ -75,41 +75,78 @@ try {
 }
 
 // ============================================================
-// CURRENT CHAPTER (for associating new notes — does not affect
-// the existing chapter list styling/highlighting above)
+// CURRENT CHAPTER — resolve ID and fetch content
 // ============================================================
 $currentChapterId = null;
+$currentChapterContent = '';
+$currentChapterNumber = 1;
+
 if (isset($_GET['chapter'])) {
     $requestedChapterNumber = (int) $_GET['chapter'];
     foreach ($chapters as $ch) {
         if ((int) $ch['chapter_number'] === $requestedChapterNumber) {
             $currentChapterId = (int) $ch['id'];
+            $currentChapterNumber = (int) $ch['chapter_number'];
             break;
         }
+    }
+}
+
+// If no chapter requested, default to first chapter
+if (!$currentChapterId && !empty($chapters)) {
+    $currentChapterId = (int) $chapters[0]['id'];
+    $currentChapterNumber = (int) $chapters[0]['chapter_number'];
+}
+
+// Fetch the actual chapter content from DB
+if ($currentChapterId) {
+    try {
+        $contentStmt = $conn->prepare("SELECT content FROM chapters WHERE id = :id LIMIT 1");
+        $contentStmt->execute([':id' => $currentChapterId]);
+        $chRow = $contentStmt->fetch(PDO::FETCH_ASSOC);
+        if ($chRow && !empty($chRow['content'])) {
+            $currentChapterContent = $chRow['content'];
+        }
+    } catch (PDOException $e) {
+        error_log("Error fetching chapter content: " . $e->getMessage());
     }
 }
 
 // ============================================================
 // READING PROGRESS
 // ============================================================
+$totalChaptersCount = count($chapters);
 $progress = [
-    'current_page' => 128,
-    'total_pages' => $book['pages'] ?? 312,
-    'percentage' => 0,
-    'remaining_time' => '1h 35m'
+    'percentage' => $totalChaptersCount > 0 ? round(($currentChapterNumber / $totalChaptersCount) * 100) : 0,
 ];
-$progress['percentage'] = round(($progress['current_page'] / $progress['total_pages']) * 100);
 
 // ============================================================
-// GENERATE PAGES
+// SPLIT CONTENT INTO PAGES (preserve HTML formatting)
 // ============================================================
-$pages = [
-    "في تلك الحارة التي تمتد بين الجبل والصحراء، وُلدت الحكاية الأولى. كان أهلها لا يعرفون عن الفوتوة إلا أنه القانون الذي يحكم كل شيء، وأن الرضا بالقسمة هو السبيل الوحيد للنجاة من غضب الحارة.",
-    "قال الجبلاوي في وصيته: لن أترك لكم إلا هذا الوقف، فاحفظوه بينكم، ولا تجعلوا الطمع يفرقكم كما فرّق أولاد آدم من قبلكم. غير أن الوصية سرعان ما نُسيت، وحلّ مكانها صوت الأقوى.",
-    "مرّت الأجيال، وتغيّر الفتوات، وبقيت الحارة على حالها؛ تحلم بالعدل وتكتفي بالحكايات. حتى جاء عرفة يحمل قنينة سحرية، لا يعرف أحد ما بداخلها على وجه اليقين.",
-    "وفي ليلة من ليالي الشتاء، انطلقت صيحة مدوية من وسط الحارة. كان عرفة قد فتح القنينة أمام أعين الجميع، ولم يصدق أحد ما رأى. لكن الحقيقة كانت أبسط مما يتخيلون، وأعقد مما يحتملون.",
-    "ومنذ تلك اللحظة، تغير كل شيء. صارت الحارة تعرف أن السحر ليس في القنينة، بل في قلوب من يؤمنون بأن التغيير ممكن. وأن الفوتوة الحقيقية هي أن يقرر الإنسان أن يكون هو الفتوة."
-];
+$rawContent = !empty($currentChapterContent) ? $currentChapterContent : '<p>لا يوجد محتوى لهذا الفصل بعد.</p>';
+
+// Split by <\/p> tags while keeping the tag itself
+$parts = preg_split('/(<\/p>)/i', $rawContent, -1, PREG_SPLIT_DELIM_CAPTURE);
+$pages = [];
+$currentPage = '';
+foreach ($parts as $part) {
+    $currentPage .= $part;
+    if (strtolower(trim($part)) === '</p>') {
+        // Push page when it has enough text (>400 chars)
+        if (mb_strlen(strip_tags($currentPage), 'UTF-8') > 400) {
+            $pages[] = $currentPage;
+            $currentPage = '';
+        }
+    }
+}
+// Push any leftover content as final page (even if short)
+if (!empty(trim(strip_tags($currentPage)))) {
+    $pages[] = $currentPage;
+}
+// Ensure at least one page — if nothing split, treat entire content as one page
+if (empty($pages)) {
+    $pages = [$rawContent];
+}
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -143,7 +180,11 @@ $pages = [
         <svg viewBox="0 0 24 24" width="20" height="20"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 19l-7-7 7-7"/></svg>
         <span>العودة للكتاب</span>
       </a>
-      <a href="<?= ROOT ?>signup" class="navbar__cta">حسابي</a>
+      <?php if (!isset($_SESSION['user'])): ?>
+          <a href="<?= ROOT ?>signup" class="navbar__cta">حساب جديد</a>
+      <?php else: ?>
+          <a href="<?= ROOT ?>profile" class="navbar__cta" style="background:var(--gold-primary); color:#140b06;"><?= htmlspecialchars($_SESSION['user']['username']) ?></a>
+      <?php endif; ?>
     </div>
   </div>
 </header>
@@ -187,7 +228,7 @@ $pages = [
             <li class="chapter-row <?= $ch['chapter_number'] <= 2 ? 'chapter-row--completed' : ($ch['chapter_number'] == 3 ? 'chapter-row--current' : 'chapter-row--unread') ?>" 
                 data-title="<?= htmlspecialchars($ch['title']) ?>" 
                 tabindex="0"
-                onclick="location.href='reading.php?book_id=<?= $bookId ?>&chapter=<?= $ch['chapter_number'] ?>'">
+                onclick="location.href='<?= ROOT ?>reading?book_id=<?= $bookId ?>&chapter=<?= $ch['chapter_number'] ?>'">
               <span class="chapter-row__status" aria-hidden="true"></span>
               <span class="chapter-row__number"><?= sprintf('%02d', $ch['chapter_number']) ?></span>
               <span class="chapter-row__title"><?= htmlspecialchars($ch['title']) ?></span>
@@ -281,20 +322,20 @@ $pages = [
             <div class="book__spine-shadow"></div>
           </div>
 
-          <!-- Left Page (Previous Page) -->
+          <!-- Right Page (First Page) - physically on the right in RTL -->
           <div class="page page--left" id="pageLeft">
             <div class="page__inner">
               <div class="page__paper-texture"></div>
-              <p class="page__text" id="pageTextLeft"><?= nl2br(htmlspecialchars($pages[1] ?? '')) ?></p>
+              <div class="page__text" id="pageTextLeft" dir="rtl" style="text-align:right;"><?= $pages[0] ?? '' ?></div>
               <div class="page__number">1</div>
             </div>
           </div>
 
-          <!-- Right Page (Current Page - Reader is here) -->
+          <!-- Left Page (Second Page) - physically on the left in RTL -->
           <div class="page page--right" id="pageRight">
             <div class="page__inner">
               <div class="page__paper-texture"></div>
-              <p class="page__text" id="pageTextRight"><?= nl2br(htmlspecialchars($pages[0] ?? '')) ?></p>
+              <div class="page__text" id="pageTextRight" dir="rtl" style="text-align:right;"><?= $pages[1] ?? '' ?></div>
               <div class="page__number">2</div>
             </div>
           </div>
@@ -308,7 +349,7 @@ $pages = [
             <div class="page page-turn page-turn--front" id="pageTurnFront">
               <div class="page__inner page-turn-inner">
                 <div class="page__paper-texture"></div>
-                <p class="page__text" id="pageTextFront"></p>
+                <div class="page__text" id="pageTextFront" dir="rtl" style="text-align:right;"></div>
                 <div class="page__number" id="pageNumFront"></div>
               </div>
               <div class="page__thickness-edge"></div>
@@ -318,7 +359,7 @@ $pages = [
             <div class="page page-turn page-turn--back" id="pageTurnBack">
               <div class="page__inner page-turn-inner">
                 <div class="page__paper-texture"></div>
-                <p class="page__text" id="pageTextBack"></p>
+                <div class="page__text" id="pageTextBack" dir="rtl" style="text-align:right;"></div>
                 <div class="page__number" id="pageNumBack"></div>
               </div>
               <div class="page__thickness-edge"></div>
@@ -341,14 +382,14 @@ $pages = [
            FLOATING READING TOOLBAR WITH SETTINGS POPOVER
            ====================================================== -->
       <div class="toolbar glass-card" role="toolbar" aria-label="أدوات القراءة" id="readingToolbar"
-           data-total-pages="<?= (int) $progress['total_pages'] ?>" data-start-page="<?= (int) $progress['current_page'] ?>">
+           data-total-pages="<?= count($pages) ?>" data-start-page="1">
 
         <button class="toolbar__btn toolbar__btn--nav" id="prevPageBtn" aria-label="الصفحة السابقة">
           <svg viewBox="0 0 24 24" width="24" height="24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></svg>
         </button>
 
         <div class="toolbar__center">
-          <span class="toolbar__page-indicator" id="toolbarPageIndicator">2 / <?= $progress['total_pages'] ?></span>
+          <span class="toolbar__page-indicator" id="toolbarPageIndicator">1 / <?= count($pages) ?></span>
           <div class="toolbar__dots" id="toolbarDots" aria-hidden="true">
             <span class="toolbar__dot"></span><span class="toolbar__dot"></span><span class="toolbar__dot"></span><span class="toolbar__dot"></span><span class="toolbar__dot"></span>
           </div>
@@ -438,8 +479,7 @@ $pages = [
         </div>
         <div class="reading-progress__info">
           <span class="reading-progress__percent"><?= $progress['percentage'] ?>% مكتمل</span>
-          <span class="reading-progress__pages">صفحة <?= $progress['current_page'] ?> من <?= $progress['total_pages'] ?></span>
-          <span class="reading-progress__time">⏱ تبقى تقريباً <?= $progress['remaining_time'] ?></span>
+          <span class="reading-progress__pages">الفصل <?= $currentChapterNumber ?> من <?= $totalChaptersCount ?></span>
         </div>
         <div class="reading-progress__save">
           <span class="reading-progress__save-indicator">✓ تم حفظ تقدم القراءة تلقائياً</span>

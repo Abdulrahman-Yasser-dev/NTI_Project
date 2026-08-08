@@ -439,3 +439,27 @@ body {
         justify-content: center;
     }
 }
+
+@media (max-width: 600px) {
+    .profile-content-area {
+        padding: 20px;
+        min-height: 300px;
+    }
+    .books-grid {
+        grid-template-columns: 1fr;
+    }
+    .books-grid-simple {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 15px 10px;
+    }
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+    }
+    .profile-info-container {
+        margin-top: -60px;
+    }
+    .section-title {
+        font-size: 1.5rem;
+    }
+}
