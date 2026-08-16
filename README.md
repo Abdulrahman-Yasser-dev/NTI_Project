@@ -1,7 +1,7 @@
 <div align="center">
 
-<!-- IMAGE: Sard logo goes here -->
-![Sard Logo](PATH_TO_SARD_LOGO)
+<!-- NOTE: filename contains a space ("sarrdd Logo.png") — consider renaming to "sard-logo.png" to avoid rendering issues on GitHub -->
+![Sard Logo](public/assets/images/sarrdd%20Logo.png)
 
 # Sard (سرد)
 
