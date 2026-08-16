@@ -1,152 +1,402 @@
-.dashboard-container {
-  max-width: 1000px;
-  margin: 100px auto 50px;
-  padding: 40px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+/* ============================================================
+   SARD Author Dashboard Styles
+   ============================================================ */
+:root {
+    --sard-cream: #F7F1E8;
+    --sard-dark-brown: #3A2418;
+    --sard-dark-brown-hover: #4D3021;
+    --sard-gold: #D8A43A;
+    --sard-border: #E5D7C7;
+    --sard-text-main: #3A2418;
+    --sard-text-muted: #7A695D;
+    --sard-white: #FFFFFF;
+    --sard-shadow: 0 20px 60px rgba(44, 26, 14, 0.08);
 }
 
+/* FIX 1: Ensure the cream background spans the entire screen */
+html, body {
+    background-color: var(--sard-cream);
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Tajawal', sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ─── ISOLATED NAVBAR ─── */
+.navbar-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 0 10px;
+    box-sizing: border-box;
+    margin-top: 20px;
+}
+
+.navbar-premium {
+    width: min(92%, 1450px);
+    background: rgba(44, 26, 14, 0.92);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 0 2rem;
+    box-shadow: 0 10px 35px rgba(44,26,14,.15);
+    transition: .3s ease;
+    z-index: 1000;
+    box-sizing: border-box;
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    transform: none;
+    align-self: center;
+    margin: 0 auto;
+}
+
+/* ─── MAIN DASHBOARD CARD ─── */
+/* FIX 2: Added display: flex to force the card to center perfectly in RTL */
+.dashboard-wrapper {
+    width: min(92%, 1150px);
+    margin: 50px auto 70px;
+    display: flex;
+    flex-direction: column;
+    background: var(--sard-white);
+    border-radius: 24px;
+    padding: 42px 40px;
+    box-shadow: var(--sard-shadow);
+    border: 1px solid rgba(59, 36, 23, 0.04);
+    box-sizing: border-box;
+}
+
+/* ─── DASHBOARD HEADER ─── */
 .dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--sard-border);
 }
 
-.dashboard-header h1 {
-  color: #d4af37;
-  margin: 0;
+.header-left {
+    display: flex;
+    flex-direction: column;
 }
 
+.dashboard-title {
+    font-family: 'Cairo', sans-serif;
+    font-weight: 700;
+    font-size: 2.1rem;
+    color: var(--sard-gold);
+    margin: 0 0 6px 0;
+}
+
+.dashboard-subtitle {
+    color: var(--sard-text-muted);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* ─── ADD NOVEL BUTTON (Matches the Dark Brown from writer_application.php) ─── */
 .add-novel-btn {
-  background: #d4af37;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s;
+    background: var(--sard-dark-brown);
+    color: #FFFFFF;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 13px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.25s ease;
+    box-shadow: 0 6px 18px rgba(58, 36, 24, 0.14);
+    cursor: pointer;
+    white-space: nowrap;
 }
 
 .add-novel-btn:hover {
-  background: #b8962c;
-  color: #fff;
+    background: var(--sard-dark-brown-hover);
+    transform: translateY(-2px);
+    color: #FFFFFF;
+    box-shadow: 0 10px 25px rgba(58, 36, 24, 0.20);
 }
 
+/* ─── PREMIUM EMPTY STATE ─── */
+/* FIX 3: Added align-items: center to fix collapsing empty state in RTL */
+.empty-state {
+    text-align: center;
+    padding: 70px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    color: var(--sard-gold);
+    margin-bottom: 20px;
+}
+
+.empty-state h3 {
+    font-family: 'Cairo', sans-serif;
+    font-weight: 700;
+    color: var(--sard-text-main);
+    font-size: 1.6rem;
+    margin: 0 0 8px 0;
+}
+
+.empty-state p {
+    color: var(--sard-text-muted);
+    font-size: 1rem;
+    margin: 0 0 25px 0;
+}
+
+/* ─── NOVEL CARDS ─── */
 .novel-card {
-  display: flex;
-  border: 1px solid #eee;
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 20px;
-  gap: 20px;
-  align-items: center;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    border: 1px solid var(--sard-border);
+    border-radius: 16px;
+    background: #FFFEFC;
+    transition: all 0.2s ease;
+}
+
+.novel-card:last-child {
+    margin-bottom: 0;
+}
+
+.novel-card:hover {
+    border-color: var(--sard-gold);
+    box-shadow: 0 4px 15px rgba(44, 26, 14, 0.04);
 }
 
 .novel-cover {
-  width: 80px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 6px;
+    width: 70px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
 }
 
 .novel-info {
-  flex-grow: 1;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .novel-title {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 5px;
-  color: #333;
+    font-family: 'Cairo', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--sard-text-main);
+    margin: 0;
 }
 
 .novel-meta {
-  color: #666;
-  font-size: 0.9rem;
-  margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--sard-text-muted);
+    font-size: 0.85rem;
+    flex-wrap: wrap;
 }
 
 .status-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: bold;
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
 }
+.status-archived { background: #fcece5; color: #b26b42; }
+.status-published { background: #eaf1e7; color: #4a7842; }
+.status-draft { background: #f0f0f0; color: #666666; }
 
-.status-archived {
-  background: #fff3e0;
-  color: #e65100;
-}
-
-.status-published {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
-.status-draft {
-  background: #eeeeee;
-  color: #616161;
-}
-
+/* ─── ACTION BUTTONS ─── */
 .novel-actions {
-  display: flex;
-  gap: 10px;
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
 .action-btn {
-  padding: 8px 15px;
-  border-radius: 6px;
-  text-decoration: none;
-  font-size: 0.9rem;
-  background: #f5f5f5;
-  color: #333;
-  transition: 0.3s;
+    padding: 8px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: #f5f2ed;
+    color: var(--sard-text-main);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid transparent;
 }
 
 .action-btn:hover {
-  background: #e0e0e0;
+    background: #e8e0d6;
+    color: var(--sard-text-main);
 }
 
 .action-btn.primary {
-  background: #d4af37;
-  color: #fff;
+    background: var(--sard-dark-brown);
+    color: #FFFFFF;
+    border-color: var(--sard-dark-brown);
 }
 
 .action-btn.primary:hover {
-  background: #b8962c;
+    background: var(--sard-dark-brown-hover);
+    color: #FFFFFF;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(58, 36, 24, 0.15);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .dashboard-container {
-    padding: 20px;
-    margin: 20px;
-  }
-  .dashboard-header {
+/* ─── FOOTER (Darker Brown to match the Navbar) ─── */
+.site-footer.author-footer {
+    background: rgba(44, 26, 14, 0.92);
+    color: rgba(247, 241, 232, 0.7);
+    padding: 50px 6% 20px;
+    direction: rtl;
+    margin-top: auto;
+}
+
+.author-footer .footer-top {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: 32px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid rgba(231, 200, 119, 0.12);
+}
+
+/* ─── HERE IS THE UPDATE (Exactly like index.php) ─── */
+.author-footer .footer-brand .brand-name {
+    font-family: 'Aref Ruqaa', serif; /* نفس الخط */
+    font-weight: 700;                 /* نفس الوزن */
+    font-size: 1.8rem;                /* نفس الحجم */
+    color: #f6eed6;                   /* نفس اللون */
+}
+
+.author-footer .footer-brand p {
+    font-size: 0.85rem;
+    line-height: 1.9;
+    color: rgba(247, 241, 232, 0.5);
+}
+
+.author-footer .footer-col h4 {
+    font-size: 0.95rem;
+    color: #e7c877;
+    margin-bottom: 14px;
+    font-weight: 700;
+}
+
+.author-footer .footer-col ul {
+    list-style: none;
+    display: flex;
     flex-direction: column;
-    gap: 15px;
-    align-items: flex-start;
-  }
-  .novel-card {
-    flex-direction: column;
-    text-align: center;
-    gap: 15px;
-  }
-  .novel-actions {
-    width: 100%;
-    justify-content: center;
+    gap: 8px;
+}
+
+.author-footer .footer-col a {
+    color: rgba(247, 241, 232, 0.5);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+}
+
+.author-footer .footer-col a:hover {
+    color: #e7c877;
+}
+
+.author-footer .footer-bottom {
+    padding-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
-  }
-  .novel-cover {
-    margin: 0 auto;
-  }
+    gap: 10px;
+    font-size: 0.75rem;
+    color: rgba(247, 241, 232, 0.25);
+}
+
+@media (max-width: 800px) {
+    .author-footer .footer-top { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 500px) {
+    .author-footer .footer-top { grid-template-columns: 1fr; }
+    .author-footer .footer-bottom { justify-content: center; text-align: center; }
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 820px) {
+    .dashboard-wrapper {
+        padding: 30px 24px;
+        margin: 40px auto 50px;
+    }
+    .dashboard-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+    .add-novel-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .novel-card {
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+    }
+    .novel-actions {
+        width: 100%;
+        justify-content: flex-start;
+        padding-top: 4px;
+    }
+    .action-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 550px) {
+    .dashboard-wrapper {
+        padding: 24px 18px;
+        border-radius: 18px;
+    }
+    .dashboard-title { font-size: 1.7rem; }
+    .novel-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    .novel-cover {
+        margin: 0 auto;
+        width: 90px;
+        height: 130px;
+    }
+    .novel-meta {
+        justify-content: center;
+    }
+    .novel-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .navbar-premium {
+        padding: 0 1rem;
+        border-radius: 16px;
+        width: 96%;
+    }
+    .navbar-wrapper { padding: 0 5px; }
 }

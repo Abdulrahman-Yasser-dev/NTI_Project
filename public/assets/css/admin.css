@@ -1,209 +1,310 @@
+/* ============================================================
+   SARD Admin Dashboard CSS - Full-Width & Fixed Floating Sidebar
+   ============================================================ */
+
 :root {
-  --primary-bg: #f8f9fa;
-  --sidebar-bg: #1c2331;
-  --sidebar-text: #adb5bd;
-  --accent-color: #8b5a2b;
-  --accent-hover: #6a4421;
-  --card-bg: #ffffff;
-  --text-main: #333333;
+  /* SARD Color Palette */
+  --sard-paper: #F7F1E8;        
+  --sard-coffee: #3B281D;       
+  --sard-terracotta: #B96F4A;   
+  --sard-gold: #C9A23A;         
+  --sard-sage: #7D9275;         
+  --sard-rose: #A77C73;         
+  --sard-white: #FFFFFF;
+  --sard-text-main: #2E1C13;
+  --sard-text-muted: #726054;
+  
+  /* Bootstrap Overrides */
+  --bs-body-font-family: 'Tajawal', sans-serif;
+  --bs-headings-font-family: 'Cairo', sans-serif;
 }
 
 body {
-  font-family: "Tajawal", sans-serif;
-  background-color: var(--primary-bg);
-  color: var(--text-main);
-  overflow-x: hidden;
-}
-
-.header-title,
-.sidebar-heading {
-  font-family: "Amiri", serif;
-}
-
-#wrapper {
-  overflow-x: hidden;
-}
-
-#sidebar-wrapper {
+  background-color: var(--sard-paper);
+  color: var(--sard-text-main);
+  font-family: var(--bs-body-font-family);
   min-height: 100vh;
-  width: 250px;
-  background-color: var(--sidebar-bg);
-  color: var(--sidebar-text);
-  transition: margin 0.25s ease-out;
+  overflow-x: hidden;
 }
 
-#sidebar-wrapper .sidebar-heading {
-  padding: 1.5rem;
-  font-size: 1.5rem;
-  color: #fff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-#sidebar-wrapper .list-group {
-  width: 250px;
-}
-
-#sidebar-wrapper .list-group-item {
-  border: none;
-  padding: 1.2rem 1.5rem;
-  color: var(--sidebar-text);
-  transition: all 0.3s;
-  background-color: transparent;
-}
-
-#sidebar-wrapper .list-group-item:hover,
-#sidebar-wrapper .list-group-item.active {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  color: #fff !important;
-  border-right: 4px solid var(--accent-color);
-}
-
-#page-content-wrapper {
+/* ============================================================
+   WRAPPER & LAYOUT
+   ============================================================ */
+.dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  min-height: 100vh;
+  padding-right: 270px; /* Space for the fixed sidebar */
+  padding-top: 20px;
+  padding-left: 20px;
+  padding-bottom: 20px;
 }
 
-#wrapper.toggled #sidebar-wrapper {
-  margin-right: -250px;
+/* ============================================================
+   FLOATING TOP NAVBAR (Full Width)
+   ============================================================ */
+.top-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--sard-white);
+  border-radius: 16px;
+  padding: 16px 24px;
+  box-shadow: 0 4px 12px rgba(59, 40, 29, 0.05);
+  border: 1px solid rgba(59, 40, 29, 0.03);
+  width: 100%;
+  margin-bottom: 24px;
 }
 
-.navbar {
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02) !important;
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-title {
+  font-family: var(--bs-headings-font-family);
+  color: var(--sard-coffee);
+  font-weight: 700;
+  margin: 0;
 }
 
 #menu-toggle {
+  color: var(--sard-coffee);
   cursor: pointer;
-  color: var(--accent-color);
-  transition: color 0.3s;
+  transition: transform 0.2s;
+}
+#menu-toggle:hover { transform: scale(1.1); }
+
+.navbar-right {
+  display: flex;
+  align-items: center;
 }
 
-#menu-toggle:hover {
-  color: var(--accent-hover);
+/* ============================================================
+   FLOATING SIDEBAR (Fixed Position - Top Right)
+   ============================================================ */
+.floating-sidebar {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 230px;
+  height: calc(100vh - 40px);
+  background-color: var(--sard-coffee);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(59, 40, 29, 0.15);
+  padding: 24px 12px 20px 12px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  z-index: 1050; /* Stays above the content */
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
+/* Sidebar Logo */
+.sidebar-logo {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 16px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.sidebar-logo img {
+  max-width: 90px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Sidebar Links */
+.floating-sidebar .list-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.floating-sidebar .list-group-item {
+  background: transparent;
+  color: rgba(247, 241, 232, 0.7);
+  border: none;
+  transition: all 0.3s ease;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.floating-sidebar .list-group-item:hover {
+  color: var(--sard-paper);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+.floating-sidebar .list-group-item.active {
+  background-color: var(--sard-terracotta) !important;
+  color: var(--sard-white) !important;
+  box-shadow: 0 4px 12px rgba(185, 111, 74, 0.3);
+}
+.floating-sidebar .list-group-item.text-gold {
+  color: var(--sard-gold);
+}
+.floating-sidebar .list-group-item.text-gold:hover {
+  color: #dbb84d;
+}
+
+/* ============================================================
+   MAIN CONTENT AREA
+   ============================================================ */
+.main-content-area {
+  flex: 1;
+  width: 100%;
+}
+
+/* ============================================================
+   STATISTICS CARDS
+   ============================================================ */
 .stat-card {
-  transition:
-    transform 0.3s,
-    box-shadow 0.3s;
+  background: var(--sard-white);
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(59, 40, 29, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-
 .stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05) !important;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(59, 40, 29, 0.08);
 }
+.stat-card.card-users { border-bottom: 4px solid var(--sard-sage); }
+.stat-card.card-writers { border-bottom: 4px solid var(--sard-terracotta); }
+.stat-card.card-admins { border-bottom: 4px solid var(--sard-rose); }
+.stat-card.card-novels { border-bottom: 4px solid var(--sard-gold); }
 
-.border-bottom-primary {
-  border-bottom: 4px solid var(--accent-color) !important;
+.stat-card .icon-bg {
+  border-radius: 50%;
+  width: 50px; height: 50px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
 }
-.border-bottom-success {
-  border-bottom: 4px solid #198754 !important;
-}
-.border-bottom-warning {
-  border-bottom: 4px solid #ffc107 !important;
-}
-.border-bottom-info {
-  border-bottom: 4px solid #0dcaf0 !important;
-}
+.card-users .icon-bg { background: rgba(125, 146, 117, 0.15); color: var(--sard-sage); }
+.card-writers .icon-bg { background: rgba(185, 111, 74, 0.15); color: var(--sard-terracotta); }
+.card-admins .icon-bg { background: rgba(167, 124, 115, 0.15); color: var(--sard-rose); }
+.card-novels .icon-bg { background: rgba(201, 162, 58, 0.15); color: var(--sard-gold); }
 
-.text-primary-accent {
-  color: var(--accent-color) !important;
+/* ============================================================
+   TABLES
+   ============================================================ */
+.card {
+  background: var(--sard-white);
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(59, 40, 29, 0.04);
 }
 
 .table th {
-  font-weight: 600;
-  color: #6c757d;
-  border-bottom-width: 1px;
+  font-weight: 700;
+  color: var(--sard-coffee);
+  background-color: rgba(247, 241, 232, 0.5);
+  border-bottom: 1px solid rgba(59, 40, 29, 0.06);
+  font-size: 0.85rem;
 }
-
 .table td {
+  color: var(--sard-text-main);
+  border-bottom: 1px solid rgba(247, 241, 232, 0.5);
   vertical-align: middle;
 }
-
-#wrapper.toggled #sidebar-wrapper {
-  margin-right: 0;
+.table-hover tbody tr:hover {
+  background-color: rgba(247, 241, 232, 0.6);
+  transition: background-color 0.2s;
 }
 
-@media (max-width: 767.98px) {
-  #sidebar-wrapper {
-    position: fixed;
-    z-index: 1050;
-    height: 100%;
-  }
-}
-
-@media (min-width: 768px) {
-  #sidebar-wrapper {
-    margin-right: 0;
-  }
-
-  #page-content-wrapper {
-    min-width: 0;
-    width: 100%;
-  }
-
-  #wrapper.toggled #sidebar-wrapper {
-    margin-right: -250px;
-  }
-}
-
-.dropdown-toggle img {
-  object-fit: cover;
-  border: 2px solid var(--accent-color);
-  background-color: #fff;
-}
-
-/* Dashboard Utilities */
-.bg-light-primary {
-  background-color: rgba(139, 90, 43, 0.1) !important;
-}
-.bg-light-success {
-  background-color: rgba(25, 135, 84, 0.1) !important;
-}
-.bg-light-info {
-  background-color: rgba(13, 202, 240, 0.1) !important;
-}
-
+/* ============================================================
+   ROLE BADGES
+   ============================================================ */
 .role-badge-select {
-  appearance: none;
-  -webkit-appearance: none;
   border: none;
   outline: none;
-  cursor: pointer;
   border-radius: 50rem;
-  padding: 0.35em 0.9em;
-  font-size: 0.8em;
+  padding: 0.25rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: none;
+  color: #fff;
+}
+.role-badge-select.role-user { background-color: #8C7C71; }
+.role-badge-select.role-writer { background-color: var(--sard-terracotta); }
+.role-badge-select.role-admin { background-color: var(--sard-rose); }
+
+/* ============================================================
+   NAV TABS
+   ============================================================ */
+.nav-pills .nav-link {
+  color: var(--sard-text-muted);
   font-weight: 600;
-  line-height: 1;
-  text-align: center;
-  white-space: nowrap;
-  transition:
-    filter 0.15s ease,
-    transform 0.1s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-  min-width: 80px;
+  border-radius: 8px;
 }
-.role-badge-select:hover {
-  filter: brightness(0.92);
-  transform: scale(1.04);
+.nav-pills .nav-link.active {
+  background-color: var(--sard-terracotta);
+  color: var(--sard-white);
+  box-shadow: 0 4px 12px rgba(185, 111, 74, 0.2);
 }
-.role-badge-select:focus {
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.12);
+.nav-pills .nav-link:hover:not(.active) {
+  background-color: rgba(185, 111, 74, 0.1);
 }
-/* Color variants — matching Bootstrap badge colors */
-.role-badge-select.role-admin {
-  background-color: #dc3545;
-  color: #fff;
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+.text-gold { color: var(--sard-gold) !important; }
+.text-coffee { color: var(--sard-coffee) !important; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1200px) {
+  .dashboard-wrapper { padding-right: 20px; }
+  .floating-sidebar { width: 200px; }
 }
-.role-badge-select.role-writer {
-  background-color: #ffc107;
-  color: #212529;
+
+@media (max-width: 991px) {
+  .dashboard-wrapper {
+    padding-right: 20px;
+    padding-top: 20px;
+    padding-left: 20px;
+  }
+  .floating-sidebar {
+    position: relative;
+    top: 0; right: 0;
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    margin-bottom: 20px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 16px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(59, 40, 29, 0.08);
+  }
+  .floating-sidebar .list-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .floating-sidebar .list-group-item {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    border-radius: 30px;
+    margin: 2px;
+  }
+  .sidebar-logo {
+    width: 100%;
+    border-bottom: 0;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+  }
+  .sidebar-logo img { max-width: 70px; }
 }
-.role-badge-select.role-user {
-  background-color: #6c757d;
-  color: #fff;
-}
-/* Option text color reset */
-.role-badge-select option {
-  color: #212529;
-  background-color: #fff;
-  font-size: 0.9rem;
+
+@media (max-width: 576px) {
+  .top-navbar { border-radius: 12px; padding: 12px 16px; flex-wrap: wrap; }
+  .floating-sidebar { border-radius: 12px; }
+  .stat-card .icon-bg { width: 40px; height: 40px; font-size: 1.2rem; }
 }

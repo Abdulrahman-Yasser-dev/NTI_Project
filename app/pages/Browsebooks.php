@@ -128,7 +128,7 @@ foreach ($dbCategories as $cat) {
             <div class="navbar-premium-brand">
                 <a href="<?= ROOT ?>index" class="brand-premium-link">
                     <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد logo" class="brand-premium-logo">
-                    <span class="brand-premium-name">سرد</span>
+                    <span class="brand-premium-name"></span>
                 </a>
             </div>
             <ul class="nav-premium-links">
@@ -138,8 +138,8 @@ foreach ($dbCategories as $cat) {
             </ul>
             <div class="nav-premium-actions">
                 <?php if (!isset($_SESSION["user"])): ?>
-                    <a href="<?= ROOT ?>login" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
-                    <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-filled">إنشاء حساب</a>
+                    <a href="<?= ROOT ?>signup-login" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
+                    <a href="<?= ROOT ?>signup-login" class="nav-premium-btn nav-premium-btn-filled">إنشاء حساب</a>
                 <?php else: ?>
                     <?php if ($_SESSION["user"]["role"] == "admin"): ?>
                         <a href="<?= ROOT ?>admin" class="nav-premium-btn nav-premium-btn-outline">لوحة التحكم</a>
@@ -304,28 +304,44 @@ BOOKSHELVES — Full Width Redesign
     </main>
 
     <!-- ============================================================
-    FOOTER — Premium with Curve
+    FOOTER — Matches Author Dashboard Style
     ============================================================ -->
-    <footer class="footer-premium">
-        <div class="footer-premium-curve"></div>
-        <div class="footer-premium-content">
-            <div class="footer-premium-brand">
-                <span class="footer-premium-logo">سرد</span>
+    <footer class="site-footer author-footer">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <span class="brand-name">سرد</span>
                 <p>مكتبة عربية رقمية تجمع القرّاء والكتّاب في مكان واحد، احتفاءً بالأدب العربي بكل تنوعه.</p>
             </div>
-            <div class="footer-premium-links">
-                <div class="footer-premium-col">
-                    <h4>روابط سريعة</h4><a href="<?= ROOT ?>index">الرئيسية</a><a href="<?= ROOT ?>Browsebooks">المكتبة</a><a href="#">الكتّاب</a><?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a><?php else: ?><a href="<?= ROOT ?>writer_application">كن كاتبا</a><?php endif; ?>
-                </div>
-                <div class="footer-premium-col">
-                    <h4>حسابك</h4><a href="<?= ROOT ?>signup">تسجيل الدخول</a><a href="<?= ROOT ?>signup">إنشاء حساب</a>
-                </div>
-                <div class="footer-premium-col">
-                    <h4>تواصل معنا</h4><a href="#">الدعم الفني</a><a href="#">الأسئلة الشائعة</a><a href="#">سياسة الخصوصية</a>
-                </div>
+            <div class="footer-col">
+                <h4>روابط سريعة</h4>
+                <ul>
+                    <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
+                    <li><a href="<?= ROOT ?>Browsebooks">المكتبة</a></li>
+                    <li><a href="#">الكتّاب</a></li>
+                    <?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?>
+                        <li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li>
+                    <?php else: ?>
+                        <li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>حسابك</h4>
+                <ul>
+                    <li><a href="<?= ROOT ?>signup-login">تسجيل الدخول</a></li>
+                    <li><a href="<?= ROOT ?>signup-login">إنشاء حساب</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>تواصل معنا</h4>
+                <ul>
+                    <li><a href="#">الدعم الفني</a></li>
+                    <li><a href="#">الأسئلة الشائعة</a></li>
+                    <li><a href="#">سياسة الخصوصية</a></li>
+                </ul>
             </div>
         </div>
-        <div class="footer-premium-bottom">
+        <div class="footer-bottom">
             <span>© 2026 سرد. جميع الحقوق محفوظة.</span>
             <span>صُنع بحب لمحبي القراءة والكتابة العربية</span>
         </div>

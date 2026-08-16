@@ -93,47 +93,51 @@ if ($chapter_id) {
 
 <body>
 
-    <!-- NAVBAR PREMIUM (Copied from Browsebooks.php) -->
-    <nav class="navbar-premium" id="navbar">
-        <div class="navbar-premium-container">
-            <div class="navbar-premium-brand">
-                <a href="<?= ROOT ?>index" class="brand-premium-link">
-                    <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد logo" class="brand-premium-logo">
-                    <span class="brand-premium-name">سرد</span>
-                </a>
-            </div>
-            <ul class="nav-premium-links">
-                <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
-                <li><a href="<?= ROOT ?>Browsebooks">المكتبة</a></li>
-                <?php if (isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
-            </ul>
-            <div class="nav-premium-actions">
-                <?php if (!isset($_SESSION["user"])): ?>
-                    <a href="<?= ROOT ?>login" class="nav-btn glass">تسجيل الدخول</a>
-                    <a href="<?= ROOT ?>signup" class="nav-btn filled">إنشاء حساب</a>
-                <?php else: ?>
-                    <?php if ($_SESSION["user"]["role"] == "admin"): ?>
-                        <a href="<?= ROOT ?>admin" class="nav-btn glass">لوحة التحكم</a>
-                    <?php endif; ?>
-                    <div class="profile-dropdown">
-                        <button class="profile-toggle" onclick="toggleProfileMenu()">
-                            <?php if (!empty($_SESSION['user']['image'])): ?>
-                                <img src="<?= ROOT ?>assets/images/users/<?= htmlspecialchars($_SESSION['user']['image']) ?>" alt="avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
-                            <?php else: ?>
-                                <i class="fa-solid fa-user-circle"></i>
-                            <?php endif; ?>
-                            <span><?= htmlspecialchars($_SESSION["user"]["username"]) ?></span>
-                            <i class="fa-solid fa-chevron-down text-sm"></i>
-                        </button>
-                        <div class="profile-menu" id="profileMenu">
-                            <a href="<?= ROOT ?>profile"><i class="fa-solid fa-user"></i> حسابي</a>
-                            <a href="<?= ROOT ?>logout"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+    <!-- ============================================================
+    NAVBAR WRAPPER
+    ============================================================ -->
+    <div class="navbar-wrapper">
+        <nav class="navbar-premium" id="navbar">
+            <div class="navbar-premium-container">
+                <div class="navbar-premium-brand">
+                    <a href="<?= ROOT ?>index" class="brand-premium-link">
+                        <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد logo" class="brand-premium-logo">
+                        <span class="brand-premium-name">سرد</span>
+                    </a>
+                </div>
+                <ul class="nav-premium-links">
+                    <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
+                    <li><a href="<?= ROOT ?>Browsebooks">المكتبة</a></li>
+                    <?php if (isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
+                </ul>
+                <div class="nav-premium-actions">
+                    <?php if (!isset($_SESSION["user"])): ?>
+                        <a href="<?= ROOT ?>login" class="nav-btn glass">تسجيل الدخول</a>
+                        <a href="<?= ROOT ?>signup" class="nav-btn filled">إنشاء حساب</a>
+                    <?php else: ?>
+                        <?php if ($_SESSION["user"]["role"] == "admin"): ?>
+                            <a href="<?= ROOT ?>admin" class="nav-btn glass">لوحة التحكم</a>
+                        <?php endif; ?>
+                        <div class="profile-dropdown">
+                            <button class="profile-toggle" onclick="toggleProfileMenu()">
+                                <?php if (!empty($_SESSION['user']['image'])): ?>
+                                    <img src="<?= ROOT ?>assets/images/users/<?= htmlspecialchars($_SESSION['user']['image']) ?>" alt="avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                                <?php else: ?>
+                                    <i class="fa-solid fa-user-circle"></i>
+                                <?php endif; ?>
+                                <span><?= htmlspecialchars($_SESSION["user"]["username"]) ?></span>
+                                <i class="fa-solid fa-chevron-down text-sm"></i>
+                            </button>
+                            <div class="profile-menu" id="profileMenu">
+                                <a href="<?= ROOT ?>profile"><i class="fa-solid fa-user"></i> حسابي</a>
+                                <a href="<?= ROOT ?>logout"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+                            </div>
                         </div>
-                    </div>
-                <?php endif; ?>
+                    <?php endif; ?>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
+    </div>
 
     <main class="editor-premium-hall">
 
@@ -209,32 +213,9 @@ if ($chapter_id) {
         <input type="hidden" name="isPublished" id="formIsPublished">
     </form>
 
-    <!-- FOOTER PREMIUM (Copied from Browsebooks.php) -->
-    <footer class="footer-premium">
-        <div class="footer-premium-curve"></div>
-        <div class="footer-premium-content">
-            <div class="footer-premium-brand">
-                <span class="footer-premium-logo">سرد</span>
-                <p>مكتبة عربية رقمية تجمع القرّاء والكتّاب في مكان واحد، احتفاءً بالأدب العربي بكل تنوعه.</p>
-            </div>
-            <div class="footer-premium-links">
-                <div class="footer-premium-col">
-                    <h4>روابط سريعة</h4><a href="<?= ROOT ?>index">الرئيسية</a><a href="<?= ROOT ?>Browsebooks">المكتبة</a><a href="#">الكتّاب</a><?php if (isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a><?php else: ?><a href="<?= ROOT ?>writer_application">كن كاتبا</a><?php endif; ?>
-                </div>
-                <div class="footer-premium-col">
-                    <h4>حسابك</h4><a href="<?= ROOT ?>signup">تسجيل الدخول</a><a href="<?= ROOT ?>signup">إنشاء حساب</a>
-                </div>
-                <div class="footer-premium-col">
-                    <h4>تواصل معنا</h4><a href="#">الدعم الفني</a><a href="#">الأسئلة الشائعة</a><a href="#">سياسة الخصوصية</a>
-                </div>
-            </div>
-        </div>
-        <div class="footer-premium-bottom">
-            <span>© 2026 سرد. جميع الحقوق محفوظة.</span>
-            <span>صُنع بحب لمحبي القراءة والكتابة العربية</span>
-        </div>
-    </footer>
-
+    <!-- ============================================================
+    JAVASCRIPT
+    ============================================================ -->
     <script>
         // ─── Navbar scroll ───────────────────────────────────────────────────────
         window.addEventListener('scroll', () => {

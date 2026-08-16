@@ -93,7 +93,7 @@ foreach ($books as $book) {
   <nav class="navbar" id="navbar">
     <a href="<?= ROOT ?>index" class="nav-brand">
       <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد">
-      <span>سرد</span>
+      <span></span>
     </a>
     <ul class="nav-links">
       <li><a href="<?= ROOT ?>index" class="active">الرئيسية</a></li>
@@ -102,8 +102,8 @@ foreach ($books as $book) {
     </ul>
     <div class="nav-actions">
       <?php if(!isset($_SESSION["user"])):?>
-      <a href="<?= ROOT ?>login" class="nav-btn glass">تسجيل الدخول</a>
-      <a href="<?= ROOT ?>signup" class="nav-btn filled">إنشاء حساب</a>
+      <a href="<?= ROOT ?>signup-login" class="nav-btn glass">تسجيل الدخول</a>
+      <a href="<?= ROOT ?>signup-login" class="nav-btn filled">إنشاء حساب</a>
       <?php else: ?>
         <?php if($_SESSION["user"]["role"]== "admin"):?>
           <a href="<?= ROOT ?>admin" class="nav-btn glass">لوحة التحكم</a>
@@ -192,7 +192,7 @@ foreach ($books as $book) {
           سرد يفتح لك بابًا للوصول إلى قرّاء حقيقيين يبحثون عن أعمال جديدة تستحق القراءة.
           شارك رواياتك وأعمالك مع مجتمع من القرّاء، واحصل على انتشار وتقدير أوسع لأسلوبك ككاتب عربي.
         </p>
-        <a href="<?= ROOT ?>signup?role=writer" class="info-cta">انشر أعمالك</a>
+        <a href="<?= ROOT ?>signup-login?tab=signup&role=writer" class="info-cta">انشر أعمالك</a>
       </div>
     </div>
   </section>
@@ -202,7 +202,7 @@ foreach ($books as $book) {
     <div class="footer-top">
       <div class="footer-brand"><span class="brand-name">سرد</span><p>مكتبة عربية رقمية تجمع القرّاء والكتّاب في مكان واحد، احتفاءً بالأدب العربي بكل تنوعه.</p></div>
       <div class="footer-col"><h4>روابط سريعة</h4><ul><li><a href="<?= ROOT ?>index">الرئيسية</a></li><li><a href="<?= ROOT ?>Browsebooks">تصفح الكتب</a></li><li><a href="#">الكتّاب</a></li><?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?></ul></div>
-      <div class="footer-col"><h4>حسابك</h4><ul><li><a href="<?= ROOT ?>signup">تسجيل الدخول</a></li><li><a href="<?= ROOT ?>signup">إنشاء حساب</a></li></ul></div>
+      <div class="footer-col"><h4>حسابك</h4><ul><li><a href="<?= ROOT ?>signup-login">تسجيل الدخول</a></li><li><a href="<?= ROOT ?>signup-login?tab=signup">إنشاء حساب</a></li></ul></div>
       <div class="footer-col"><h4>تواصل معنا</h4><ul><li><a href="#">الدعم الفني</a></li><li><a href="#">الأسئلة الشائعة</a></li><li><a href="#">سياسة الخصوصية</a></li></ul></div>
     </div>
     <div class="footer-bottom"><span>© 2026 سرد. جميع الحقوق محفوظة.</span><span>صُنع بحب لمحبي القراءة والكتابة العربية</span></div>

@@ -167,7 +167,7 @@ if (empty($pages)) {
   <div class="navbar__inner">
     <a href="<?= ROOT ?>index" class="navbar__logo">
       <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد">
-      <span>سرد</span>
+      <span></span>
     </a>
     <nav class="navbar__links" aria-label="التنقل الرئيسي">
       <a href="<?= ROOT ?>index">الرئيسية</a>
