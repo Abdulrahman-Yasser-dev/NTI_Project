@@ -89,49 +89,57 @@ $cover_image = !empty($novel['cover_image'])
 
 <body>
 
-    <!-- NAVBAR PREMIUM (Copied from Browsebooks.php) -->
-    <nav class="navbar-premium" id="navbar">
-        <div class="navbar-premium-container">
-            <div class="navbar-premium-brand">
-                <a href="<?= ROOT ?>index" class="brand-premium-link">
-                    <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد logo" class="brand-premium-logo">
-                    <span class="brand-premium-name">سرد</span>
-                </a>
-            </div>
-            <ul class="nav-premium-links">
-                <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
-                <li><a href="<?= ROOT ?>Browsebooks">المكتبة</a></li>
-                <?php if (isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
-            </ul>
-            <div class="nav-premium-actions">
-                <?php if (!isset($_SESSION["user"])): ?>
-                    <a href="<?= ROOT ?>login" class="nav-btn glass">تسجيل الدخول</a>
-                    <a href="<?= ROOT ?>signup" class="nav-btn filled">إنشاء حساب</a>
-                <?php else: ?>
-                    <?php if ($_SESSION["user"]["role"] == "admin"): ?>
-                        <a href="<?= ROOT ?>admin" class="nav-btn glass">لوحة التحكم</a>
-                    <?php endif; ?>
-                    <div class="profile-dropdown">
-                        <button class="profile-toggle" onclick="toggleProfileMenu()">
-                            <?php if (!empty($_SESSION['user']['image'])): ?>
-                                <img src="<?= ROOT ?>assets/images/users/<?= htmlspecialchars($_SESSION['user']['image']) ?>" alt="avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
-                            <?php else: ?>
-                                <i class="fa-solid fa-user-circle"></i>
-                            <?php endif; ?>
-                            <span><?= htmlspecialchars($_SESSION["user"]["username"]) ?></span>
-                            <i class="fa-solid fa-chevron-down text-sm"></i>
-                        </button>
-                        <div class="profile-menu" id="profileMenu">
-                            <a href="<?= ROOT ?>profile"><i class="fa-solid fa-user"></i> حسابي</a>
-                            <a href="<?= ROOT ?>logout"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+    <!-- ============================================================
+    NAVBAR WRAPPER
+    ============================================================ -->
+    <div class="navbar-wrapper">
+        <nav class="navbar-premium" id="navbar">
+            <div class="navbar-premium-container">
+                <div class="navbar-premium-brand">
+                    <a href="<?= ROOT ?>index" class="brand-premium-link">
+                        <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد logo" class="brand-premium-logo">
+                        <span class="brand-premium-name">سرد</span>
+                    </a>
+                </div>
+                <ul class="nav-premium-links">
+                    <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
+                    <li><a href="<?= ROOT ?>Browsebooks">المكتبة</a></li>
+                    <?php if (isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?><li><a href="<?= ROOT ?>author_dashboard">لوحة الكاتب</a></li><?php else: ?><li><a href="<?= ROOT ?>writer_application">كن كاتبا</a></li><?php endif; ?>
+                </ul>
+                <div class="nav-premium-actions">
+                    <?php if (!isset($_SESSION["user"])): ?>
+                        <a href="<?= ROOT ?>login" class="nav-btn glass">تسجيل الدخول</a>
+                        <a href="<?= ROOT ?>signup" class="nav-btn filled">إنشاء حساب</a>
+                    <?php else: ?>
+                        <?php if ($_SESSION["user"]["role"] == "admin"): ?>
+                            <a href="<?= ROOT ?>admin" class="nav-btn glass">لوحة التحكم</a>
+                        <?php endif; ?>
+                        <div class="profile-dropdown">
+                            <button class="profile-toggle" onclick="toggleProfileMenu()">
+                                <?php if (!empty($_SESSION['user']['image'])): ?>
+                                    <img src="<?= ROOT ?>assets/images/users/<?= htmlspecialchars($_SESSION['user']['image']) ?>" alt="avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                                <?php else: ?>
+                                    <i class="fa-solid fa-user-circle"></i>
+                                <?php endif; ?>
+                                <span><?= htmlspecialchars($_SESSION["user"]["username"]) ?></span>
+                                <i class="fa-solid fa-chevron-down text-sm"></i>
+                            </button>
+                            <div class="profile-menu" id="profileMenu">
+                                <a href="<?= ROOT ?>profile"><i class="fa-solid fa-user"></i> حسابي</a>
+                                <a href="<?= ROOT ?>logout"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+                            </div>
                         </div>
-                    </div>
-                <?php endif; ?>
+                    <?php endif; ?>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
+    </div>
 
+    <!-- ============================================================
+    MAIN CONTENT
+    ============================================================ -->
     <main class="chapters-premium-hall">
+        
         <!-- Sidebar -->
         <aside class="premium-sidebar">
             <div class="cover-container">
@@ -210,10 +218,10 @@ $cover_image = !empty($novel['cover_image'])
                     <span>كتابة فصل جديد</span>
                 </a>
             <?php else: ?>
-                <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px;">
+                <div class="status-message">
                     <i class="fas fa-clock text-warning" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                    <h4 style="color: #664d03; font-family: 'Aref Ruqaa', serif; margin-bottom: 5px;">قيد المراجعة</h4>
-                    <p style="color: #664d03; margin: 0; font-size: 0.95rem;">هذه الرواية قيد المراجعة من قبل الإدارة. لا يمكنك إضافة فصول جديدة حتى يتم الموافقة عليها ونشرها.</p>
+                    <h4>قيد المراجعة</h4>
+                    <p>هذه الرواية قيد المراجعة من قبل الإدارة. لا يمكنك إضافة فصول جديدة حتى يتم الموافقة عليها ونشرها.</p>
                 </div>
             <?php endif; ?>
 
@@ -240,7 +248,7 @@ $cover_image = !empty($novel['cover_image'])
                                 <h4>
                                     <?= htmlspecialchars($chapter['title']) ?>
                                     <?php if ($isDraft): ?>
-                                        <span style="background: var(--gold-glow); color: var(--gold); padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; margin-right: 8px;">مسودة</span>
+                                        <span class="status-badge-draft">مسودة</span>
                                     <?php endif; ?>
                                 </h4>
                                 <div class="chapter-meta">
@@ -251,21 +259,23 @@ $cover_image = !empty($novel['cover_image'])
                             </div>
                         </div>
                         <div class="chapter-actions">
-                            <a href="<?= ROOT ?>write_new_chapter_existing_novel/<?= $novel_id ?>/<?= $chapter['id'] ?>" class="btn" title="تعديل الفصل" style="background:none; border:none; color:inherit; cursor:pointer;">
+                            <a href="<?= ROOT ?>write_new_chapter_existing_novel/<?= $novel_id ?>/<?= $chapter['id'] ?>" class="btn" title="تعديل الفصل">
                                 <i class="fas fa-pencil-alt"></i>
                             </a>
                         </div>
                     </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <div style="text-align: center; color: var(--text-soft); padding: 40px; background: #fff; border-radius: 16px; border: 1px dashed rgba(44,26,14,0.1);">
+                <div class="empty-chapters-message">
                     لا يوجد فصول لهذه الرواية حتى الآن. ابدأ بكتابة الفصل الأول!
                 </div>
             <?php endif; ?>
         </section>
     </main>
 
-    <!-- FOOTER PREMIUM (Copied from Browsebooks.php) -->
+    <!-- ============================================================
+    FOOTER WRAPPER
+    ============================================================ -->
     <footer class="footer-premium">
         <div class="footer-premium-curve"></div>
         <div class="footer-premium-content">
@@ -293,7 +303,9 @@ $cover_image = !empty($novel['cover_image'])
         </div>
     </footer>
 
-    <!-- Settings Modal -->
+    <!-- ============================================================
+    SETTINGS MODAL
+    ============================================================ -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal-content">
             <button class="modal-close" id="closeSettingsBtn"><i class="fas fa-times"></i></button>
@@ -338,6 +350,9 @@ $cover_image = !empty($novel['cover_image'])
         </div>
     </div>
 
+    <!-- ============================================================
+    JAVASCRIPT
+    ============================================================ -->
     <script>
         // Navbar Scroll
         window.addEventListener('scroll', () => {
@@ -383,7 +398,6 @@ $cover_image = !empty($novel['cover_image'])
             const item = e.target.closest('.chapter-premium-item[draggable]');
             if (!item) return;
             dragSrc = item;
-            // Small delay so browser snapshot is taken before we add class
             requestAnimationFrame(() => item.classList.add('dragging'));
         });
 
@@ -417,7 +431,6 @@ $cover_image = !empty($novel['cover_image'])
             const srcIdx = items.indexOf(dragSrc);
             const tgtIdx = items.indexOf(target);
 
-            // Insert before or after based on position
             if (srcIdx < tgtIdx) {
                 target.after(dragSrc);
             } else {
@@ -426,7 +439,6 @@ $cover_image = !empty($novel['cover_image'])
 
             target.classList.remove('drag-over');
 
-            // Brief highlight to confirm drop
             dragSrc.style.transition = 'box-shadow 0.3s ease';
             dragSrc.style.boxShadow = '0 0 0 3px rgba(212, 166, 74, 0.4)';
             setTimeout(() => {
@@ -434,55 +446,45 @@ $cover_image = !empty($novel['cover_image'])
             }, 600);
         });
 
-        // ---------------------------------------------------
         // Sort Dropdown & Logic
-        // ---------------------------------------------------
         const sortToggleBtn = document.getElementById('sortToggleBtn');
         const sortDropdown = document.getElementById('sortDropdown');
         const sortLabel = document.getElementById('sortLabel');
         const sortOptions = document.querySelectorAll('.sort-option');
 
-        // Toggle dropdown
         sortToggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             sortDropdown.classList.toggle('open');
         });
 
-        // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (!sortToggleBtn.contains(e.target) && !sortDropdown.contains(e.target)) {
                 sortDropdown.classList.remove('open');
             }
         });
 
-        // Handle sort options
         sortOptions.forEach(option => {
             option.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const sortType = option.getAttribute('data-sort');
 
-                // Update UI
                 sortOptions.forEach(opt => opt.classList.remove('active'));
                 option.classList.add('active');
                 sortDropdown.classList.remove('open');
 
-                // Update label based on selection
                 if (sortType === 'manual') sortLabel.textContent = 'ترتيب يدوي';
                 else if (sortType.startsWith('title')) sortLabel.textContent = 'ترتيب أبجدي';
                 else if (sortType.startsWith('date')) sortLabel.textContent = 'ترتيب بالزمن';
                 else if (sortType.startsWith('words')) sortLabel.textContent = 'ترتيب بالكلمات';
 
-                // Perform sorting
                 sortChapters(sortType);
             });
         });
 
         function sortChapters(sortType) {
-            // Get all items except the "Add New" button and list header
             const container = document.querySelector('.premium-main');
             const items = Array.from(container.querySelectorAll('.chapter-premium-item'));
 
-            // Re-enable or disable drag based on mode
             const isManual = sortType === 'manual';
             items.forEach(item => {
                 item.setAttribute('draggable', isManual);
@@ -493,16 +495,9 @@ $cover_image = !empty($novel['cover_image'])
                 }
             });
 
-            if (isManual) {
-                // We cannot "restore" manual order easily without saving it, 
-                // but usually switching to manual just leaves them where they are 
-                // and allows dragging again.
-                return;
-            }
+            if (isManual) return;
 
-            // Perform actual sort
             items.sort((a, b) => {
-                // Drafts always at the bottom? Optional. For now we sort everything.
                 if (sortType === 'title-asc') {
                     return a.dataset.title.localeCompare(b.dataset.title, 'ar');
                 } else if (sortType === 'title-desc') {
@@ -519,7 +514,6 @@ $cover_image = !empty($novel['cover_image'])
                 return 0;
             });
 
-            // Re-append in new order (DOM automatically moves them)
             items.forEach(item => container.appendChild(item));
         }
     </script>

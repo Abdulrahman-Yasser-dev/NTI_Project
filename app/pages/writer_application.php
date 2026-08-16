@@ -77,183 +77,402 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($successMessage)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>كن كاتباً — سرد</title>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <!-- Global CSS for consistency -->
-    <link rel="stylesheet" href="<?= ROOT ?>assets/css/index.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <!-- Shared Browsebooks CSS -->
+    <link rel="stylesheet" href="<?= ROOT ?>assets/css/Browsebooks.css" />
+    
     <style>
-        .application-container {
-            max-width: 800px;
-            margin: 100px auto 50px;
-            padding: 40px;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        /* ─── RESET & PAGE BACKGROUND ─── */
+        body {
+            background-color: #F7F1E8; /* SARD warm cream */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0; 
+            margin: 0;
+            font-family: 'Tajawal', sans-serif;
         }
+
+        /* ============================================================
+           ISOLATED NAVBAR (OVERRIDE FOR FIXED)
+           ============================================================ */
+        .navbar-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 0 10px;
+            box-sizing: border-box;
+            margin-top: 20px;
+        }
+
+        .navbar-premium {
+            width: min(92%, 1450px);
+            background: rgba(44, 26, 14, 0.92);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 0 2rem;
+            box-shadow: 0 10px 35px rgba(44,26,14,.15);
+            transition: .3s ease;
+            z-index: 1000;
+            box-sizing: border-box;
+            /* CRITICAL: Overrides the 'fixed' property from Browsebooks.css */
+            position: relative !important; 
+            left: 0 !important;
+            right: 0 !important;
+            top: 0 !important;
+            transform: none !important;
+            align-self: center; 
+            margin: 0 auto;
+        }
+        .navbar-premium-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            min-height: 68px;
+        }
+
+        /* ============================================================
+           HERO GRID - IMAGE LEFT, FORM RIGHT
+           ============================================================ */
+        .writer-hero {
+            width: min(92%, 1300px);
+            /* EXACT FIX: Forces the hero down 65px to create the visible cream gap */
+            margin: 65px auto 70px;
+            display: grid;
+            grid-template-columns: 1fr 0.85fr;
+            gap: 65px;
+            align-items: center;
+            /* Forces visual grid to LTR so Column 1 = Left, Column 2 = Right */
+            direction: ltr;
+        }
+
+        /* ─── LEFT COLUMN: WRITER ILLUSTRATION ─── */
+        .writer-image-col {
+            grid-column: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            direction: rtl;
+            /* Fine tuning: 15px downward shift to align visual center with the form */
+            padding-top: 15px;
+        }
+
+        .writer-illustration {
+            width: 100%;
+            max-width: 700px;
+            height: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        /* ─── RIGHT COLUMN: FORM ─── */
+        .writer-form-col {
+            grid-column: 2;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding-top: 0;
+            direction: rtl;
+            /* Ensure no negative margins are shifting this element up */
+            margin-top: 0;
+        }
+
+        .application-card {
+            width: 100%;
+            max-width: 500px;
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 36px 32px;
+            box-shadow: 0 20px 60px rgba(44, 26, 14, 0.08);
+            border: 1px solid rgba(59, 36, 23, 0.04);
+            box-sizing: border-box;
+            /* Ensure no hidden transformations are shifting this element */
+            transform: none !important;
+        }
+
+        /* ─── FORM TYPOGRAPHY ─── */
         .application-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 28px;
         }
         .application-header h1 {
-            color: #d4af37; /* Gold */
-            margin-bottom: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 700;
+            font-size: 1.85rem;
+            color: #3A2418;
+            margin: 0 0 10px;
+            line-height: 1.5;
+        }
+        .application-header h1 i {
+            color: #D8A43A;
+            margin-left: 8px;
         }
         .application-header p {
-            color: #666;
-            font-size: 1.1rem;
+            color: #7A695D;
+            font-size: 0.92rem;
+            line-height: 1.8;
+            margin: 0;
         }
+
+        /* ─── FORM INPUTS ─── */
         .form-group {
             margin-bottom: 20px;
         }
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 500;
-            color: #333;
+            font-weight: 600;
+            color: #2C1A0E;
+            font-size: 0.95rem;
         }
         .form-control {
             width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 15px 17px;
+            border: 1px solid #E5D7C7;
+            border-radius: 13px;
+            background: #FFFEFC;
+            color: #2C1A0E;
             font-family: 'Tajawal', sans-serif;
-            font-size: 1rem;
-            transition: all 0.3s ease;
+            font-size: 0.98rem;
+            transition: all 0.25s ease;
+            box-sizing: border-box;
+        }
+        .form-control::placeholder {
+            color: #A8988A;
+        }
+        .form-control:hover {
+            border-color: #D6C3AE;
         }
         .form-control:focus {
-            border-color: #d4af37;
+            border-color: #D8A43A;
+            background: #FFFFFF;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+            box-shadow: 0 0 0 4px rgba(216, 164, 58, 0.10);
         }
         textarea.form-control {
             resize: vertical;
             min-height: 120px;
         }
+
+        /* ─── SUBMIT BUTTON ─── */
         .submit-btn {
-            background: #d4af37;
-            color: #fff;
+            background: #3A2418;
+            color: #FFFFFF;
             border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-family: 'Tajawal', sans-serif;
+            padding: 15px 30px;
+            border-radius: 13px;
+            font-size: 1rem;
+            font-family: 'Cairo', sans-serif;
             cursor: pointer;
             width: 100%;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            font-weight: 700;
+            transition: all 0.25s ease;
+            box-shadow: 0 6px 18px rgba(58, 36, 24, 0.14);
+            margin-top: 8px;
         }
         .submit-btn:hover {
-            background: #b8962c;
+            background: #4D3021;
             transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(58, 36, 24, 0.20);
         }
+
+        /* ─── ALERTS ─── */
         .alert {
-            padding: 15px;
-            border-radius: 8px;
+            padding: 16px 24px;
+            border-radius: 12px;
             margin-bottom: 20px;
             text-align: center;
-            font-weight: 500;
+            font-weight: 600;
+            border: 1px solid transparent;
+            font-family: 'Tajawal', sans-serif;
         }
         .alert-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #c8e6c9;
+            background: #F0F4EB;
+            color: #3A5A2F;
+            border-color: #D7E3CC;
         }
         .alert-error {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
+            background: #FBECEB;
+            color: #962C2C;
+            border-color: #F3D8D7;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 1100px) {
+            .writer-hero { gap: 50px; }
+            .writer-illustration { max-width: 580px; }
+        }
+
+        @media (max-width: 820px) {
+            .writer-hero {
+                width: 92%;
+                grid-template-columns: 1fr;
+                gap: 35px;
+                margin-top: 45px; /* Slightly less gap on tablet */
+                margin-bottom: 45px;
+                direction: ltr;
+            }
+            .writer-form-col {
+                grid-column: 1;
+                justify-content: center;
+                direction: rtl;
+                padding-top: 0;
+            }
+            .application-card { max-width: 520px; }
+            
+            .writer-image-col {
+                grid-column: 1;
+                justify-content: center;
+                direction: rtl;
+                max-width: 500px;
+                margin: 0 auto;
+            }
+            .writer-illustration { max-width: 500px; }
+        }
+
+        @media (max-width: 550px) {
+            .application-card { padding: 28px 20px; border-radius: 18px; }
+            .application-header h1 { font-size: 1.5rem; }
+            .application-header p { font-size: 0.88rem; }
+            .writer-illustration { max-width: 100%; }
+            .navbar-premium { padding: 0 1rem; border-radius: 16px; width: 96%; }
+            .navbar-wrapper { padding: 0 5px; }
         }
     </style>
 </head>
 <body>
-    
-    <!-- Navbar (simplified for this page) -->
-                <nav class="navbar" id="navbar" style="background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 15px 5%;">
-        <a href="<?= ROOT ?>index" class="nav-brand" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
-            <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد" style="height: 40px;">
-            <span style="font-family: 'Aref Ruqaa', serif; font-size: 1.5rem; color: #8b5a2b; font-weight: bold;">سرد</span>
-        </a>
-        <ul class="nav-links" style="display: flex; gap: 20px; list-style: none; margin: 0; padding: 0;">
-            <li><a href="<?= ROOT ?>index" style="text-decoration: none; color: #333; font-weight: 500;">الرئيسية</a></li>
-            <li><a href="<?= ROOT ?>Browsebooks" style="text-decoration: none; color: #333; font-weight: 500;">تصفح الكتب</a></li>
-            <?php if(isset($_SESSION["user"]) && $_SESSION["user"]["role"] === "writer"): ?>
-                <li><a href="<?= ROOT ?>author_dashboard" style="text-decoration: none; color: #8b5a2b; font-weight: 600;">لوحة الكاتب</a></li>
-            <?php else: ?>
-                <li><a href="<?= ROOT ?>writer_application" style="text-decoration: none; color: #8b5a2b; font-weight: 600;">كن كاتبا</a></li>
-            <?php endif; ?>
-        </ul>
-        <div class="nav-actions" style="display: flex; gap: 15px; align-items: center;">
-            <?php if(!isset($_SESSION["user"])):?>
-                <a href="<?= ROOT ?>login" class="nav-btn glass" style="text-decoration: none; padding: 8px 20px; border-radius: 20px; border: 1px solid #8b5a2b; color: #8b5a2b;">تسجيل الدخول</a>
-                <a href="<?= ROOT ?>signup" class="nav-btn filled" style="text-decoration: none; padding: 8px 20px; border-radius: 20px; background: #8b5a2b; color: white;">إنشاء حساب</a>
-            <?php else: ?>
-                <?php if($_SESSION["user"]["role"]== "admin"):?>
-                    <a href="<?= ROOT ?>admin" class="nav-btn glass" style="text-decoration: none; padding: 8px 20px; border-radius: 20px; border: 1px solid #8b5a2b; color: #8b5a2b;">لوحة التحكم</a>
-                <?php endif; ?>
-                <div class="profile-dropdown" style="position: relative;">
-                    <button class="profile-toggle" onclick="this.nextElementSibling.classList.toggle('show')" style="background: none; border: none; display: flex; align-items: center; gap: 8px; cursor: pointer; font-family: inherit;">
-                        <?php if(!empty($_SESSION['user']['image'])): ?>
-                            <img src="<?= ROOT ?>assets/images/users/<?= htmlspecialchars($_SESSION['user']['image']) ?>" alt="avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
-                        <?php else: ?>
-                            <i class="fa-solid fa-user-circle" style="font-size: 1.5rem; color: #8b5a2b;"></i>
+
+    <!-- ============================================================
+    ISOLATED NAVBAR CONTAINER
+    ============================================================ -->
+    <div class="navbar-wrapper">
+        <nav class="navbar-premium" id="navbar">
+            <div class="navbar-premium-container">
+                
+                <div class="navbar-premium-brand">
+                    <a href="<?= ROOT ?>index" class="brand-premium-link">
+                        <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد logo" class="brand-premium-logo">
+                        <span class="brand-premium-name"></span>
+                    </a>
+                </div>
+
+                <ul class="nav-premium-links">
+                    <li><a href="<?= ROOT ?>index">الرئيسية</a></li>
+                    <li><a href="<?= ROOT ?>Browsebooks">المكتبة</a></li>
+                    <li><a href="<?= ROOT ?>writer_application" class="active">كن كاتبا</a></li>
+                </ul>
+
+                <div class="nav-premium-actions">
+                    <?php if (!isset($_SESSION["user"])): ?>
+                        <a href="<?= ROOT ?>login" class="nav-premium-btn nav-premium-btn-outline">تسجيل الدخول</a>
+                        <a href="<?= ROOT ?>signup" class="nav-premium-btn nav-premium-btn-filled">إنشاء حساب</a>
+                    <?php else: ?>
+                        <?php if ($_SESSION["user"]["role"] == "admin"): ?>
+                            <a href="<?= ROOT ?>admin" class="nav-premium-btn nav-premium-btn-outline">لوحة التحكم</a>
                         <?php endif; ?>
-                        <span style="font-weight: 600; color: #333;"><?= htmlspecialchars($_SESSION["user"]["username"]) ?></span>
-                        <i class="fa-solid fa-chevron-down" style="font-size: 0.8rem; color: #666;"></i>
-                    </button>
-                    <div class="profile-menu" style="display: none; position: absolute; top: 100%; left: 0; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; padding: 10px 0; min-width: 150px; flex-direction: column; z-index: 1001;">
-                        <a href="<?= ROOT ?>profile" style="padding: 10px 20px; text-decoration: none; color: #333; display: block;"><i class="fa-solid fa-user" style="width: 20px;"></i> حسابي</a>
-                        <a href="<?= ROOT ?>logout" style="padding: 10px 20px; text-decoration: none; color: #d32f2f; display: block;"><i class="fa-solid fa-right-from-bracket" style="width: 20px;"></i> تسجيل الخروج</a>
-                    </div>
+                        <div class="profile-dropdown">
+                            <button class="profile-toggle" onclick="toggleProfileMenu()">
+                                <?php if (!empty($_SESSION['user']['image'])): ?>
+                                    <img src="<?= ROOT ?>assets/images/users/<?= htmlspecialchars($_SESSION['user']['image']) ?>" alt="avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                                <?php else: ?>
+                                    <i class="fa-solid fa-user-circle"></i>
+                                <?php endif; ?>
+                                <span><?= htmlspecialchars($_SESSION["user"]["username"]) ?></span>
+                                <i class="fa-solid fa-chevron-down text-sm"></i>
+                            </button>
+                            <div class="profile-menu" id="profileMenu">
+                                <a href="<?= ROOT ?>profile"><i class="fa-solid fa-user"></i> حسابي</a>
+                                <a href="<?= ROOT ?>logout"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
-                <style>
-                    .profile-menu.show { display: flex !important; }
-                    .profile-menu a:hover { background: #f5f5f5; }
-                </style>
-            <?php endif; ?>
-        </div>
-    </nav>
-
-    <div class="application-container">
-        <div class="application-header">
-            <h1>انضم إلى كتّاب سرد</h1>
-            <p>شارك إبداعاتك مع مجتمع كبير من القرّاء الشغوفين بالأدب.</p>
-        </div>
-
-        <?php if (!empty($successMessage)): ?>
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle"></i> <?= htmlspecialchars($successMessage) ?>
             </div>
-            <div style="text-align:center; margin-top:20px;">
-                <a href="<?= ROOT ?>index" style="color: #d4af37; text-decoration: underline;">العودة للرئيسية</a>
-            </div>
-        <?php else: ?>
-            <?php if (!empty($errorMessage)): ?>
-                <div class="alert alert-error">
-                    <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($errorMessage) ?>
-                </div>
-            <?php endif; ?>
-
-            <form method="POST" action="">
-                <div class="form-group">
-                    <label for="full_name">الاسم الثلاثي</label>
-                    <input type="text" id="full_name" name="full_name" class="form-control" required placeholder="أدخل اسمك الحقيقي">
-                </div>
-                
-                <div class="form-group">
-                    <label for="novel_name">اسم الرواية المقترحة أو الحالية</label>
-                    <input type="text" id="novel_name" name="novel_name" class="form-control" required placeholder="ما هو العمل الذي تود نشره؟">
-                </div>
-                
-                <div class="form-group">
-                    <label for="request_details">نبذة عن الرواية وعنك</label>
-                    <textarea id="request_details" name="request_details" class="form-control" required placeholder="تحدث عن فكرة الرواية، خبراتك السابقة في الكتابة، وأي تفاصيل أخرى مفيدة..."></textarea>
-                </div>
-                
-                <button type="submit" class="submit-btn">إرسال الطلب</button>
-            </form>
-        <?php endif; ?>
+        </nav>
     </div>
+
+    <!-- ============================================================
+    HERO SECTION - IMAGE LEFT, FORM RIGHT
+    ============================================================ -->
+    <div class="writer-hero">
+        
+        <!-- LEFT: WRITER ILLUSTRATION -->
+        <div class="writer-image-col">
+            <img src="<?= ROOT ?>assets/images/writer2.png" alt="كاتب يكتب في مكتبه" class="writer-illustration" />
+        </div>
+
+        <!-- RIGHT: REGISTRATION FORM -->
+        <div class="writer-form-col">
+            <div class="application-card">
+                <div class="application-header">
+                    <h1><i class="fa-regular fa-pen-to-square"></i> انضم إلى كتّاب سرد</h1>
+                    <p>شارك إبداعاتك مع مجتمع كبير من القرّاء الشغوفين بالأدب.</p>
+                </div>
+
+                <?php if (!empty($successMessage)): ?>
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> <?= htmlspecialchars($successMessage) ?>
+                    </div>
+                    <div style="text-align:center; margin-top:20px;">
+                        <a href="<?= ROOT ?>index" style="color: #3A2418; text-decoration: underline; font-weight:600;">العودة للرئيسية</a>
+                    </div>
+                <?php else: ?>
+                    <?php if (!empty($errorMessage)): ?>
+                        <div class="alert alert-error">
+                            <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($errorMessage) ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <form method="POST" action="">
+                        <div class="form-group">
+                            <label for="full_name">الاسم الثلاثي</label>
+                            <input type="text" id="full_name" name="full_name" class="form-control" required placeholder="أدخل اسمك الحقيقي">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="novel_name">اسم الرواية المقترحة أو الحالية</label>
+                            <input type="text" id="novel_name" name="novel_name" class="form-control" required placeholder="ما هو العمل الذي تود نشره؟">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="request_details">نبذة عن الرواية وعنك</label>
+                            <textarea id="request_details" name="request_details" class="form-control" required placeholder="تحدث عن فكرة الرواية، خبراتك السابقة في الكتابة، وأي تفاصيل أخرى مفيدة..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">إرسال الطلب</button>
+                    </form>
+                <?php endif; ?>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================
+    JAVASCRIPT - Profile Dropdown
+    ============================================================ -->
+    <script>
+        function toggleProfileMenu() {
+            var menu = document.getElementById('profileMenu');
+            if(menu) {
+                menu.classList.toggle('show');
+            }
+        }
+
+        window.addEventListener('click', function(e) {
+            var toggle = document.querySelector('.profile-toggle');
+            var menu = document.getElementById('profileMenu');
+            if (toggle && menu) {
+                if (!toggle.contains(e.target) && !menu.contains(e.target)) {
+                    menu.classList.remove('show');
+                }
+            }
+        });
+    </script>
 
 </body>
 </html>

@@ -1,13 +1,50 @@
+/* ─── Mobile Navbar Toggle ─── */
+var navToggle = document.getElementById('navMobileToggle');
+var navLinks = document.querySelector('.nav-premium-links');
+if (navToggle && navLinks) {
+    navToggle.addEventListener('click', function() {
+        navLinks.classList.toggle('is-open');
+        navToggle.textContent = navLinks.classList.contains('is-open') ? '✕' : '☰';
+    });
+}
+
+/* ─── Profile Dropdown ─── */
+function toggleProfileMenu(e) {
+    if (e) e.stopPropagation();
+    var menu = document.getElementById('profileMenu');
+    if (menu) menu.classList.toggle('show');
+}
+document.addEventListener('click', function(e) {
+    var toggle = document.querySelector('.profile-toggle');
+    var menu = document.getElementById('profileMenu');
+    if (toggle && menu && !toggle.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.remove('show');
+    }
+});
+
+/* ─── Form UI Logic ─── */
 const titleInput = document.getElementById('title');
 const titleCount = document.getElementById('title-count');
 const descInput = document.getElementById('description');
 const descCount = document.getElementById('desc-count');
 const coverInput = document.getElementById('cover_image');
+const fileNameDisplay = document.getElementById('fileNameDisplay');
 const form = document.getElementById('novelForm');
 
 titleInput.addEventListener('input', () => titleCount.textContent = titleInput.value.length);
 descInput.addEventListener('input', () => descCount.textContent = descInput.value.length);
 
+// File name update
+coverInput.addEventListener('change', function() {
+    if (this.files && this.files.length > 0) {
+        fileNameDisplay.textContent = this.files[0].name;
+        document.getElementById('err-cover').textContent = '';
+    } else {
+        fileNameDisplay.textContent = 'اختر صورة...';
+    }
+});
+
+// Category Dropdown
 const catToggle = document.getElementById('catToggle');
 const catMenu = document.getElementById('catMenu');
 const catToggleText = document.getElementById('catToggleText');
@@ -28,7 +65,7 @@ catMenu.querySelectorAll('input[type="checkbox"]').forEach(cb => {
         const checked = catMenu.querySelectorAll('input:checked');
         catToggleText.textContent = checked.length > 0
             ? checked.length + ' تصنيف مختار'
-            : 'اختاري التصنيفات';
+            : 'اختر التصنيفات';
         if (checked.length > 0) {
             document.getElementById('err-cat').textContent = '';
             catToggle.classList.remove('invalid');
@@ -36,6 +73,7 @@ catMenu.querySelectorAll('input[type="checkbox"]').forEach(cb => {
     });
 });
 
+// Form Validation
 form.addEventListener('submit', (e) => {
     let valid = true;
 

@@ -445,7 +445,7 @@ $readingUrl = ROOT . 'reading?book_id=' . $book['id'];
             <div class="navbar-premium-brand">
                 <a href="<?= ROOT ?>index" class="brand-premium-link">
                     <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد logo" class="brand-premium-logo">
-                    <span class="brand-premium-name">سرد</span>
+                    <span class="brand-premium-name"></span>
                 </a>
             </div>
             <ul class="nav-premium-links">

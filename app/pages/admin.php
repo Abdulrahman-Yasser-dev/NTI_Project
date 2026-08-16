@@ -126,44 +126,48 @@ if ($tab === 'dashboard') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم | منصة الروايات</title>
+    <title>لوحة التحكم | سرد</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= ROOT ?>assets/css/admin.css">
 </head>
 
 <body>
-
-    <div class="d-flex" id="wrapper">
-        <div class="sidebar" id="sidebar-wrapper">
-            <div class="sidebar-heading text-center py-4 fs-4 fw-bold">
-                <i class="fa-solid fa-feather-pointed me-2"></i> سرد
+    <div class="dashboard-wrapper" id="wrapper">
+        
+        <!-- FLOATING SIDEBAR (Fixed Position) -->
+        <div class="floating-sidebar" id="sidebar-wrapper">
+            <div class="sidebar-logo">
+                <img src="<?= ROOT ?>assets/images/sarrdd Logo.png" alt="سرد">
             </div>
-            <div class="list-group list-group-flush my-3">
-                <a href="admin?tab=dashboard" class="list-group-item list-group-item-action bg-transparent <?= $tab === 'dashboard' ? 'active' : 'fw-bold' ?>">
+            
+            <div class="list-group list-group-flush my-4">
+                <a href="admin?tab=dashboard" class="list-group-item list-group-item-action <?= $tab === 'dashboard' ? 'active' : '' ?>">
                     <i class="fas fa-tachometer-alt ms-2"></i> الرئيسية
                 </a>
-                <a href="admin?tab=users" class="list-group-item list-group-item-action bg-transparent <?= $tab === 'users' ? 'active' : 'fw-bold' ?>">
+                <a href="admin?tab=users" class="list-group-item list-group-item-action <?= $tab === 'users' ? 'active' : '' ?>">
                     <i class="fas fa-users-cog ms-2"></i> إدارة المستخدمين
                 </a>
-                <a href="admin?tab=novels" class="list-group-item list-group-item-action bg-transparent <?= $tab === 'novels' ? 'active' : 'fw-bold' ?>">
+                <a href="admin?tab=novels" class="list-group-item list-group-item-action <?= $tab === 'novels' ? 'active' : '' ?>">
                     <i class="fas fa-book-open ms-2"></i> إدارة الروايات
                 </a>
-                <a href="logout" class="list-group-item list-group-item-action bg-transparent fw-bold text-danger mt-5">
+                <a href="logout" class="list-group-item list-group-item-action text-gold mt-auto border-top border-secondary">
                     <i class="fas fa-sign-out-alt ms-2"></i> تسجيل الخروج
                 </a>
             </div>
         </div>
 
-        <div id="page-content-wrapper">
-            <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 border-bottom shadow-sm d-flex justify-content-between">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-bars primary-text fs-4 ms-3" id="menu-toggle"></i>
-                    <h2 class="fs-4 m-0 header-title ms-3">لوحة الإدارة</h2>
+        <!-- MAIN CONTENT AREA (Full Width) -->
+        <div class="main-content-area" id="page-content-wrapper">
+            
+            <!-- FLOATING TOP NAVBAR -->
+            <nav class="top-navbar">
+                <div class="navbar-left">
+                    <i class="fas fa-bars fs-4" id="menu-toggle"></i>
+                    <h2 class="fs-4 m-0 header-title me-3">لوحة الإدارة</h2>
                 </div>
-
-                <div class="d-flex align-items-center">
+                <div class="navbar-right">
                     <div class="dropdown">
                         <a class="text-dark dropdown-toggle d-flex align-items-center text-decoration-none" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <span class="fw-bold me-2"><?= htmlspecialchars($_SESSION['user']['username']) ?></span>
@@ -171,52 +175,58 @@ if ($tab === 'dashboard') {
                         </a>
                         <ul class="dropdown-menu dropdown-menu-start text-end" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="admin?tab=profile">الملف الشخصي</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="<?= ROOT ?>logout">تسجيل الخروج</a></li>
                         </ul>
                     </div>
                 </div>
             </nav>
 
-            <div class="container-fluid px-4 pt-4 pb-5">
+            <div class="container-fluid px-4 pt-3 pb-5">
                 <?php if ($tab === 'dashboard'): ?>
                     <div class="row g-4 mb-5">
                         <div class="col-md-3">
-                            <div class="p-4 bg-white shadow-sm d-flex justify-content-between align-items-center rounded stat-card border-bottom-success">
+                            <div class="stat-card card-users p-4 d-flex justify-content-between align-items-center">
                                 <div>
-                                    <p class="fs-6 text-muted mb-1">إجمالي المستخدمين</p>
-                                    <h3 class="fs-2 mb-0 fw-bold"><?= $usersCount ?></h3>
+                                    <p class="text-muted mb-1 small fw-bold">إجمالي المستخدمين</p>
+                                    <h3 class="fs-2 mb-0 fw-bold text-coffee"><?= $usersCount ?></h3>
                                 </div>
-                                <i class="fas fa-users fs-1 text-success bg-light p-3 rounded-circle"></i>
+                                <div class="icon-bg">
+                                    <i class="fas fa-users"></i>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="p-4 bg-white shadow-sm d-flex justify-content-between align-items-center rounded stat-card border-bottom-warning">
+                            <div class="stat-card card-writers p-4 d-flex justify-content-between align-items-center">
                                 <div>
-                                    <p class="fs-6 text-muted mb-1">الكتاب (Writers)</p>
-                                    <h3 class="fs-2 mb-0 fw-bold"><?= $writersCount ?></h3>
+                                    <p class="text-muted mb-1 small fw-bold">الكتاب (Writers)</p>
+                                    <h3 class="fs-2 mb-0 fw-bold text-coffee"><?= $writersCount ?></h3>
                                 </div>
-                                <i class="fas fa-feather fs-1 text-warning bg-light p-3 rounded-circle"></i>
+                                <div class="icon-bg">
+                                    <i class="fas fa-feather-alt"></i>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="p-4 bg-white shadow-sm d-flex justify-content-between align-items-center rounded stat-card border-bottom-info">
+                            <div class="stat-card card-admins p-4 d-flex justify-content-between align-items-center">
                                 <div>
-                                    <p class="fs-6 text-muted mb-1">المديرين (Admins)</p>
-                                    <h3 class="fs-2 mb-0 fw-bold"><?= $adminsCount ?></h3>
+                                    <p class="text-muted mb-1 small fw-bold">المديرين (Admins)</p>
+                                    <h3 class="fs-2 mb-0 fw-bold text-coffee"><?= $adminsCount ?></h3>
                                 </div>
-                                <i class="fas fa-user-shield fs-1 text-info bg-light p-3 rounded-circle"></i>
+                                <div class="icon-bg">
+                                    <i class="fas fa-user-shield"></i>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="p-4 bg-white shadow-sm d-flex justify-content-between align-items-center rounded stat-card border-bottom-primary">
+                            <div class="stat-card card-novels p-4 d-flex justify-content-between align-items-center">
                                 <div>
-                                    <p class="fs-6 text-muted mb-1">إجمالي الروايات</p>
-                                    <h3 class="fs-2 mb-0 fw-bold">0</h3>
+                                    <p class="text-muted mb-1 small fw-bold">إجمالي الروايات</p>
+                                    <h3 class="fs-2 mb-0 fw-bold text-coffee">0</h3>
                                 </div>
-                                <i class="fas fa-book fs-1 text-primary-accent bg-light p-3 rounded-circle"></i>
+                                <div class="icon-bg">
+                                    <i class="fas fa-book-open"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -225,8 +235,8 @@ if ($tab === 'dashboard') {
                         <div class="col-12">
                             <div class="card border-0 shadow-sm rounded-3">
                                 <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0 fw-bold header-title"><i class="fas fa-user-plus ms-2 text-primary-accent"></i> أحدث المستخدمين المسجلين</h5>
-                                    <a href="#" class="btn btn-sm btn-outline-primary px-3 rounded-pill">عرض الكل</a>
+                                    <h5 class="mb-0 fw-bold header-title"><i class="fas fa-user-plus ms-2 text-gold"></i> أحدث المستخدمين المسجلين</h5>
+                                    <a href="admin?tab=users" class="btn btn-sm btn-outline-secondary px-3 rounded-pill">عرض الكل</a>
                                 </div>
                                 <div class="card-body p-0">
                                     <div class="table-responsive">
@@ -254,11 +264,11 @@ if ($tab === 'dashboard') {
                                                             <td class="py-3 text-muted"><?= htmlspecialchars($u['email']) ?></td>
                                                             <td class="py-3">
                                                                 <?php if ($u['role'] == 'admin'): ?>
-                                                                    <span class="badge bg-danger rounded-pill px-3 py-2">مدير</span>
+                                                                    <span class="badge rounded-pill px-3 py-2" style="background-color: var(--sard-rose); color: #fff;">مدير</span>
                                                                 <?php elseif ($u['role'] == 'writer'): ?>
-                                                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-2">كاتب</span>
+                                                                    <span class="badge rounded-pill px-3 py-2" style="background-color: var(--sard-terracotta); color: #fff;">كاتب</span>
                                                                 <?php else: ?>
-                                                                    <span class="badge bg-secondary rounded-pill px-3 py-2">مستخدم</span>
+                                                                    <span class="badge rounded-pill px-3 py-2" style="background-color: #8C7C71; color: #fff;">مستخدم</span>
                                                                 <?php endif; ?>
                                                             </td>
                                                             <td class="py-3 text-muted small" dir="ltr" style="text-align: right;">
@@ -470,12 +480,12 @@ if ($tab === 'dashboard') {
                                                                         <span class="fw-bold"><?= htmlspecialchars($n['title']) ?></span>
                                                                     </td>
                                                                     <td class="py-3 text-muted"><?= htmlspecialchars($n['author_name']) ?></td>
-                                                                    <td class="py-3"><span class="badge bg-primary px-2 py-1 rounded-pill">منشورة</span></td>
+                                                                    <td class="py-3"><span class="badge bg-secondary px-2 py-1 rounded-pill">منشورة</span></td>
                                                                     <td class="py-3 text-muted small" dir="ltr" style="text-align: right;">
                                                                         <?= date('Y-m-d', strtotime($n['created_at'])) ?>
                                                                     </td>
                                                                     <td class="py-3 text-muted" dir="ltr" style="text-align: right;">
-                                                                        <a href="<?= ROOT ?>BookDetails?id=<?= $n['id'] ?>" class="btn btn-sm btn-outline-primary px-3 rounded-pill me-2">عرض</a>
+                                                                        <a href="<?= ROOT ?>BookDetails?id=<?= $n['id'] ?>" class="btn btn-sm btn-outline-secondary px-3 rounded-pill me-2">عرض</a>
                                                                         <form method="post" class="d-inline">
                                                                             <input type="hidden" name="novel_id" value="<?= $n['id'] ?>">
                                                                             <button type="submit" name="delete_novel" class="btn btn-sm btn-danger px-3 rounded-pill" onclick="return confirm('هل أنت متأكد من حذف هذه الرواية؟')">حذف</button>
@@ -532,7 +542,7 @@ if ($tab === 'dashboard') {
                                                                         <?= date('Y-m-d', strtotime($n['created_at'])) ?>
                                                                     </td>
                                                                     <td class="py-3">
-                                                                        <a href="<?= ROOT ?>BookDetails?id=<?= $n['id'] ?>" target="_blank" class="btn btn-sm btn-outline-primary px-2 rounded-pill me-1">معاينة</a>
+                                                                        <a href="<?= ROOT ?>BookDetails?id=<?= $n['id'] ?>" target="_blank" class="btn btn-sm btn-outline-secondary px-2 rounded-pill me-1">معاينة</a>
                                                                         <form method="post" class="d-inline">
                                                                             <input type="hidden" name="novel_id" value="<?= $n['id'] ?>">
                                                                             <button type="submit" name="approve_novel" class="btn btn-sm btn-success px-2 rounded-pill me-1">نشر</button>
@@ -557,13 +567,13 @@ if ($tab === 'dashboard') {
                     <div class="row">
                         <div class="col-lg-4 mb-4">
                             <div class="card border-0 shadow-sm rounded-4 text-center overflow-hidden h-100">
-                                <div class="p-4" style="background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%); height: 120px;"></div>
+                                <div class="p-4" style="background: linear-gradient(135deg, var(--sard-terracotta) 0%, var(--sard-rose) 100%); height: 120px;"></div>
                                 <div class="card-body mt-n5 position-relative">
                                     <img src="https://ui-avatars.com/api/?name=Admin&background=fff&color=8b5a2b" alt="Admin Profile" class="rounded-circle border border-4 border-white shadow-sm mb-3 position-relative" width="120" height="120" style="margin-top: -80px; z-index: 2;">
 
-                                    <h4 class="fw-bold mb-1" style="font-family: 'Amiri', serif;"><?= $adminProfile['username'] ?></h4>
+                                    <h4 class="fw-bold mb-1" style="font-family: 'Cairo', sans-serif;"><?= $adminProfile['username'] ?></h4>
                                     <p class="text-muted mb-3"><?= $adminProfile['email'] ?></p>
-                                    <span class="badge bg-danger rounded-pill px-4 py-2 fs-6 mb-3 shadow-sm">مدير عام</span>
+                                    <span class="badge rounded-pill px-4 py-2 fs-6 mb-3 shadow-sm" style="background-color: var(--sard-rose); color: #fff;">مدير عام</span>
 
                                     <hr class="text-muted opacity-10 mx-4">
                                     <div class="d-flex justify-content-around mt-4 mb-2">
@@ -585,7 +595,7 @@ if ($tab === 'dashboard') {
                         <div class="col-lg-8 mb-4">
                             <div class="card border-0 shadow-sm rounded-4 h-100">
                                 <div class="card-header bg-white py-4 border-0 border-bottom">
-                                    <h5 class="mb-0 fw-bold header-title"><i class="fas fa-user-edit ms-2 text-primary-accent"></i> المعلومات الشخصية</h5>
+                                    <h5 class="mb-0 fw-bold header-title"><i class="fas fa-user-edit ms-2 text-gold"></i> المعلومات الشخصية</h5>
                                 </div>
                                 <div class="card-body p-4 pt-5">
                                     <form method="post" enctype="multipart/form-data">
@@ -598,7 +608,7 @@ if ($tab === 'dashboard') {
                                             <div class="col-12 text-center mb-3">
                                                 <div class="position-relative d-inline-block">
                                                     <img src="<?= !empty($adminProfile['image']) ? ROOT . 'assets/images/users/' . $adminProfile['image'] : 'https://ui-avatars.com/api/?name=' . urlencode($adminProfile['username']) . '&background=8b5a2b&color=fff' ?>" alt="Admin" class="rounded-circle shadow-sm" width="100" height="100" style="object-fit: cover;" id="profileImagePreview">
-                                                    <label for="adminImageInput" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2" style="cursor:pointer; background-color: var(--accent-color) !important;">
+                                                    <label for="adminImageInput" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-2" style="cursor:pointer; background-color: var(--sard-terracotta) !important;">
                                                         <i class="fas fa-camera"></i>
                                                     </label>
                                                     <input type="file" id="adminImageInput" name="image" class="d-none" accept="image/*" onchange="document.getElementById('profileImagePreview').src = window.URL.createObjectURL(this.files[0])">
@@ -639,7 +649,7 @@ if ($tab === 'dashboard') {
                                                 </div>
                                             <?php } ?>
                                             <div class="col-12 mt-4 text-start">
-                                                <button type="submit" class="btn btn-primary px-5 py-3 fw-bold rounded-3 shadow-sm" style="background-color: var(--accent-color); border-color: var(--accent-color);">
+                                                <button type="submit" class="btn btn-primary px-5 py-3 fw-bold rounded-3 shadow-sm" style="background-color: var(--sard-terracotta); border-color: var(--sard-terracotta);">
                                                     <i class="fas fa-save ms-2"></i> حفظ التعديلات
                                                 </button>
                                             </div>
@@ -654,10 +664,12 @@ if ($tab === 'dashboard') {
 
             </div>
         </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="<?= ROOT ?>assets/js/admin.js"></script>
+
     <!-- Writer Modals -->
     <?php if (!empty($writerRequests)): foreach ($writerRequests as $u): ?>
     <div class="modal fade" id="writerModal<?= $u['id'] ?>" tabindex="-1" aria-hidden="true" style="z-index: 9999;">
@@ -685,6 +697,7 @@ if ($tab === 'dashboard') {
         </div>
     </div>
     <?php endforeach; endif; ?>
+
     <!-- Publishing Modals -->
     <?php if (!empty($novelRequests)): foreach ($novelRequests as $n): ?>
     <div class="modal fade" id="novelModal<?= $n['id'] ?>" tabindex="-1" aria-hidden="true" style="z-index: 9999;">
